@@ -23,7 +23,7 @@ using Microsoft::WRL::ComPtr;
 class Scene
 {
 public:
-    Scene() {};
+    Scene() = default;
     Scene(UINT width, UINT height, std::wstring name);
 
     virtual void OnInit(ID3D12Device* device);
