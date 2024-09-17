@@ -2,11 +2,11 @@
 //
 
 #include "stdafx.h"
-#include "Scene.h"
+#include "Framework.h"
 
 _Use_decl_annotations_
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
 {
-    Scene sample(1280, 720, L"MyGame");
+    Framework sample(1280, 720, L"MyGame");
     return Win32Application::Run(&sample, hInstance, nCmdShow);
 }

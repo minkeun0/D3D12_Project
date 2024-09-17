@@ -20,51 +20,42 @@
 // An example of this can be found in the class method: OnDestroy().
 using Microsoft::WRL::ComPtr;
 
-class Scene : public DXSample
+class Scene
 {
 public:
+    Scene() {};
     Scene(UINT width, UINT height, std::wstring name);
 
-    virtual void OnInit();
+    virtual void OnInit(ID3D12Device* device);
     virtual void OnUpdate();
-    virtual void OnRender();
+    virtual void OnRender(ID3D12Resource* renderTarget, ID3D12DescriptorHeap* rtvHeap, UINT rtvDescriptorSize, UINT frameIndex);
     virtual void OnDestroy();
 
+    std::wstring GetSceneName();
+    ID3D12GraphicsCommandList* GetCommandList();
 private:
-    static const UINT FrameCount = 2;
-
     //struct Vertex
     //{
     //    DirectX::XMFLOAT3 position;
     //    DirectX::XMFLOAT4 color;
     //};
 
+    std::wstring m_name;
+
     // Pipeline objects.
     CD3DX12_VIEWPORT m_viewport;
     CD3DX12_RECT m_scissorRect;
 
-    ComPtr<IDXGISwapChain3> m_swapChain;
-    ComPtr<ID3D12Device> m_device;
-    ComPtr<ID3D12Resource> m_renderTargets[FrameCount];
     ComPtr<ID3D12CommandAllocator> m_commandAllocator;
-    ComPtr<ID3D12CommandQueue> m_commandQueue;
-    ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
     ComPtr<ID3D12PipelineState> m_pipelineState;
     ComPtr<ID3D12GraphicsCommandList> m_commandList;
-    UINT m_rtvDescriptorSize;
 
     //// App resources.
     //ComPtr<ID3D12Resource> m_vertexBuffer;
     //D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
 
-    // Synchronization objects.
-    UINT m_frameIndex;
-    HANDLE m_fenceEvent;
-    ComPtr<ID3D12Fence> m_fence;
-    UINT64 m_fenceValue;
+    void LoadPipeline(ID3D12Device* device);
+    void LoadAssets(ID3D12Device* device);
+    void PopulateCommandList(ID3D12Resource* renderTarget, ID3D12DescriptorHeap* rtvHeap, UINT rtvDescriptorSize, UINT frameIndex);
 
-    void LoadPipeline();
-    void LoadAssets();
-    void PopulateCommandList();
-    void WaitForPreviousFrame();
 };

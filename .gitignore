@@ -1,8 +1,8 @@
-/D3D12_Project
-/x64
-/x86
-/.vs
-/.sln
-/.vcxproj
-/.filters
-/.user
+D3D12_Project/
+x64/
+x86/
+*.vs
+*.sln
+*.user
+*.vcxproj
+*.filters
