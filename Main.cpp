@@ -7,6 +7,6 @@
 _Use_decl_annotations_
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
 {
-    Framework sample(1280, 720, L"MyGame");
+    Framework sample(1000, 600, L"MyGame");
     return Win32Application::Run(&sample, hInstance, nCmdShow);
 }

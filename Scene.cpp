@@ -69,12 +69,12 @@ void Scene::OnDestroy()
 
 }
 
-std::wstring Scene::GetSceneName()
+std::wstring Scene::GetSceneName() const
 {
     return m_name;
 }
 
-ID3D12GraphicsCommandList* Scene::GetCommandList()
+ID3D12GraphicsCommandList* Scene::GetCommandList() const
 {
     return m_commandList.Get();
 }

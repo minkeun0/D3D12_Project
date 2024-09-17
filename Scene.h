@@ -31,8 +31,8 @@ public:
     virtual void OnRender(ID3D12Resource* renderTarget, ID3D12DescriptorHeap* rtvHeap, UINT rtvDescriptorSize, UINT frameIndex);
     virtual void OnDestroy();
 
-    std::wstring GetSceneName();
-    ID3D12GraphicsCommandList* GetCommandList();
+    std::wstring GetSceneName() const;
+    ID3D12GraphicsCommandList* GetCommandList() const;
 private:
     //struct Vertex
     //{
