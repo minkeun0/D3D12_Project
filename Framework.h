@@ -17,11 +17,14 @@ public:
 private:
 	static const UINT FrameCount = 2;
 
+	// Pipeline objects.
 	ComPtr<IDXGISwapChain3> m_swapChain;
 	ComPtr<ID3D12Device> m_device;
 	ComPtr<ID3D12Resource> m_renderTargets[FrameCount];
 	ComPtr<ID3D12CommandQueue> m_commandQueue;
 	ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
+	ComPtr<ID3D12CommandAllocator> m_commandAllocator;
+	ComPtr<ID3D12GraphicsCommandList> m_commandList;
 	UINT m_rtvDescriptorSize;
 
 	// Synchronization objects.
@@ -33,6 +36,7 @@ private:
 	std::unordered_map<std::wstring, Scene> m_Scenes;
 
 	void LoadPipeline();
+	void PopulateCommandList();
 	void BuildScenes();
 	void WaitForPreviousFrame();
 };

@@ -27,11 +27,11 @@ public:
 
     virtual void OnInit(ID3D12Device* device);
     virtual void OnUpdate();
-    virtual void OnRender(ID3D12Resource* renderTarget, ID3D12DescriptorHeap* rtvHeap, UINT rtvDescriptorSize, UINT frameIndex);
+    virtual void OnRender();
     virtual void OnDestroy();
 
     std::wstring GetSceneName() const;
-    ID3D12GraphicsCommandList* GetCommandList() const;
+    ID3D12PipelineState* GetPSO() const;
 private:
     struct Vertex
     {
@@ -41,20 +41,14 @@ private:
 
     std::wstring m_name;
 
-    // Pipeline objects.
     CD3DX12_VIEWPORT m_viewport;
     CD3DX12_RECT m_scissorRect;
 
-    ComPtr<ID3D12CommandAllocator> m_commandAllocator;
     ComPtr<ID3D12PipelineState> m_pipelineState;
-    ComPtr<ID3D12GraphicsCommandList> m_commandList;
 
     // App resources.
     ComPtr<ID3D12Resource> m_vertexBuffer;
     D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
 
-    void LoadPipeline(ID3D12Device* device);
     void LoadAssets(ID3D12Device* device);
-    void PopulateCommandList(ID3D12Resource* renderTarget, ID3D12DescriptorHeap* rtvHeap, UINT rtvDescriptorSize, UINT frameIndex);
-
 };

@@ -21,10 +21,10 @@ void Framework::OnUpdate()
 void Framework::OnRender()
 {
     // Record all the commands we need to render the scene into the command list.
-    m_Scenes[L"BaseScene"].OnRender(m_renderTargets[m_frameIndex].Get(), m_rtvHeap.Get(), m_rtvDescriptorSize, m_frameIndex);
+    PopulateCommandList();
 
     // Execute the command list.
-    ID3D12CommandList* ppCommandLists[] = { m_Scenes[L"BaseScene"].GetCommandList()}; // 이름 하드 코딩 말고 매개 변수로 전달 받는 방식으로 바꿔야함.
+    ID3D12CommandList* ppCommandLists[] = { m_commandList.Get()}; // 이름 하드 코딩 말고 매개 변수로 전달 받는 방식으로 바꿔야함.
     m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 
     // Present the frame.
@@ -157,6 +157,46 @@ void Framework::LoadPipeline()
             ThrowIfFailed(HRESULT_FROM_WIN32(GetLastError()));
         }
     }
+
+    // Create the command allocator.
+    ThrowIfFailed(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocator)));
+
+    // Create the command list.
+    ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocator.Get(), nullptr, IID_PPV_ARGS(&m_commandList)));
+
+    // Command lists are created in the recording state, but there is nothing
+    // to record yet. The main loop expects it to be closed, so close it now.
+    ThrowIfFailed(m_commandList->Close());
+
+}
+
+void Framework::PopulateCommandList()
+{
+    // Command list allocators can only be reset when the associated 
+    // command lists have finished execution on the GPU; apps should use 
+    // fences to determine GPU execution progress.
+    ThrowIfFailed(m_commandAllocator->Reset());
+
+    // However, when ExecuteCommandList() is called on a particular command 
+    // list, that command list can then be reset at any time and must be before 
+    // re-recording.
+    ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), m_Scenes[L"BaseScene"].GetPSO()));
+
+    // Indicate that the back buffer will be used as a render target.
+    m_commandList->ResourceBarrier(1,
+        &CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+
+    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), m_frameIndex, m_rtvDescriptorSize);
+
+    // Record commands.
+    const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
+    m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+
+    // Indicate that the back buffer will now be used to present.
+    m_commandList->ResourceBarrier(1,
+        &CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+
+    ThrowIfFailed(m_commandList->Close());
 }
 
 void Framework::BuildScenes()
