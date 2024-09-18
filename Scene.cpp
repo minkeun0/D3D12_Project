@@ -12,9 +12,7 @@
 #include "stdafx.h"
 #include "Scene.h"
 
-Scene::Scene(UINT width, UINT height, std::wstring name) :
-    m_viewport(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height)),
-    m_scissorRect(0, 0, static_cast<LONG>(width), static_cast<LONG>(height)),
+Scene::Scene(std::wstring name) :
     m_name(name)
 {
 }
@@ -46,9 +44,4 @@ void Scene::OnDestroy()
 std::wstring Scene::GetSceneName() const
 {
     return m_name;
-}
-
-ID3D12PipelineState* Scene::GetPSO() const
-{
-    return m_pipelineState.Get();
 }

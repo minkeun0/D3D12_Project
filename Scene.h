@@ -23,7 +23,7 @@ class Scene
 {
 public:
     Scene() = default;
-    Scene(UINT width, UINT height, std::wstring name);
+    Scene(std::wstring name);
 
     virtual void OnInit(ID3D12Device* device);
     virtual void OnUpdate();
@@ -31,20 +31,9 @@ public:
     virtual void OnDestroy();
 
     std::wstring GetSceneName() const;
-    ID3D12PipelineState* GetPSO() const;
 private:
-    struct Vertex
-    {
-        DirectX::XMFLOAT3 position;
-        DirectX::XMFLOAT4 color;
-    };
 
     std::wstring m_name;
-
-    CD3DX12_VIEWPORT m_viewport;
-    CD3DX12_RECT m_scissorRect;
-
-    ComPtr<ID3D12PipelineState> m_pipelineState;
 
     // App resources.
     ComPtr<ID3D12Resource> m_vertexBuffer;
