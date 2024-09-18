@@ -19,3 +19,4 @@
 #include <shellapi.h>
 
 #include <unordered_map>
+#include <vector>

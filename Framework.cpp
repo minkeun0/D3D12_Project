@@ -13,21 +13,24 @@ Framework::Framework(UINT width, UINT height, std::wstring name) :
 void Framework::OnInit()
 {
 	LoadPipeline();
-    LoadAssets();
     BuildScenes();
+    m_scenes[L"BaseScene"].OnInit(m_device.Get());
+    LoadAssets();
+    WaitForPreviousFrame();
 }
 
 void Framework::OnUpdate()
 {
 }
 
+// Render the scene.
 void Framework::OnRender()
 {
     // Record all the commands we need to render the scene into the command list.
     PopulateCommandList();
 
     // Execute the command list.
-    ID3D12CommandList* ppCommandLists[] = { m_commandList.Get()}; // 이름 하드 코딩 말고 매개 변수로 전달 받는 방식으로 바꿔야함.
+    ID3D12CommandList* ppCommandLists[] = { m_commandList.Get()};
     m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 
     // Present the frame.
@@ -198,8 +201,10 @@ void Framework::LoadAssets()
         UINT compileFlags = 0;
 #endif
 
-        ThrowIfFailed(D3DCompileFromFile(GetAssetFullPath(L"shaders.hlsl").c_str(), nullptr, nullptr, "VSMain", "vs_5_0", compileFlags, 0, &vertexShader, nullptr));
-        ThrowIfFailed(D3DCompileFromFile(GetAssetFullPath(L"shaders.hlsl").c_str(), nullptr, nullptr, "PSMain", "ps_5_0", compileFlags, 0, &pixelShader, nullptr));
+        ThrowIfFailed(D3DCompileFromFile(L"shaders.hlsl", nullptr, nullptr, "VSMain", "vs_5_0", compileFlags, 0, &vertexShader, nullptr));
+        ThrowIfFailed(D3DCompileFromFile(L"shaders.hlsl", nullptr, nullptr, "PSMain", "ps_5_0", compileFlags, 0, &pixelShader, nullptr));
+        //ThrowIfFailed(D3DCompileFromFile(GetAssetFullPath(L"shaders.hlsl").c_str(), nullptr, nullptr, "VSMain", "vs_5_0", compileFlags, 0, &vertexShader, nullptr));
+        //ThrowIfFailed(D3DCompileFromFile(GetAssetFullPath(L"shaders.hlsl").c_str(), nullptr, nullptr, "PSMain", "ps_5_0", compileFlags, 0, &pixelShader, nullptr));
 
         // Define the vertex input layout.
         D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
@@ -225,7 +230,6 @@ void Framework::LoadAssets()
         psoDesc.SampleDesc.Count = 1;
         ThrowIfFailed(m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState)));
     }
-
 }
 
 void Framework::PopulateCommandList()
@@ -240,15 +244,23 @@ void Framework::PopulateCommandList()
     // re-recording.
     ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), m_pipelineState.Get()));
 
+    // Set necessary state.
+    m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
+    m_commandList->RSSetViewports(1, &m_viewport);
+    m_commandList->RSSetScissorRects(1, &m_scissorRect);
+
     // Indicate that the back buffer will be used as a render target.
     m_commandList->ResourceBarrier(1,
         &CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
     CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), m_frameIndex, m_rtvDescriptorSize);
+    m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 
     // Record commands.
     const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
     m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+
+    m_scenes[L"BaseScene"].OnRender(m_commandList.Get());
 
     // Indicate that the back buffer will now be used to present.
     m_commandList->ResourceBarrier(1,
@@ -259,9 +271,8 @@ void Framework::PopulateCommandList()
 
 void Framework::BuildScenes()
 {
-    Scene BaseScene(L"BaseScene");
-    BaseScene.OnInit(m_device.Get());
-    m_Scenes[BaseScene.GetSceneName()] = BaseScene;
+    Scene baseScene(L"BaseScene");
+    m_scenes[baseScene.GetSceneName()] = baseScene;
 }
 
 void Framework::WaitForPreviousFrame()

@@ -10,8 +10,9 @@
 //*********************************************************
 
 #pragma once
-
 #include "DXSample.h"
+#include "Object.h"
+
 // Note that while ComPtr is used to manage the lifetime of resources on the CPU,
 // it has no understanding of the lifetime of resources on the GPU. Apps must account
 // for the GPU lifetime of resources to avoid destroying objects that may still be
@@ -27,17 +28,21 @@ public:
 
     virtual void OnInit(ID3D12Device* device);
     virtual void OnUpdate();
-    virtual void OnRender();
+    virtual void OnRender(ID3D12GraphicsCommandList* commandList);
     virtual void OnDestroy();
 
     std::wstring GetSceneName() const;
 private:
 
     std::wstring m_name;
+    std::unordered_map<std::wstring, Object> m_Object;
 
     // App resources.
     ComPtr<ID3D12Resource> m_vertexBuffer;
     D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
 
+    void BuildObjects();
     void LoadAssets(ID3D12Device* device);
+    void PopulateCommandList(ID3D12GraphicsCommandList* commandList);
+
 };

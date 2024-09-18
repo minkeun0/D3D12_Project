@@ -39,7 +39,7 @@ private:
 	ComPtr<ID3D12Fence> m_fence;
 	UINT64 m_fenceValue;
 
-	std::unordered_map<std::wstring, Scene> m_Scenes;
+	std::unordered_map<std::wstring, Scene> m_scenes;
 
 	void LoadPipeline();
 	void LoadAssets();
