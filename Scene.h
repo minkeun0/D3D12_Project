@@ -12,7 +12,6 @@
 #pragma once
 
 #include "DXSample.h"
-
 // Note that while ComPtr is used to manage the lifetime of resources on the CPU,
 // it has no understanding of the lifetime of resources on the GPU. Apps must account
 // for the GPU lifetime of resources to avoid destroying objects that may still be
@@ -34,11 +33,11 @@ public:
     std::wstring GetSceneName() const;
     ID3D12GraphicsCommandList* GetCommandList() const;
 private:
-    //struct Vertex
-    //{
-    //    DirectX::XMFLOAT3 position;
-    //    DirectX::XMFLOAT4 color;
-    //};
+    struct Vertex
+    {
+        DirectX::XMFLOAT3 position;
+        DirectX::XMFLOAT4 color;
+    };
 
     std::wstring m_name;
 
@@ -50,9 +49,9 @@ private:
     ComPtr<ID3D12PipelineState> m_pipelineState;
     ComPtr<ID3D12GraphicsCommandList> m_commandList;
 
-    //// App resources.
-    //ComPtr<ID3D12Resource> m_vertexBuffer;
-    //D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
+    // App resources.
+    ComPtr<ID3D12Resource> m_vertexBuffer;
+    D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
 
     void LoadPipeline(ID3D12Device* device);
     void LoadAssets(ID3D12Device* device);
