@@ -191,8 +191,10 @@ void Framework::PopulateCommandList()
     // re-recording.
     ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), nullptr));
 
+    // Set State
     m_scenes[L"BaseScene"]->SetState(m_commandList.Get());
-
+    // Set State
+    
     // Indicate that the back buffer will be used as a render target.
     m_commandList->ResourceBarrier(1,
         &CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
@@ -204,8 +206,10 @@ void Framework::PopulateCommandList()
     const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
     m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 
+    // Rendering
     m_scenes[L"BaseScene"]->OnRender(m_commandList.Get());
-
+    // Rendering
+    
     // Indicate that the back buffer will now be used to present.
     m_commandList->ResourceBarrier(1,
         &CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
