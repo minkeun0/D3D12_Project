@@ -17,19 +17,15 @@ public:
 private:
 	static const UINT FrameCount = 2;
 
-	CD3DX12_VIEWPORT m_viewport;
-	CD3DX12_RECT m_scissorRect;
-
 	// Pipeline objects.
-	ComPtr<IDXGISwapChain3> m_swapChain;
+	ComPtr<IDXGIFactory4> m_factory;
 	ComPtr<ID3D12Device> m_device;
-	ComPtr<ID3D12Resource> m_renderTargets[FrameCount];
 	ComPtr<ID3D12CommandQueue> m_commandQueue;
-	ComPtr<ID3D12RootSignature> m_rootSignature;
+	ComPtr<IDXGISwapChain3> m_swapChain;
 	ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
+	ComPtr<ID3D12Resource> m_renderTargets[FrameCount];
 	ComPtr<ID3D12CommandAllocator> m_commandAllocator;
 	ComPtr<ID3D12GraphicsCommandList> m_commandList;
-	ComPtr<ID3D12PipelineState> m_pipelineState;
 
 	UINT m_rtvDescriptorSize;
 
@@ -39,12 +35,13 @@ private:
 	ComPtr<ID3D12Fence> m_fence;
 	UINT64 m_fenceValue;
 
-	std::unordered_map<std::wstring, Scene> m_scenes;
+	std::unordered_map<std::wstring, std::unique_ptr<Scene>> m_scenes;
 
+	void LoadFactoryAndDevice();
 	void LoadPipeline();
 	void LoadAssets();
 	void PopulateCommandList();
-	void BuildScenes();
+	void BuildScenes(ID3D12Device* device);
 	void WaitForPreviousFrame();
 };
 

@@ -24,25 +24,30 @@ class Scene
 {
 public:
     Scene() = default;
-    Scene(std::wstring name);
+    Scene(UINT width, UINT height, std::wstring name);
 
     virtual void OnInit(ID3D12Device* device);
     virtual void OnUpdate();
     virtual void OnRender(ID3D12GraphicsCommandList* commandList);
     virtual void OnDestroy();
 
+    void SetState(ID3D12GraphicsCommandList* commandList);
     std::wstring GetSceneName() const;
 private:
 
     std::wstring m_name;
-    std::unordered_map<std::wstring, Object> m_Object;
+    std::unordered_map<std::wstring, std::unique_ptr<Object>> m_Object;
+
+    CD3DX12_VIEWPORT m_viewport;
+    CD3DX12_RECT m_scissorRect;
+    ComPtr<ID3D12RootSignature> m_rootSignature;
+    ComPtr<ID3D12PipelineState> m_pipelineState;
 
     // App resources.
     ComPtr<ID3D12Resource> m_vertexBuffer;
     D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
 
-    void BuildObjects();
+    void BuildObjects(ID3D12Device* device);
     void LoadAssets(ID3D12Device* device);
     void PopulateCommandList(ID3D12GraphicsCommandList* commandList);
-
 };
