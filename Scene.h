@@ -32,8 +32,15 @@ public:
     virtual void OnDestroy();
 
     void SetState(ID3D12GraphicsCommandList* commandList);
+    void SetDescriptorHeaps(ID3D12GraphicsCommandList* commandList);
     std::wstring GetSceneName() const;
 private:
+
+    struct SceneConstantBuffer
+    {
+        XMFLOAT4 offset;
+    };
+
 
     std::wstring m_name;
     std::unordered_map<std::wstring, std::unique_ptr<Object>> m_Object;
@@ -43,12 +50,22 @@ private:
     ComPtr<ID3D12RootSignature> m_rootSignature;
     ComPtr<ID3D12PipelineState> m_pipelineState;
 
+
     // App resources.
     ComPtr<ID3D12Resource> m_vertexBuffer;
     D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
+
+    ComPtr<ID3D12Resource> m_constantBuffer;
+    ComPtr<ID3D12DescriptorHeap> m_cbvHeap;
+    UINT8* m_MappedData;
+    SceneConstantBuffer m_constantBufferData;
+
 
     void BuildObjects(ID3D12Device* device);
     void BuildRootSignature(ID3D12Device* device);
     void BuildPSO(ID3D12Device* device);
     void BuildVertexBuffer(ID3D12Device* device);
+    void BuidCBVHeap(ID3D12Device* device);
+    void BuildConstantBuffer(ID3D12Device* device);
+    UINT CalcConstantBufferByteSize(UINT byteSize);
 };

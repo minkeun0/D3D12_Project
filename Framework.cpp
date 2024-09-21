@@ -18,6 +18,7 @@ void Framework::OnInit()
 
 void Framework::OnUpdate()
 {
+    m_scenes[L"BaseScene"]->OnUpdate();
 }
 
 // Render the scene.
@@ -187,9 +188,10 @@ void Framework::PopulateCommandList()
     // re-recording.
     ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), nullptr));
 
-    // Set State
+    // Set
     m_scenes[L"BaseScene"]->SetState(m_commandList.Get());
-    // Set State
+    m_scenes[L"BaseScene"]->SetDescriptorHeaps(m_commandList.Get());
+    // Set
     
     // Indicate that the back buffer will be used as a render target.
     m_commandList->ResourceBarrier(1,
