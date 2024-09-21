@@ -48,6 +48,7 @@ private:
     D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
 
     void BuildObjects(ID3D12Device* device);
-    void LoadAssets(ID3D12Device* device);
-    void PopulateCommandList(ID3D12GraphicsCommandList* commandList);
+    void BuildRootSignature(ID3D12Device* device);
+    void BuildPSO(ID3D12Device* device);
+    void BuildVertexBuffer(ID3D12Device* device);
 };

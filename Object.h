@@ -17,6 +17,7 @@ public:
 	UINT GetMeshByteSize() const;
 private:
 	std::wstring m_name;
+
 	std::vector<Vertex> m_mesh;
 	UINT m_meshByteSize;
 

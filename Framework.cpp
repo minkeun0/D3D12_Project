@@ -11,8 +11,8 @@ Framework::Framework(UINT width, UINT height, std::wstring name) :
 void Framework::OnInit()
 {
     LoadFactoryAndDevice();
-    BuildScenes(m_device.Get());
 	LoadPipeline();
+    BuildScenes(m_device.Get());
     WaitForPreviousFrame();
 }
 
@@ -173,10 +173,6 @@ void Framework::LoadPipeline()
     // to record yet. The main loop expects it to be closed, so close it now.
     ThrowIfFailed(m_commandList->Close());
 
-}
-
-void Framework::LoadAssets()
-{
 }
 
 void Framework::PopulateCommandList()
