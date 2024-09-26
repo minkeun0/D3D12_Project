@@ -34,7 +34,9 @@ void Scene::OnInit(ID3D12Device* device)
 void Scene::BuildObjects(ID3D12Device* device)
 {
     auto tmp = std::make_unique<Object>(L"BaseObject");
-    tmp->OnInit(device);
+    tmp->AddComponent<Mesh>(make_shared<Mesh>());
+    tmp->AddComponent<Position>(make_shared<Position>(0, 0, 0, 0));
+    tmp->AddComponent<Velocity>(make_shared<Velocity>(0.03, 0.03, 0, 0));
     m_Object[tmp->GetObjectName()] = std::move(tmp);
 }
 
@@ -123,8 +125,11 @@ void Scene::BuildVertexBuffer(ID3D12Device* device)
     // Create the vertex buffer.
     {
         std::vector<Vertex> tmp;
-        tmp.insert(tmp.end(), m_Object[L"BaseObject"]->GetMesh()->begin(), m_Object[L"BaseObject"]->GetMesh()->end());
-        const UINT vertexBufferSize = m_Object[L"BaseObject"]->GetMeshByteSize();
+
+        auto meshData = m_Object[L"BaseObject"]->GetComponent<Mesh>();
+        meshData->LoadMesh();
+        tmp.insert(tmp.end(), meshData->GetData().begin(), meshData->GetData().end());
+        const UINT vertexBufferSize = meshData->GetByteSize();
 
         // Note: using upload heaps to transfer static data like vert buffers is not 
         // recommended. Every time the GPU needs it, the upload heap will be marshalled 
@@ -186,7 +191,6 @@ void Scene::BuildConstantBuffer(ID3D12Device* device)
     // app closes. Keeping things mapped for the lifetime of the resource is okay.
     CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
     ThrowIfFailed(m_constantBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_MappedData)));
-    //memcpy(m_MappedData, &m_constantBufferData, sizeof(m_constantBufferData));
 }
 
 UINT Scene::CalcConstantBufferByteSize(UINT byteSize)
@@ -212,9 +216,28 @@ void Scene::SetDescriptorHeaps(ID3D12GraphicsCommandList* commandList)
 // Update frame-based values.
 void Scene::OnUpdate()
 {
-    m_Object[L"BaseObject"]->OnUpdate();
-    m_constantBufferData.offset.x = m_Object[L"BaseObject"]->GetSpeed();
-    memcpy(m_MappedData, &m_constantBufferData, sizeof(m_constantBufferData));
+    //m_Object[L"BaseObject"]->OnUpdate();
+    //m_constantBufferData.position.x = m_Object[L"BaseObject"]->GetSpeed();
+    //memcpy(m_MappedData, &m_constantBufferData, sizeof(m_constantBufferData));
+    auto& currentObject = m_Object[L"BaseObject"];
+
+    auto positionData = currentObject->GetComponent<Position>();
+    auto velocityData = currentObject->GetComponent<Velocity>();
+
+    XMVECTOR p = XMLoadFloat4(&positionData->GetPosition());
+    XMVECTOR v = XMLoadFloat4(&velocityData->GetVelocity());
+    XMVECTOR result = XMVectorAdd(p, v);
+    XMFLOAT4 resultFloat4;
+    XMStoreFloat4(&resultFloat4, result);
+    positionData->SetPosition(resultFloat4);
+
+    resultFloat4.x = 0.5*cosf(resultFloat4.x);
+    resultFloat4.y = 0.5*sinf(resultFloat4.y);
+
+    //if (resultFloat4.x >= 1.2f) {
+    //    positionData->SetPosition(XMFLOAT4(0,0,0,0));
+    //}
+    memcpy(m_MappedData, &resultFloat4, sizeof(resultFloat4));
 }
 
 // Render the scene.
@@ -223,7 +246,7 @@ void Scene::OnRender(ID3D12GraphicsCommandList* commandList)
     commandList->SetGraphicsRootDescriptorTable(0, m_cbvHeap->GetGPUDescriptorHandleForHeapStart());
     commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-    commandList->DrawInstanced(3, 1, 0, 0);
+    commandList->DrawInstanced(6, 1, 0, 0);
 }
 
 void Scene::OnDestroy()

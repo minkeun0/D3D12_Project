@@ -1,5 +1,5 @@
 #pragma once
-#include "Vertex.h"
+#include "Component.h"
 
 class Object
 {
@@ -12,18 +12,21 @@ public:
 	virtual void OnRender();
 	virtual void OnDestroy();
 
-	std::wstring GetObjectName() const;
-	std::vector<Vertex>* GetMesh();
-	UINT GetMeshByteSize() const;
+	wstring GetObjectName() const;
 	float GetSpeed() const;
+	
+	template<typename T>
+	void AddComponent(shared_ptr<T>& component) { m_components[typeid(T).name()] = component; }
+
+	template<typename T>
+	shared_ptr<T> GetComponent(){ return static_pointer_cast<T>(m_components[typeid(T).name()]); }
+
 private:
-	std::wstring m_name;
+	wstring m_name;
 	float m_speed;
 
-	std::vector<Vertex> m_mesh;
-	UINT m_meshByteSize;
+	unordered_map<string, shared_ptr<Component>> m_components;
 
 	void SetSpeed(float speed);
-	void BuildMesh();
 };
 
