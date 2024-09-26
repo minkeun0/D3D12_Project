@@ -4,8 +4,6 @@
 
 using Microsoft::WRL::ComPtr;
 
-//class Win32Application; // unique_ptr 이기 때문에 전방선언 만으로는 안되고 헤더를 포함시켜야한다.
-
 class Framework
 {
 public:
@@ -26,7 +24,6 @@ public:
 
 private:
 	unique_ptr<Win32Application> m_win32App;
-	//Win32Application* m_win32App;
 
 	// Adapter info.
 	bool m_useWarpDevice;

@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "Framework.h"
 #include "DXSampleHelper.h"
-//#include "Win32Application.h"
 
 Framework::Framework(HINSTANCE hInstance, int nCmdShow, UINT width, UINT height, std::wstring name) :
     m_frameIndex(0),
@@ -9,7 +8,6 @@ Framework::Framework(HINSTANCE hInstance, int nCmdShow, UINT width, UINT height,
     m_useWarpDevice(false)
 {
     m_win32App = make_unique<Win32Application>(width, height, name);
-    //m_win32App = new Win32Application(width, height, name);
 }
 
 int Framework::Run(HINSTANCE hInstance, int nCmdShow)
