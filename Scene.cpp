@@ -11,6 +11,8 @@
 
 #include "stdafx.h"
 #include "Scene.h"
+#include "DXSampleHelper.h"
+
 
 Scene::Scene(UINT width, UINT height, std::wstring name) :
     m_viewport(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height)),

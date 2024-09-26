@@ -10,7 +10,6 @@
 //*********************************************************
 
 #pragma once
-#include "DXSample.h"
 #include "Object.h"
 
 // Note that while ComPtr is used to manage the lifetime of resources on the CPU,

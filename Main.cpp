@@ -7,6 +7,6 @@
 _Use_decl_annotations_
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
 {
-    Framework sample(1000, 600, L"MyGame");
-    return Win32Application::Run(&sample, hInstance, nCmdShow);
+    Framework gameWithWin32(hInstance, nCmdShow, 1000, 600, L"MyGame");
+    return gameWithWin32.Run(hInstance, nCmdShow);
 }

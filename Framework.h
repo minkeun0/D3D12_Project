@@ -1,20 +1,35 @@
 #pragma once
-#include "DXSample.h"
 #include "Scene.h"
+#include "Win32Application.h"
 
 using Microsoft::WRL::ComPtr;
 
-class Framework : public DXSample
+class Win32Application;
+
+class Framework
 {
 public:
-	Framework(UINT width, UINT height, std::wstring name);
+	Framework() = default;
+	Framework(HINSTANCE hInstance, int nCmdShow, UINT width, UINT height, std::wstring name);
+
+	//시발점 시발점 시발점 시발점
+	virtual int Run(HINSTANCE hInstance, int nCmdShow);
+	//시발점 시발점 시발점 시발점
 
 	virtual void OnInit();
 	virtual void OnUpdate();
 	virtual void OnRender();
 	virtual void OnDestroy();
 
+	virtual void OnKeyDown(UINT8 /*key*/) {}
+	virtual void OnKeyUp(UINT8 /*key*/) {}
+
 private:
+	unique_ptr<Win32Application> m_win32App;
+
+	// Adapter info.
+	bool m_useWarpDevice;
+
 	static const UINT FrameCount = 2;
 
 	// Pipeline objects.
@@ -36,6 +51,12 @@ private:
 	UINT64 m_fenceValue;
 
 	std::unordered_map<std::wstring, std::unique_ptr<Scene>> m_scenes;
+
+	void GetHardwareAdapter(
+		_In_ IDXGIFactory1* pFactory,
+		_Outptr_result_maybenull_ IDXGIAdapter1** ppAdapter,
+		bool requestHighPerformanceAdapter = false);
+
 
 	void LoadFactoryAndDevice();
 	void LoadPipeline();
