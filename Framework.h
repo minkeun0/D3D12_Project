@@ -4,7 +4,7 @@
 
 using Microsoft::WRL::ComPtr;
 
-class Win32Application;
+//class Win32Application;
 
 class Framework
 {

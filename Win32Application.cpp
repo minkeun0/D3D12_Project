@@ -11,8 +11,7 @@
 
 #include "stdafx.h"
 #include "Win32Application.h"
-
-HWND Win32Application::m_hwnd = nullptr;
+#include "Framework.h"
 
 Win32Application::Win32Application(UINT width, UINT height, std::wstring name) : 
     m_title(name),
