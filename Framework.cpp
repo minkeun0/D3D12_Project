@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Framework.h"
 #include "DXSampleHelper.h"
+//#include "Win32Application.h"
 
 Framework::Framework(HINSTANCE hInstance, int nCmdShow, UINT width, UINT height, std::wstring name) :
     m_frameIndex(0),
@@ -8,15 +9,15 @@ Framework::Framework(HINSTANCE hInstance, int nCmdShow, UINT width, UINT height,
     m_useWarpDevice(false)
 {
     m_win32App = make_unique<Win32Application>(width, height, name);
+    //m_win32App = new Win32Application(width, height, name);
 }
 
 int Framework::Run(HINSTANCE hInstance, int nCmdShow)
 {
-    m_win32App->CreateWnd(this, hInstance);
-    ShowWindow(m_win32App->GetHwnd(), nCmdShow);
+    // Initialize the framework.
+    OnInit(hInstance, nCmdShow);
 
-    // Initialize the framework. OnInit is defined in each child-implementation of DXSample.
-    OnInit();
+    ShowWindow(m_win32App->GetHwnd(), nCmdShow);
 
     // Main sample loop.
     MSG msg = {};
@@ -36,8 +37,12 @@ int Framework::Run(HINSTANCE hInstance, int nCmdShow)
     return static_cast<char>(msg.wParam);
 }
 
-void Framework::OnInit()
+void Framework::OnInit(HINSTANCE hInstance, int nCmdShow)
 {
+    // 윈도우 초기화
+    InitWnd(hInstance);
+
+    // D3D12 초기화
     LoadFactoryAndDevice();
 	LoadPipeline();
     BuildScenes(m_device.Get());
@@ -135,6 +140,11 @@ void Framework::GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1** ppAd
     }
 
     *ppAdapter = adapter.Detach();
+}
+
+void Framework::InitWnd(HINSTANCE hInstance)
+{
+    m_win32App->CreateWnd(this, hInstance);
 }
 
 void Framework::LoadFactoryAndDevice()

@@ -4,7 +4,7 @@
 
 using Microsoft::WRL::ComPtr;
 
-//class Win32Application;
+//class Win32Application; // unique_ptr 이기 때문에 전방선언 만으로는 안되고 헤더를 포함시켜야한다.
 
 class Framework
 {
@@ -16,7 +16,7 @@ public:
 	virtual int Run(HINSTANCE hInstance, int nCmdShow);
 	//시발점 시발점 시발점 시발점
 
-	virtual void OnInit();
+	virtual void OnInit(HINSTANCE hInstance, int nCmdShow);
 	virtual void OnUpdate();
 	virtual void OnRender();
 	virtual void OnDestroy();
@@ -26,6 +26,7 @@ public:
 
 private:
 	unique_ptr<Win32Application> m_win32App;
+	//Win32Application* m_win32App;
 
 	// Adapter info.
 	bool m_useWarpDevice;
@@ -57,7 +58,7 @@ private:
 		_Outptr_result_maybenull_ IDXGIAdapter1** ppAdapter,
 		bool requestHighPerformanceAdapter = false);
 
-
+	void InitWnd(HINSTANCE hInstance);
 	void LoadFactoryAndDevice();
 	void LoadPipeline();
 	void PopulateCommandList();
