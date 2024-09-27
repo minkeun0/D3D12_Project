@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "Object.h"
 
 Object::Object(std::wstring name) :

@@ -1,8 +1,7 @@
 #pragma once
+#include "stdafx.h"
 #include "Scene.h"
 #include "Win32Application.h"
-
-using Microsoft::WRL::ComPtr;
 
 class Framework
 {

@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "Framework.h"
 #include "DXSampleHelper.h"
 

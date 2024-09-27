@@ -9,7 +9,6 @@
 //
 //*********************************************************
 
-#include "stdafx.h"
 #include "Win32Application.h"
 #include "Framework.h"
 

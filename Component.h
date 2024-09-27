@@ -1,5 +1,7 @@
 #pragma once
+#include "stdafx.h"
 #include "Vertex.h"
+
 class Component
 {
 public:
