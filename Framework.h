@@ -49,10 +49,7 @@ private:
 
 	std::unordered_map<std::wstring, std::unique_ptr<Scene>> m_scenes;
 
-	void GetHardwareAdapter(
-		_In_ IDXGIFactory1* pFactory,
-		_Outptr_result_maybenull_ IDXGIAdapter1** ppAdapter,
-		bool requestHighPerformanceAdapter = false);
+	void GetHardwareAdapter( _In_ IDXGIFactory1* pFactory, _Outptr_result_maybenull_ IDXGIAdapter1** ppAdapter, bool requestHighPerformanceAdapter = false);
 
 	void InitWnd(HINSTANCE hInstance);
 	void LoadFactoryAndDevice();

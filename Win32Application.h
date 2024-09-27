@@ -11,13 +11,13 @@ public:
 
     void CreateWnd(Framework* framework, HINSTANCE hInstance);
 
+    int MainLoop();
     void SetCustomWindowText(LPCWSTR text);
-
     HWND GetHwnd() { return m_hwnd; }
     const WCHAR* GetTitle() const { return m_title.c_str(); }
     UINT GetWidth() const { return m_width; }
     UINT GetHeight() const { return m_height; }
-
+    
 protected:
     static LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 

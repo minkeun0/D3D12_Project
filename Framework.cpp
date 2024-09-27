@@ -13,25 +13,18 @@ int Framework::Run(HINSTANCE hInstance, int nCmdShow)
 {
     // Initialize the framework.
     OnInit(hInstance, nCmdShow);
-
     ShowWindow(m_win32App->GetHwnd(), nCmdShow);
 
-    // Main sample loop.
-    MSG msg = {};
-    while (msg.message != WM_QUIT)
-    {
-        // Process any messages in the queue.
-        if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-        {
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-        }
-    }
+    ////윈도우 문구 추가
+    //wstring wstr{ L"안녕" };
+    //m_win32App->SetCustomWindowText(wstr.c_str());
+
+    int winMsg{ m_win32App->MainLoop() };
 
     OnDestroy();
 
     // Return this part of the WM_QUIT message to Windows.
-    return static_cast<char>(msg.wParam);
+    return winMsg;
 }
 
 void Framework::OnInit(HINSTANCE hInstance, int nCmdShow)

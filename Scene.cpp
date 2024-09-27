@@ -1,5 +1,6 @@
 #include "Scene.h"
 #include "DXSampleHelper.h"
+#include "Vertex.h"
 
 
 Scene::Scene(UINT width, UINT height, std::wstring name) :
