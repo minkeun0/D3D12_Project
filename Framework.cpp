@@ -13,12 +13,13 @@ int Framework::Run(HINSTANCE hInstance, int nCmdShow)
 {
     // Initialize the framework.
     OnInit(hInstance, nCmdShow);
-    ShowWindow(m_win32App->GetHwnd(), nCmdShow);
+
 
     ////윈도우 문구 추가
     //wstring wstr{ L"안녕" };
     //m_win32App->SetCustomWindowText(wstr.c_str());
 
+    ShowWindow(m_win32App->GetHwnd(), nCmdShow);
     int winMsg{ m_win32App->MainLoop() };
 
     OnDestroy();
@@ -309,7 +310,7 @@ void Framework::PopulateCommandList()
 
 void Framework::BuildScenes(ID3D12Device* device)
 {
-    auto tmp = std::make_unique<Scene>(m_win32App->GetWidth(), m_win32App->GetHeight(), L"BaseScene");
+    auto tmp = make_unique<Scene>(m_win32App->GetWidth(), m_win32App->GetHeight(), L"BaseScene");
     tmp->OnInit(device);
     m_scenes[tmp->GetSceneName()] = std::move(tmp);
 }

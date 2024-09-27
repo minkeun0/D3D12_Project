@@ -25,7 +25,7 @@ public:
 	Position() : m_position(0, 0, 0, 0) {};
 	Position(float x, float y, float z, float w) : m_position(x, y, z, w) {};
 	XMFLOAT4 GetPosition() { return m_position; };
-	void SetPosition(XMFLOAT4 position) { m_position = position; };
+	void SetPosition(XMVECTOR position) { XMStoreFloat4(&m_position, position); };
 private:
 	XMFLOAT4 m_position;
 };

@@ -45,9 +45,9 @@ void Scene::BuildRootSignature(ID3D12Device* device)
     }
 
     CD3DX12_DESCRIPTOR_RANGE1 ranges[1];
-    CD3DX12_ROOT_PARAMETER1 rootParameters[1];
-
     ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+
+    CD3DX12_ROOT_PARAMETER1 rootParameters[1];
     rootParameters[0].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_VERTEX);
 
     // Allow input layout and deny uneccessary access to certain pipeline stages.
@@ -217,18 +217,8 @@ void Scene::OnUpdate()
 
     XMVECTOR p = XMLoadFloat4(&positionData->GetPosition());
     XMVECTOR v = XMLoadFloat4(&velocityData->GetVelocity());
-    XMVECTOR result = XMVectorAdd(p, v);
-    XMFLOAT4 resultFloat4;
-    XMStoreFloat4(&resultFloat4, result);
-    positionData->SetPosition(resultFloat4);
-
-    resultFloat4.x = 0.5*cosf(resultFloat4.x);
-    resultFloat4.y = 0.5*sinf(resultFloat4.y);
-
-    //if (resultFloat4.x >= 1.2f) {
-    //    positionData->SetPosition(XMFLOAT4(0,0,0,0));
-    //}
-    memcpy(m_MappedData, &resultFloat4, sizeof(resultFloat4));
+    positionData->SetPosition(XMVectorAdd(p, v));
+    memcpy(m_MappedData, &positionData->GetPosition(), sizeof(positionData->GetPosition()));
 }
 
 // Render the scene.
