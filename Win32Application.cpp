@@ -57,23 +57,6 @@ void Win32Application::SetCustomWindowText(LPCWSTR text)
     SetWindowText(m_hwnd, windowText.c_str());
 }
 
-int Win32Application::MainLoop()
-{
-    // Main loop.
-    MSG msg = {};
-    while (msg.message != WM_QUIT)
-    {
-        // Process any messages in the queue.
-        if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-        {
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-        }
-    }
-
-    return static_cast<char>(msg.wParam);
-}
-
 // Main message handler for the sample.
 LRESULT CALLBACK Win32Application::WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -103,13 +86,13 @@ LRESULT CALLBACK Win32Application::WindowProc(HWND hWnd, UINT message, WPARAM wP
         }
         return 0;
 
-    case WM_PAINT:
-        if (pSample)
-        {
-            pSample->OnUpdate();
-            pSample->OnRender();
-        }
-        return 0;
+    //case WM_PAINT:
+    //    if (pSample)
+    //    {
+    //        pSample->OnUpdate();
+    //        pSample->OnRender();
+    //    }
+    //    return 0;
 
     case WM_DESTROY:
         PostQuitMessage(0);

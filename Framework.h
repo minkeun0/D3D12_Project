@@ -55,7 +55,7 @@ private:
 	void LoadFactoryAndDevice();
 	void LoadPipeline();
 	void PopulateCommandList();
-	void BuildScenes(ID3D12Device* device);
+	void BuildScenes(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
 	void WaitForPreviousFrame();
 };
 

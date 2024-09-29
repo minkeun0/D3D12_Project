@@ -1,6 +1,7 @@
 #pragma once
 #include "stdafx.h"
 #include "Object.h"
+#include "Vertex.h"
 
 // Note that while ComPtr is used to manage the lifetime of resources on the CPU,
 // it has no understanding of the lifetime of resources on the GPU. Apps must account
@@ -15,7 +16,7 @@ public:
     Scene() = default;
     Scene(UINT width, UINT height, std::wstring name);
 
-    virtual void OnInit(ID3D12Device* device);
+    virtual void OnInit(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
     virtual void OnUpdate();
     virtual void OnRender(ID3D12GraphicsCommandList* commandList);
     virtual void OnDestroy();
@@ -30,6 +31,10 @@ private:
         XMFLOAT4 position;
     };
 
+    static const UINT TextureWidth = 256;
+    static const UINT TextureHeight = 256;
+    static const UINT TexturePixelSize = 4;    // The number of bytes used to represent a pixel in the texture.
+
 
     std::wstring m_name;
     std::unordered_map<std::wstring, std::unique_ptr<Object>> m_Object;
@@ -41,20 +46,36 @@ private:
 
 
     // App resources.
-    ComPtr<ID3D12Resource> m_vertexBuffer;
+    ComPtr<ID3D12DescriptorHeap> m_descriptorHeap;
+
+    ComPtr<ID3D12Resource> m_vertexBuffer_default;
+    ComPtr<ID3D12Resource> m_vertexBuffer_upload;
     D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
+    vector<Vertex> m_vertexData;
+    D3D12_SUBRESOURCE_DATA m_vertexSubData; // 아마도 컴포넌트로 옮길듯..
+
+    ComPtr<ID3D12Resource> m_textureBuffer_default;
+    ComPtr<ID3D12Resource> m_textureBuffer_upload;
+    vector<UINT8> m_textureData;
+    D3D12_SUBRESOURCE_DATA m_textureSubData;
 
     ComPtr<ID3D12Resource> m_constantBuffer;
-    ComPtr<ID3D12DescriptorHeap> m_cbvHeap;
+
     UINT8* m_MappedData;
     SceneConstantBuffer m_constantBufferData;
+
+    UINT m_cbvsrvuavDescriptorSize;
+
 
 
     void BuildObjects(ID3D12Device* device);
     void BuildRootSignature(ID3D12Device* device);
     void BuildPSO(ID3D12Device* device);
-    void BuildVertexBuffer(ID3D12Device* device);
-    void BuidCBVHeap(ID3D12Device* device);
+    void BuildVertexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
     void BuildConstantBuffer(ID3D12Device* device);
+    void BuildTextureBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
+    void BuildDescriptorHeap(ID3D12Device* device);
     UINT CalcConstantBufferByteSize(UINT byteSize);
+    std::vector<UINT8> GenerateTextureData();
+
 };

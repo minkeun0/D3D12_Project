@@ -20,12 +20,28 @@ int Framework::Run(HINSTANCE hInstance, int nCmdShow)
     //m_win32App->SetCustomWindowText(wstr.c_str());
 
     ShowWindow(m_win32App->GetHwnd(), nCmdShow);
-    int winMsg{ m_win32App->MainLoop() };
+
+    // Main loop.
+    MSG msg = {};
+    while (msg.message != WM_QUIT)
+    {
+        // Process any messages in the queue.
+        if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+        {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+        else
+        {
+            OnUpdate();
+            OnRender();
+        }
+    }
 
     OnDestroy();
 
     // Return this part of the WM_QUIT message to Windows.
-    return winMsg;
+    return static_cast<char>(msg.wParam);
 }
 
 void Framework::OnInit(HINSTANCE hInstance, int nCmdShow)
@@ -36,7 +52,12 @@ void Framework::OnInit(HINSTANCE hInstance, int nCmdShow)
     // D3D12 ÃÊ±âÈ­
     LoadFactoryAndDevice();
 	LoadPipeline();
-    BuildScenes(m_device.Get());
+    BuildScenes(m_device.Get(), m_commandList.Get());
+
+    // Close the command list and execute it to begin the initial GPU setup.
+    ThrowIfFailed(m_commandList->Close());
+    ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
+    m_commandQueue.Get()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
     WaitForPreviousFrame();
 }
 
@@ -262,11 +283,6 @@ void Framework::LoadPipeline()
 
     // Create the command list.
     ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocator.Get(), nullptr, IID_PPV_ARGS(&m_commandList)));
-
-    // Command lists are created in the recording state, but there is nothing
-    // to record yet. The main loop expects it to be closed, so close it now.
-    ThrowIfFailed(m_commandList->Close());
-
 }
 
 void Framework::PopulateCommandList()
@@ -308,10 +324,10 @@ void Framework::PopulateCommandList()
     ThrowIfFailed(m_commandList->Close());
 }
 
-void Framework::BuildScenes(ID3D12Device* device)
+void Framework::BuildScenes(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
     auto tmp = make_unique<Scene>(m_win32App->GetWidth(), m_win32App->GetHeight(), L"BaseScene");
-    tmp->OnInit(device);
+    tmp->OnInit(device, commandList);
     m_scenes[tmp->GetSceneName()] = std::move(tmp);
 }
 

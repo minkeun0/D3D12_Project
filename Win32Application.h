@@ -11,7 +11,6 @@ public:
 
     void CreateWnd(Framework* framework, HINSTANCE hInstance);
 
-    int MainLoop();
     void SetCustomWindowText(LPCWSTR text);
     HWND GetHwnd() { return m_hwnd; }
     const WCHAR* GetTitle() const { return m_title.c_str(); }
