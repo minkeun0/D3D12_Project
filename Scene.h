@@ -31,11 +31,6 @@ private:
         XMFLOAT4 position;
     };
 
-    static const UINT TextureWidth = 256;
-    static const UINT TextureHeight = 256;
-    static const UINT TexturePixelSize = 4;    // The number of bytes used to represent a pixel in the texture.
-
-
     std::wstring m_name;
     std::unordered_map<std::wstring, std::unique_ptr<Object>> m_Object;
 
@@ -56,15 +51,13 @@ private:
 
     ComPtr<ID3D12Resource> m_textureBuffer_default;
     ComPtr<ID3D12Resource> m_textureBuffer_upload;
-    vector<UINT8> m_textureData;
-    D3D12_SUBRESOURCE_DATA m_textureSubData;
 
     vector<D3D12_SUBRESOURCE_DATA> m_subresources;
+    unique_ptr<uint8_t[]> m_ddsData;
 
     ComPtr<ID3D12Resource> m_constantBuffer;
 
     UINT8* m_MappedData;
-    SceneConstantBuffer m_constantBufferData;
 
     UINT m_cbvsrvuavDescriptorSize;
 
@@ -79,5 +72,4 @@ private:
     void BuildTextureBufferView(ID3D12Device* device);
     void BuildDescriptorHeap(ID3D12Device* device);
     UINT CalcConstantBufferByteSize(UINT byteSize);
-    std::vector<UINT8> GenerateTextureData();
 };

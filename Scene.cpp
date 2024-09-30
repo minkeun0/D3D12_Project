@@ -1,13 +1,11 @@
 #include "Scene.h"
 #include "DXSampleHelper.h"
-#include "./include/DirectXTex.h"
 
 Scene::Scene(UINT width, UINT height, std::wstring name) :
     m_viewport(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height)),
     m_scissorRect(0, 0, static_cast<LONG>(width), static_cast<LONG>(height)),
     m_name(name),
-    m_MappedData(nullptr),
-    m_constantBufferData{}
+    m_MappedData(nullptr)
 {
 }
 
@@ -216,12 +214,14 @@ void Scene::BuildTextureBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* 
 
     // Create the texture.
     {
-        ScratchImage image;
-        ThrowIfFailed(LoadFromDDSFile(L"./Textures/tree01S.dds", DDS_FLAGS_NONE, nullptr, image));
-        TexMetadata metadata = image.GetMetadata();
+        ThrowIfFailed(LoadDDSTextureFromFile(device, L"./Textures/tree02S.dds", m_textureBuffer_default.GetAddressOf(),m_ddsData, m_subresources));
 
-        ThrowIfFailed(CreateTexture(device, metadata, &m_textureBuffer_default));
-        ThrowIfFailed(PrepareUpload(device, image.GetImages(), image.GetImageCount(), metadata, m_subresources));
+        //ScratchImage image;
+        //ThrowIfFailed(LoadFromDDSFile(L"./Textures/tree01S.dds", DDS_FLAGS_NONE, nullptr, image));
+        //TexMetadata metadata = image.GetMetadata();
+
+        //ThrowIfFailed(CreateTexture(device, metadata, &m_textureBuffer_default));
+        //ThrowIfFailed(PrepareUpload(device, image.GetImages(), image.GetImageCount(), metadata, m_subresources));
 
         const UINT64 uploadBufferSize = GetRequiredIntermediateSize(m_textureBuffer_default.Get(), 0, m_subresources.size());
 
@@ -246,7 +246,7 @@ void Scene::BuildTextureBufferView(ID3D12Device* device)
     srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
     srvDesc.Format = m_textureBuffer_default->GetDesc().Format;
     srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-    srvDesc.Texture2D.MipLevels = 1;
+    srvDesc.Texture2D.MipLevels = m_textureBuffer_default->GetDesc().MipLevels;
 
     CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(m_descriptorHeap->GetCPUDescriptorHandleForHeapStart());
     hDescriptor.Offset(1, m_cbvsrvuavDescriptorSize);
@@ -257,42 +257,6 @@ void Scene::BuildTextureBufferView(ID3D12Device* device)
 UINT Scene::CalcConstantBufferByteSize(UINT byteSize)
 {
     return (byteSize + 255) & ~255;
-}
-
-std::vector<UINT8> Scene::GenerateTextureData()
-{
-    const UINT rowPitch = TextureWidth * TexturePixelSize;
-    const UINT cellPitch = rowPitch >> 3;        // The width of a cell in the checkboard texture.
-    const UINT cellHeight = TextureWidth >> 3;    // The height of a cell in the checkerboard texture.
-    const UINT textureSize = rowPitch * TextureHeight;
-
-    std::vector<UINT8> data(textureSize);
-    UINT8* pData = &data[0];
-
-    for (UINT n = 0; n < textureSize; n += TexturePixelSize)
-    {
-        UINT x = n % rowPitch;
-        UINT y = n / rowPitch;
-        UINT i = x / cellPitch;
-        UINT j = y / cellHeight;
-
-        if (i % 2 == j % 2)
-        {
-            pData[n] = 0x00;        // R
-            pData[n + 1] = 0x00;    // G
-            pData[n + 2] = 0x00;    // B
-            pData[n + 3] = 0xff;    // A
-        }
-        else
-        {
-            pData[n] = 0xff;        // R
-            pData[n + 1] = 0xff;    // G
-            pData[n + 2] = 0xff;    // B
-            pData[n + 3] = 0xff;    // A
-        }
-    }
-
-    return data;
 }
 
 void Scene::SetState(ID3D12GraphicsCommandList* commandList)

@@ -21,6 +21,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "./include/DirectXTex.h"
+#include "DDSTextureLoader12.h"
 using namespace std;
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
