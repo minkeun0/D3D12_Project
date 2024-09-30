@@ -2,7 +2,7 @@
 
 void Mesh::LoadMesh()
 {
-	float size = 0.1f;
+	float size = 0.5f;
 	m_data.push_back(Vertex{ { size, -size, 0.0f }, { 1.0f, 1.0f} });
 	m_data.push_back(Vertex{ { -size, -size, 0.0f }, { 0.0f, 1.0f} });
 	m_data.push_back(Vertex{ { -size, size, 0.0f }, { 0.0f, 0.0f} });

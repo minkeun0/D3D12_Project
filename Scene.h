@@ -74,8 +74,8 @@ private:
     void BuildVertexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
     void BuildConstantBuffer(ID3D12Device* device);
     void BuildTextureBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
+    void BuildTextureView(ID3D12Device* device);
     void BuildDescriptorHeap(ID3D12Device* device);
     UINT CalcConstantBufferByteSize(UINT byteSize);
     std::vector<UINT8> GenerateTextureData();
-
 };

@@ -1,7 +1,6 @@
 #include "Scene.h"
 #include "DXSampleHelper.h"
-#include "Vertex.h"
-
+#include "DirectXTex.h"
 
 Scene::Scene(UINT width, UINT height, std::wstring name) :
     m_viewport(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height)),
@@ -21,6 +20,7 @@ void Scene::OnInit(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
     BuildConstantBuffer(device);
     BuildVertexBuffer(device, commandList);
     BuildTextureBuffer(device, commandList);
+    BuildTextureView(device);
 }
 
 void Scene::BuildObjects(ID3D12Device* device)
@@ -28,7 +28,7 @@ void Scene::BuildObjects(ID3D12Device* device)
     auto tmp = std::make_unique<Object>(L"BaseObject");
     tmp->AddComponent<Mesh>(make_shared<Mesh>());
     tmp->AddComponent<Position>(make_shared<Position>(0, 0, 0, 0));
-    tmp->AddComponent<Velocity>(make_shared<Velocity>(0.03, 0.03, 0, 0));
+    tmp->AddComponent<Velocity>(make_shared<Velocity>(0.1f, 0.1f, 0, 0));
     m_Object[tmp->GetObjectName()] = std::move(tmp);
 }
 
@@ -225,17 +225,33 @@ void Scene::BuildTextureBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* 
 
     // Create the texture.
     {
-        // Describe and create a Texture2D.
+
+        TexMetadata metadata;
+        ScratchImage image;
+        ThrowIfFailed(LoadFromDDSFile(L"./Textures/checkboard.dds", DDS_FLAGS_NONE, &metadata, image));
+
+        ////Describe and create a Texture2D.
+        //D3D12_RESOURCE_DESC textureDesc = {};
+        //textureDesc.MipLevels = 1;
+        //textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        //textureDesc.Width = TextureWidth;
+        //textureDesc.Height = TextureHeight;
+        //textureDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+        //textureDesc.DepthOrArraySize = 1;
+        //textureDesc.SampleDesc.Count = 1;
+        //textureDesc.SampleDesc.Quality = 0;
+        //textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+
         D3D12_RESOURCE_DESC textureDesc = {};
-        textureDesc.MipLevels = 1;
-        textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-        textureDesc.Width = TextureWidth;
-        textureDesc.Height = TextureHeight;
+        textureDesc.MipLevels = static_cast<UINT16>(metadata.mipLevels);
+        textureDesc.Format = metadata.format;
+        textureDesc.Width = static_cast<UINT>(metadata.width);
+        textureDesc.Height = static_cast<UINT>(metadata.height);
         textureDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
-        textureDesc.DepthOrArraySize = 1;
+        textureDesc.DepthOrArraySize = static_cast<UINT16>(metadata.arraySize);
         textureDesc.SampleDesc.Count = 1;
         textureDesc.SampleDesc.Quality = 0;
-        textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+        textureDesc.Dimension = static_cast<D3D12_RESOURCE_DIMENSION>(metadata.dimension);
 
         ThrowIfFailed(device->CreateCommittedResource(
             &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
@@ -244,6 +260,9 @@ void Scene::BuildTextureBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* 
             D3D12_RESOURCE_STATE_COPY_DEST,
             nullptr,
             IID_PPV_ARGS(m_textureBuffer_default.GetAddressOf())));
+
+        //const UINT64 subresourceCount = image.GetImageCount();
+        //const UINT64 uploadBufferSize = GetRequiredIntermediateSize(m_textureBuffer_default.Get(), 0, static_cast<UINT>(subresourceCount));
         const UINT64 uploadBufferSize = GetRequiredIntermediateSize(m_textureBuffer_default.Get(), 0, 1);
 
         // Create the GPU upload buffer.
@@ -254,30 +273,36 @@ void Scene::BuildTextureBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* 
             D3D12_RESOURCE_STATE_GENERIC_READ,
             nullptr,
             IID_PPV_ARGS(m_textureBuffer_upload.GetAddressOf())));
+        
+        //m_textureData = GenerateTextureData();
+        //m_textureSubData.pData = m_textureData.data();
+        //m_textureSubData.RowPitch = TextureWidth * TexturePixelSize;
+        //m_textureSubData.SlicePitch = m_textureSubData.RowPitch * TextureHeight;
 
-        // Copy data to the intermediate upload heap and then schedule a copy 
-        // from the upload heap to the Texture2D.
-        m_textureData = GenerateTextureData();
+        const Image* pImage = image.GetImages();
+        m_textureSubData.pData = pImage->pixels;
+        m_textureSubData.RowPitch = pImage->rowPitch;
+        m_textureSubData.SlicePitch = pImage->slicePitch;
 
-        m_textureSubData.pData = m_textureData.data();
-        m_textureSubData.RowPitch = TextureWidth * TexturePixelSize;
-        m_textureSubData.SlicePitch = m_textureSubData.RowPitch * TextureHeight;
-
-        UpdateSubresources<1>(commandList, m_textureBuffer_default.Get(), m_textureBuffer_upload.Get(), 0, 0, 1, &m_textureSubData);
+        //UpdateSubresources(commandList, m_textureBuffer_default.Get(), m_textureBuffer_upload.Get(), 0, 0, static_cast<UINT>(subresourceCount), &m_textureSubData);
+        UpdateSubresources(commandList, m_textureBuffer_default.Get(), m_textureBuffer_upload.Get(), 0, 0, 1, &m_textureSubData);
         commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_textureBuffer_default.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
-
-        // Describe and create a SRV for the texture.
-        D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-        srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-        srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-        srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-        srvDesc.Texture2D.MipLevels = 1;
-
-        CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(m_descriptorHeap->GetCPUDescriptorHandleForHeapStart());
-        hDescriptor.Offset(1, m_cbvsrvuavDescriptorSize);
-
-        device->CreateShaderResourceView(m_textureBuffer_default.Get(), &srvDesc, hDescriptor);
     }
+}
+
+void Scene::BuildTextureView(ID3D12Device* device)
+{
+    // Describe and create a SRV for the texture.
+    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    srvDesc.Format = m_textureBuffer_default->GetDesc().Format;
+    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+    srvDesc.Texture2D.MipLevels = 1;
+
+    CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(m_descriptorHeap->GetCPUDescriptorHandleForHeapStart());
+    hDescriptor.Offset(1, m_cbvsrvuavDescriptorSize);
+
+    device->CreateShaderResourceView(m_textureBuffer_default.Get(), &srvDesc, hDescriptor);
 }
 
 UINT Scene::CalcConstantBufferByteSize(UINT byteSize)
