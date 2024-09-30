@@ -59,6 +59,8 @@ private:
     vector<UINT8> m_textureData;
     D3D12_SUBRESOURCE_DATA m_textureSubData;
 
+    vector<D3D12_SUBRESOURCE_DATA> m_subresources;
+
     ComPtr<ID3D12Resource> m_constantBuffer;
 
     UINT8* m_MappedData;
@@ -74,7 +76,7 @@ private:
     void BuildVertexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
     void BuildConstantBuffer(ID3D12Device* device);
     void BuildTextureBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
-    void BuildTextureView(ID3D12Device* device);
+    void BuildTextureBufferView(ID3D12Device* device);
     void BuildDescriptorHeap(ID3D12Device* device);
     UINT CalcConstantBufferByteSize(UINT byteSize);
     std::vector<UINT8> GenerateTextureData();

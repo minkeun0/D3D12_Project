@@ -20,7 +20,7 @@ void Scene::OnInit(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
     BuildConstantBuffer(device);
     BuildVertexBuffer(device, commandList);
     BuildTextureBuffer(device, commandList);
-    BuildTextureView(device);
+    BuildTextureBufferView(device);
 }
 
 void Scene::BuildObjects(ID3D12Device* device)
@@ -216,33 +216,14 @@ void Scene::BuildTextureBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* 
 
     // Create the texture.
     {
-
-        TexMetadata metadata;
         ScratchImage image;
-        ThrowIfFailed(LoadFromDDSFile(L"./Textures/checkboard.dds", DDS_FLAGS_NONE, &metadata, image));
+        ThrowIfFailed(LoadFromDDSFile(L"./Textures/checkboard.dds", DDS_FLAGS_NONE, nullptr, image));
+        TexMetadata metadata = image.GetMetadata();
 
-        D3D12_RESOURCE_DESC textureDesc = {};
-        textureDesc.MipLevels = static_cast<UINT16>(metadata.mipLevels);
-        textureDesc.Format = metadata.format;
-        textureDesc.Width = static_cast<UINT>(metadata.width);
-        textureDesc.Height = static_cast<UINT>(metadata.height);
-        textureDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
-        textureDesc.DepthOrArraySize = static_cast<UINT16>(metadata.arraySize);
-        textureDesc.SampleDesc.Count = 1;
-        textureDesc.SampleDesc.Quality = 0;
-        textureDesc.Dimension = static_cast<D3D12_RESOURCE_DIMENSION>(metadata.dimension);
+        ThrowIfFailed(CreateTexture(device, metadata, &m_textureBuffer_default));
+        ThrowIfFailed(PrepareUpload(device, image.GetImages(), image.GetImageCount(), metadata, m_subresources));
 
-        ThrowIfFailed(device->CreateCommittedResource(
-            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
-            D3D12_HEAP_FLAG_NONE,
-            &textureDesc,
-            D3D12_RESOURCE_STATE_COPY_DEST,
-            nullptr,
-            IID_PPV_ARGS(m_textureBuffer_default.GetAddressOf())));
-
-        //const UINT64 subresourceCount = image.GetImageCount();
-        //const UINT64 uploadBufferSize = GetRequiredIntermediateSize(m_textureBuffer_default.Get(), 0, static_cast<UINT>(subresourceCount));
-        const UINT64 uploadBufferSize = GetRequiredIntermediateSize(m_textureBuffer_default.Get(), 0, 1);
+        const UINT64 uploadBufferSize = GetRequiredIntermediateSize(m_textureBuffer_default.Get(), 0, m_subresources.size());
 
         // Create the GPU upload buffer.
         ThrowIfFailed(device->CreateCommittedResource(
@@ -253,18 +234,12 @@ void Scene::BuildTextureBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* 
             nullptr,
             IID_PPV_ARGS(m_textureBuffer_upload.GetAddressOf())));
         
-        const Image* pImage = image.GetImages();
-        m_textureSubData.pData = pImage->pixels;
-        m_textureSubData.RowPitch = pImage->rowPitch;
-        m_textureSubData.SlicePitch = pImage->slicePitch;
-
-        //UpdateSubresources(commandList, m_textureBuffer_default.Get(), m_textureBuffer_upload.Get(), 0, 0, static_cast<UINT>(subresourceCount), &m_textureSubData);
-        UpdateSubresources(commandList, m_textureBuffer_default.Get(), m_textureBuffer_upload.Get(), 0, 0, 1, &m_textureSubData);
+        UpdateSubresources(commandList, m_textureBuffer_default.Get(), m_textureBuffer_upload.Get(), 0, 0, static_cast<UINT>(m_subresources.size()), m_subresources.data());
         commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_textureBuffer_default.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
     }
 }
 
-void Scene::BuildTextureView(ID3D12Device* device)
+void Scene::BuildTextureBufferView(ID3D12Device* device)
 {
     // Describe and create a SRV for the texture.
     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
