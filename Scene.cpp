@@ -1,6 +1,6 @@
 #include "Scene.h"
 #include "DXSampleHelper.h"
-#include "DirectXTex.h"
+#include "./include/DirectXTex.h"
 
 Scene::Scene(UINT width, UINT height, std::wstring name) :
     m_viewport(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height)),
@@ -217,7 +217,7 @@ void Scene::BuildTextureBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* 
     // Create the texture.
     {
         ScratchImage image;
-        ThrowIfFailed(LoadFromDDSFile(L"./Textures/checkboard.dds", DDS_FLAGS_NONE, nullptr, image));
+        ThrowIfFailed(LoadFromDDSFile(L"./Textures/tree01S.dds", DDS_FLAGS_NONE, nullptr, image));
         TexMetadata metadata = image.GetMetadata();
 
         ThrowIfFailed(CreateTexture(device, metadata, &m_textureBuffer_default));

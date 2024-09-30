@@ -62,10 +62,10 @@
     <ClInclude Include="Component.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="DirectXTex.h">
+    <ClInclude Include="d3dx12.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="d3dx12.h">
+    <ClInclude Include="include\DirectXTex.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

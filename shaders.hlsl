@@ -22,8 +22,8 @@ PSInput VSMain(VSInput input)
 {
     PSInput output;
     
-    output.position.x = input.position.x + (0.5 * cos(velocity.x));
-    output.position.y = input.position.y + (0.5 * sin(velocity.y));
+    output.position.x = input.position.x; //+ (0.5 * cos(velocity.x));
+    output.position.y = input.position.y; //+ (0.5 * sin(velocity.y));
     output.position.zw = input.position.zw;
     output.uv = input.uv;
 
