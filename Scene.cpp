@@ -100,8 +100,6 @@ void Scene::BuildPSO(ID3D12Device* device)
 
     ThrowIfFailed(D3DCompileFromFile(L"shaders.hlsl", nullptr, nullptr, "VSMain", "vs_5_0", compileFlags, 0, &vertexShader, nullptr));
     ThrowIfFailed(D3DCompileFromFile(L"shaders.hlsl", nullptr, nullptr, "PSMain", "ps_5_0", compileFlags, 0, &pixelShader, nullptr));
-    //ThrowIfFailed(D3DCompileFromFile(GetAssetFullPath(L"shaders.hlsl").c_str(), nullptr, nullptr, "VSMain", "vs_5_0", compileFlags, 0, &vertexShader, nullptr));
-    //ThrowIfFailed(D3DCompileFromFile(GetAssetFullPath(L"shaders.hlsl").c_str(), nullptr, nullptr, "PSMain", "ps_5_0", compileFlags, 0, &pixelShader, nullptr));
 
     // Define the vertex input layout.
     D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
@@ -166,13 +164,6 @@ void Scene::BuildVertexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* c
     commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_vertexBuffer_default.Get(),
         D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ));
 
-    //// Copy the mesh data to the vertex buffer.
-    //UINT8* pVertexDataBegin;
-    //CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
-    //ThrowIfFailed(m_vertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
-    //memcpy(pVertexDataBegin, tmp.data(), vertexBufferSize);
-    //m_vertexBuffer->Unmap(0, nullptr);
-
     // Initialize the vertex buffer view.
     m_vertexBufferView.BufferLocation = m_vertexBuffer_default->GetGPUVirtualAddress();
     m_vertexBufferView.StrideInBytes = sizeof(Vertex);
@@ -230,18 +221,6 @@ void Scene::BuildTextureBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* 
         ScratchImage image;
         ThrowIfFailed(LoadFromDDSFile(L"./Textures/checkboard.dds", DDS_FLAGS_NONE, &metadata, image));
 
-        ////Describe and create a Texture2D.
-        //D3D12_RESOURCE_DESC textureDesc = {};
-        //textureDesc.MipLevels = 1;
-        //textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-        //textureDesc.Width = TextureWidth;
-        //textureDesc.Height = TextureHeight;
-        //textureDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
-        //textureDesc.DepthOrArraySize = 1;
-        //textureDesc.SampleDesc.Count = 1;
-        //textureDesc.SampleDesc.Quality = 0;
-        //textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-
         D3D12_RESOURCE_DESC textureDesc = {};
         textureDesc.MipLevels = static_cast<UINT16>(metadata.mipLevels);
         textureDesc.Format = metadata.format;
@@ -274,11 +253,6 @@ void Scene::BuildTextureBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* 
             nullptr,
             IID_PPV_ARGS(m_textureBuffer_upload.GetAddressOf())));
         
-        //m_textureData = GenerateTextureData();
-        //m_textureSubData.pData = m_textureData.data();
-        //m_textureSubData.RowPitch = TextureWidth * TexturePixelSize;
-        //m_textureSubData.SlicePitch = m_textureSubData.RowPitch * TextureHeight;
-
         const Image* pImage = image.GetImages();
         m_textureSubData.pData = pImage->pixels;
         m_textureSubData.RowPitch = pImage->rowPitch;
@@ -364,9 +338,6 @@ void Scene::SetDescriptorHeaps(ID3D12GraphicsCommandList* commandList)
 // Update frame-based values.
 void Scene::OnUpdate()
 {
-    //m_Object[L"BaseObject"]->OnUpdate();
-    //m_constantBufferData.position.x = m_Object[L"BaseObject"]->GetSpeed();
-    //memcpy(m_MappedData, &m_constantBufferData, sizeof(m_constantBufferData));
     auto& currentObject = m_Object[L"BaseObject"];
     auto positionData = currentObject->GetComponent<Position>();
     auto velocityData = currentObject->GetComponent<Velocity>();
