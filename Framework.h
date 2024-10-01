@@ -2,6 +2,7 @@
 #include "stdafx.h"
 #include "Scene.h"
 #include "Win32Application.h"
+#include "GameTimer.h"
 
 class Framework
 {
@@ -14,8 +15,8 @@ public:
 	//시발점 시발점 시발점 시발점
 
 	virtual void OnInit(HINSTANCE hInstance, int nCmdShow);
-	virtual void OnUpdate();
-	virtual void OnRender();
+	virtual void OnUpdate(GameTimer& gTimer);
+	virtual void OnRender(GameTimer& gTimer);
 	virtual void OnDestroy();
 
 	virtual void OnKeyDown(UINT8 /*key*/) {}
@@ -23,6 +24,8 @@ public:
 
 private:
 	unique_ptr<Win32Application> m_win32App;
+
+	GameTimer m_Timer;
 
 	// Adapter info.
 	bool m_useWarpDevice;
@@ -35,11 +38,14 @@ private:
 	ComPtr<ID3D12CommandQueue> m_commandQueue;
 	ComPtr<IDXGISwapChain3> m_swapChain;
 	ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
+	ComPtr<ID3D12DescriptorHeap> m_dsvHeap;
 	ComPtr<ID3D12Resource> m_renderTargets[FrameCount];
+	ComPtr<ID3D12Resource> m_depthStencilBuffer;
 	ComPtr<ID3D12CommandAllocator> m_commandAllocator;
 	ComPtr<ID3D12GraphicsCommandList> m_commandList;
 
 	UINT m_rtvDescriptorSize;
+	UINT m_dsvDescriptorSize;
 
 	// Synchronization objects.
 	UINT m_frameIndex;

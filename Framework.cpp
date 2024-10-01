@@ -14,15 +14,13 @@ int Framework::Run(HINSTANCE hInstance, int nCmdShow)
     // Initialize the framework.
     OnInit(hInstance, nCmdShow);
 
-
-    ////윈도우 문구 추가
-    //wstring wstr{ L"안녕" };
-    //m_win32App->SetCustomWindowText(wstr.c_str());
-
     ShowWindow(m_win32App->GetHwnd(), nCmdShow);
+
+    m_Timer.Reset();
 
     // Main loop.
     MSG msg = {};
+    float fps = 0;
     while (msg.message != WM_QUIT)
     {
         // Process any messages in the queue.
@@ -33,8 +31,11 @@ int Framework::Run(HINSTANCE hInstance, int nCmdShow)
         }
         else
         {
-            OnUpdate();
-            OnRender();
+            m_Timer.Tick();
+            m_Timer.CalculateFrame(&fps);
+            m_win32App->SetCustomWindowText(to_wstring(fps).c_str());
+            OnUpdate(m_Timer);
+            OnRender(m_Timer);
         }
     }
 
@@ -61,13 +62,13 @@ void Framework::OnInit(HINSTANCE hInstance, int nCmdShow)
     WaitForPreviousFrame();
 }
 
-void Framework::OnUpdate()
+void Framework::OnUpdate(GameTimer& gTimer)
 {
-    m_scenes[L"BaseScene"]->OnUpdate();
+    m_scenes[L"BaseScene"]->OnUpdate(gTimer);
 }
 
 // Render the scene.
-void Framework::OnRender()
+void Framework::OnRender(GameTimer& gTimer)
 {
     // Record all the commands we need to render the scene into the command list.
     PopulateCommandList();
@@ -248,9 +249,23 @@ void Framework::LoadPipeline()
         rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
         rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
         ThrowIfFailed(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvHeap)));
-
         m_rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+
+        D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc;
+        dsvHeapDesc.NumDescriptors = 1;
+        dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+        dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+        dsvHeapDesc.NodeMask = 0;
+        ThrowIfFailed(m_device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(m_dsvHeap.GetAddressOf())));
+        m_dsvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
     }
+
+    // Create the command allocator.
+    ThrowIfFailed(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocator)));
+
+    // Create the command list.
+    ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocator.Get(), nullptr, IID_PPV_ARGS(&m_commandList)));
+
 
     // Create frame resources.
     {
@@ -265,6 +280,35 @@ void Framework::LoadPipeline()
         }
     }
 
+    // Create depth/stencil buffer and view
+    {
+        D3D12_RESOURCE_DESC depthStencilDesc;
+        depthStencilDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+            DXGI_FORMAT_D24_UNORM_S8_UINT, // 깊이 및 스텐실 포맷
+            m_win32App->GetWidth(), m_win32App->GetHeight(),
+            1, 0, 1, 0, // MipLevels, ArraySize, SampleCount, Quality
+            D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL // 깊이-스텐실 플래그
+        );
+
+        D3D12_CLEAR_VALUE depthOptimizedClearValue;
+        depthOptimizedClearValue.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+        depthOptimizedClearValue.DepthStencil.Depth = 1.0f; // 깊이 초기값
+        depthOptimizedClearValue.DepthStencil.Stencil = 0;  // 스텐실 초기값
+
+        // 리소스 생성
+        m_device->CreateCommittedResource(
+            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+            D3D12_HEAP_FLAG_NONE,
+            &depthStencilDesc,
+            D3D12_RESOURCE_STATE_COMMON,
+            &depthOptimizedClearValue,
+            IID_PPV_ARGS(&m_depthStencilBuffer)
+        );
+
+        m_device->CreateDepthStencilView(m_depthStencilBuffer.Get(), nullptr, m_dsvHeap->GetCPUDescriptorHandleForHeapStart());
+        m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_depthStencilBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_DEPTH_WRITE));
+    }
+
     // Create synchronization objects.
     {
         ThrowIfFailed(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence)));
@@ -277,12 +321,6 @@ void Framework::LoadPipeline()
             ThrowIfFailed(HRESULT_FROM_WIN32(GetLastError()));
         }
     }
-
-    // Create the command allocator.
-    ThrowIfFailed(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocator)));
-
-    // Create the command list.
-    ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocator.Get(), nullptr, IID_PPV_ARGS(&m_commandList)));
 }
 
 void Framework::PopulateCommandList()
@@ -307,11 +345,13 @@ void Framework::PopulateCommandList()
         &CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
     CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), m_frameIndex, m_rtvDescriptorSize);
-    m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_dsvHeap->GetCPUDescriptorHandleForHeapStart(), 0, m_dsvDescriptorSize);
+    m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 
     // Record commands.
     const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
     m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+    m_commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1, 0, 0, nullptr);
 
     // Rendering
     m_scenes[L"BaseScene"]->OnRender(m_commandList.Get());
@@ -346,3 +386,4 @@ void Framework::WaitForPreviousFrame()
     }
     m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 }
+

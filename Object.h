@@ -14,8 +14,7 @@ public:
 	virtual void OnDestroy();
 
 	wstring GetObjectName() const;
-	float GetSpeed() const;
-	
+
 	template<typename T>
 	void AddComponent(shared_ptr<T>& component) { m_components[typeid(T).name()] = component; }
 
@@ -24,10 +23,6 @@ public:
 
 private:
 	wstring m_name;
-	float m_speed;
-
 	unordered_map<string, shared_ptr<Component>> m_components;
-
-	void SetSpeed(float speed);
 };
 

@@ -1,14 +1,10 @@
 #pragma once
 #include "stdafx.h"
 #include "Object.h"
-#include "Vertex.h"
 
-// Note that while ComPtr is used to manage the lifetime of resources on the CPU,
-// it has no understanding of the lifetime of resources on the GPU. Apps must account
-// for the GPU lifetime of resources to avoid destroying objects that may still be
-// referenced by the GPU.
-// An example of this can be found in the class method: OnDestroy().
 using Microsoft::WRL::ComPtr;
+
+class GameTimer;
 
 class Scene
 {
@@ -17,7 +13,7 @@ public:
     Scene(UINT width, UINT height, std::wstring name);
 
     virtual void OnInit(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
-    virtual void OnUpdate();
+    virtual void OnUpdate(GameTimer& gTimer);
     virtual void OnRender(ID3D12GraphicsCommandList* commandList);
     virtual void OnDestroy();
 
@@ -25,13 +21,8 @@ public:
     void SetDescriptorHeaps(ID3D12GraphicsCommandList* commandList);
     std::wstring GetSceneName() const;
 private:
-
-    struct SceneConstantBuffer
-    {
-        XMFLOAT4 position;
-    };
-
     std::wstring m_name;
+
     std::unordered_map<std::wstring, std::unique_ptr<Object>> m_Object;
 
     CD3DX12_VIEWPORT m_viewport;
@@ -42,34 +33,37 @@ private:
 
     // App resources.
     ComPtr<ID3D12DescriptorHeap> m_descriptorHeap;
-
-    ComPtr<ID3D12Resource> m_vertexBuffer_default;
-    ComPtr<ID3D12Resource> m_vertexBuffer_upload;
-    D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
+    UINT m_cbvsrvuavDescriptorSize;
+    //
     vector<Vertex> m_vertexData;
-    D3D12_SUBRESOURCE_DATA m_vertexSubData; // 아마도 컴포넌트로 옮길듯..
-
+    vector<uint16_t> m_indexData;
+    UINT m_vertexDataSize;
+    UINT m_indexDataSize;
+    ComPtr<ID3D12Resource> m_vertexBuffer_default;
+    ComPtr<ID3D12Resource> m_indexBuffer_default;
+    ComPtr<ID3D12Resource> m_vertexBuffer_upload;
+    ComPtr<ID3D12Resource> m_indexBuffer_upload;
+    D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
+    D3D12_INDEX_BUFFER_VIEW m_indexBufferView;
+    //
     ComPtr<ID3D12Resource> m_textureBuffer_default;
     ComPtr<ID3D12Resource> m_textureBuffer_upload;
-
-    vector<D3D12_SUBRESOURCE_DATA> m_subresources;
-    unique_ptr<uint8_t[]> m_ddsData;
-
+    //
     ComPtr<ID3D12Resource> m_constantBuffer;
-
     UINT8* m_MappedData;
-
-    UINT m_cbvsrvuavDescriptorSize;
-
-
-
+    //
     void BuildObjects(ID3D12Device* device);
     void BuildRootSignature(ID3D12Device* device);
     void BuildPSO(ID3D12Device* device);
     void BuildVertexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
+    void BuildIndexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
+    void BuildVertexBufferView();
+    void BuildIndexBufferView();
     void BuildConstantBuffer(ID3D12Device* device);
+    void BuildConstantBufferView(ID3D12Device* device);
     void BuildTextureBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
     void BuildTextureBufferView(ID3D12Device* device);
     void BuildDescriptorHeap(ID3D12Device* device);
     UINT CalcConstantBufferByteSize(UINT byteSize);
+    void CreateMesh();
 };

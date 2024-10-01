@@ -1,6 +1,6 @@
 cbuffer SceneConstantBuffer : register(b0)
 {
-    float4 velocity;
+    float4x4 world;
 };
 
 Texture2D g_texture : register(t0);
@@ -22,9 +22,9 @@ PSInput VSMain(VSInput input)
 {
     PSInput output;
     
-    output.position.x = input.position.x; //+ (0.5 * cos(velocity.x));
-    output.position.y = input.position.y; //+ (0.5 * sin(velocity.y));
-    output.position.zw = input.position.zw;
+    float4 tmp = mul(input.position, world);
+    
+    output.position = tmp;
     output.uv = input.uv;
 
     return output;

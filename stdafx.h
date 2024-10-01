@@ -20,6 +20,7 @@
 
 #include <unordered_map>
 #include <vector>
+#include <array>
 
 #include "./include/DirectXTex.h"
 #include "DDSTextureLoader12.h"

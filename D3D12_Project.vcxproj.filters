@@ -36,7 +36,7 @@
     <ClCompile Include="Component.cpp">
       <Filter>리소스 파일\소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="DDSTextureLoader12.cpp">
+    <ClCompile Include="GameTimer.cpp">
       <Filter>리소스 파일\소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
@@ -59,7 +59,7 @@
     <ClInclude Include="Object.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="Vertex.h">
+    <ClInclude Include="Info.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Component.h">
@@ -71,7 +71,7 @@
     <ClInclude Include="include\DirectXTex.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="DDSTextureLoader12.h">
+    <ClInclude Include="GameTimer.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
