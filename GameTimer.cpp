@@ -122,21 +122,3 @@ void GameTimer::Tick()
 		mDeltaTime = 0.0;
 	}
 }
-
-void GameTimer::CalculateFrame(float* fps)
-{
-	static int frameCnt = 0;
-	static float timeElapsed = 0.0f;
-
-	frameCnt++;
-
-	// Compute averages over one second period.
-	if ((TotalTime() - timeElapsed) >= 1.0f)
-	{
-		*fps = (float)frameCnt; // fps = frameCnt / 1
-		// Reset for next average.
-		frameCnt = 0;
-		timeElapsed += 1.0f;
-	}
-}
-

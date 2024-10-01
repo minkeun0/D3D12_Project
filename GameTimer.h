@@ -19,9 +19,6 @@ public:
 	void Stop();  // Call when paused.
 	void Tick();  // Call every frame.
 
-	void CalculateFrame(float* fps);
-
-
 private:
 	double mSecondsPerCount;
 	double mDeltaTime;

@@ -392,10 +392,10 @@ void Scene::OnUpdate(GameTimer& gTimer)
     XMMATRIX world = rotate * translate;
 
     // 카메라 행렬.
-    XMVECTOR pos = XMVectorSet(0.0f, 0.0f, -10.0f, 1.0f);
+    XMVECTOR eye = XMVectorSet(0.0f, 5.0f, -10.0f, 1.0f);
     XMVECTOR target = XMVectorZero();
     XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-    XMMATRIX view = XMMatrixLookAtLH(pos, target, up);
+    XMMATRIX view = XMMatrixLookAtLH(eye, target, up);
 
     // 투영 행렬
     XMMATRIX proj = XMMatrixPerspectiveFovLH(XM_PI * 0.25f, m_viewport.Width/m_viewport.Height, 1.0f, 1000.0f);

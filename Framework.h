@@ -63,5 +63,7 @@ private:
 	void PopulateCommandList();
 	void BuildScenes(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
 	void WaitForPreviousFrame();
+	void CalculateFrame();
+
 };
 

@@ -53,7 +53,7 @@ void Win32Application::CreateWnd(Framework* framework, HINSTANCE hInstance)
 // Helper function for setting the window's title text.
 void Win32Application::SetCustomWindowText(LPCWSTR text)
 {
-    std::wstring windowText = m_title + L": " + text;
+    std::wstring windowText = m_title + L" : " + text;
     SetWindowText(m_hwnd, windowText.c_str());
 }
 

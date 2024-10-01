@@ -20,7 +20,6 @@ int Framework::Run(HINSTANCE hInstance, int nCmdShow)
 
     // Main loop.
     MSG msg = {};
-    float fps = 0;
     while (msg.message != WM_QUIT)
     {
         // Process any messages in the queue.
@@ -32,8 +31,7 @@ int Framework::Run(HINSTANCE hInstance, int nCmdShow)
         else
         {
             m_Timer.Tick();
-            m_Timer.CalculateFrame(&fps);
-            m_win32App->SetCustomWindowText(to_wstring(fps).c_str());
+            CalculateFrame();
             OnUpdate(m_Timer);
             OnRender(m_Timer);
         }
@@ -385,5 +383,26 @@ void Framework::WaitForPreviousFrame()
         WaitForSingleObject(m_fenceEvent, INFINITE);
     }
     m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
+}
+
+void Framework::CalculateFrame()
+{
+    static int frameCnt = 0;
+    static float timeElapsed = 0.0f;
+
+    frameCnt++;
+
+    // Compute averages over one second period.
+    if ((m_Timer.TotalTime() - timeElapsed) >= 1.0f)
+    {
+        float fps = (float)frameCnt; // fps = frameCnt / 1
+        wstring windowText = L" FPS " + to_wstring(fps);
+        m_win32App->SetCustomWindowText(windowText.c_str());
+        // Reset for next average.
+        frameCnt = 0;
+        timeElapsed += 1.0f;
+    }
+
+
 }
 
