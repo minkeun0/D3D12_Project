@@ -15,10 +15,12 @@ public:
     virtual void OnInit(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
     virtual void OnUpdate(GameTimer& gTimer);
     virtual void OnRender(ID3D12GraphicsCommandList* commandList);
+    virtual void OnResize(UINT width, UINT height);
     virtual void OnDestroy();
 
     void SetState(ID3D12GraphicsCommandList* commandList);
     void SetDescriptorHeaps(ID3D12GraphicsCommandList* commandList);
+
     std::wstring GetSceneName() const;
 private:
     std::wstring m_name;
@@ -29,8 +31,6 @@ private:
     CD3DX12_RECT m_scissorRect;
     ComPtr<ID3D12RootSignature> m_rootSignature;
     ComPtr<ID3D12PipelineState> m_pipelineState;
-
-
     // App resources.
     ComPtr<ID3D12DescriptorHeap> m_descriptorHeap;
     UINT m_cbvsrvuavDescriptorSize;
@@ -52,6 +52,8 @@ private:
     ComPtr<ID3D12Resource> m_constantBuffer;
     UINT8* m_MappedData;
     //
+    XMFLOAT4X4 m_proj;
+    //
     void BuildObjects(ID3D12Device* device);
     void BuildRootSignature(ID3D12Device* device);
     void BuildPSO(ID3D12Device* device);
@@ -65,5 +67,6 @@ private:
     void BuildTextureBufferView(ID3D12Device* device);
     void BuildDescriptorHeap(ID3D12Device* device);
     UINT CalcConstantBufferByteSize(UINT byteSize);
-    void CreateMesh();
+    void BuildMesh();
+    void BuildProjMatrix();
 };

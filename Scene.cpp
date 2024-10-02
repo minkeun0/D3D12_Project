@@ -7,12 +7,13 @@ Scene::Scene(UINT width, UINT height, std::wstring name) :
     m_name(name),
     m_MappedData(nullptr)
 {
+    BuildProjMatrix();
 }
 
 void Scene::OnInit(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
     BuildObjects(device);
-    CreateMesh();
+    BuildMesh();
     BuildRootSignature(device);
     BuildPSO(device);
     BuildVertexBuffer(device, commandList);
@@ -78,11 +79,11 @@ void Scene::BuildRootSignature(ID3D12Device* device)
         D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
         D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
         D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-        D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
-        D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
+        D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
+        //D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
 
     CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
-    rootSignatureDesc.Init_1_1(_countof(rootParameters), rootParameters, 1, &sampler, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+    rootSignatureDesc.Init_1_1(_countof(rootParameters), rootParameters, 1, &sampler, rootSignatureFlags);
 
     ComPtr<ID3DBlob> signature;
     ComPtr<ID3DBlob> error;
@@ -308,7 +309,7 @@ UINT Scene::CalcConstantBufferByteSize(UINT byteSize)
     return (byteSize + 255) & ~255;
 }
 
-void Scene::CreateMesh()
+void Scene::BuildMesh()
 {
     std::array<Vertex, 8> vertices =
     {
@@ -356,6 +357,12 @@ void Scene::CreateMesh()
     m_indexDataSize = (UINT)indices.size() * sizeof(std::uint16_t);
 }
 
+void Scene::BuildProjMatrix()
+{
+    XMMATRIX proj = XMMatrixPerspectiveFovLH(XM_PI * 0.25f, m_viewport.Width / m_viewport.Height, 1.0f, 1000.0f);
+    XMStoreFloat4x4(&m_proj, proj);
+}
+
 void Scene::SetState(ID3D12GraphicsCommandList* commandList)
 {
     // Set necessary state.
@@ -398,7 +405,7 @@ void Scene::OnUpdate(GameTimer& gTimer)
     XMMATRIX view = XMMatrixLookAtLH(eye, target, up);
 
     // 투영 행렬
-    XMMATRIX proj = XMMatrixPerspectiveFovLH(XM_PI * 0.25f, m_viewport.Width/m_viewport.Height, 1.0f, 1000.0f);
+    XMMATRIX proj = XMLoadFloat4x4(&m_proj);
 
     // 최종 변환 행렬
     XMMATRIX worldViewProj = world * view * proj;
@@ -421,6 +428,13 @@ void Scene::OnRender(ID3D12GraphicsCommandList* commandList)
     commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
     commandList->IASetIndexBuffer(&m_indexBufferView);
     commandList->DrawIndexedInstanced(m_indexData.size(), 1, 0, 0, 0);
+}
+
+void Scene::OnResize(UINT width, UINT height)
+{
+    m_viewport = { CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f) };
+    m_scissorRect = { CD3DX12_RECT(0, 0, static_cast<LONG>(width), static_cast<LONG>(height)) };
+    BuildProjMatrix();
 }
 
 void Scene::OnDestroy()

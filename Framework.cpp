@@ -6,6 +6,7 @@ Framework::Framework(HINSTANCE hInstance, int nCmdShow, UINT width, UINT height,
     m_rtvDescriptorSize(0),
     m_useWarpDevice(false)
 {
+    ThrowIfFailed(DXGIDeclareAdapterRemovalSupport());
     m_win32App = make_unique<Win32Application>(width, height, name);
 }
 
@@ -49,8 +50,17 @@ void Framework::OnInit(HINSTANCE hInstance, int nCmdShow)
     InitWnd(hInstance);
 
     // D3D12 초기화
-    LoadFactoryAndDevice();
-	LoadPipeline();
+    BuildFactoryAndDevice();
+    BuildCommandQueueAndSwapChain();
+    BuildCommandListAndAllocator();
+    BuildRtvDescriptorHeap();
+    BuildRtv();
+    BuildDsvDescriptorHeap();
+    BuildDepthStencilBuffer(m_win32App->GetWidth(), m_win32App->GetHeight());
+    BuildDsv();
+    BuildFence();
+
+    // 씬 생성
     BuildScenes(m_device.Get(), m_commandList.Get());
 
     // Close the command list and execute it to begin the initial GPU setup.
@@ -79,6 +89,42 @@ void Framework::OnRender(GameTimer& gTimer)
     ThrowIfFailed(m_swapChain->Present(1, 0));
 
     WaitForPreviousFrame();
+}
+
+void Framework::OnResize(UINT width, UINT height, bool minimized)
+{
+    // Determine if the swap buffers and other resources need to be resized or not.
+    if ((width != m_win32App->GetWidth() || height != m_win32App->GetHeight()) && !minimized)
+    {
+        WaitForPreviousFrame();
+        ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), nullptr));
+
+        m_win32App->OnResize(width, height);
+
+        for (UINT n = 0; n < FrameCount; n++)
+        {
+            m_renderTargets[n].Reset();
+        }
+        m_depthStencilBuffer.Reset();
+
+        // Resize the swap chain to the desired dimensions.
+        DXGI_SWAP_CHAIN_DESC desc = {};
+        m_swapChain->GetDesc(&desc);
+        ThrowIfFailed(m_swapChain->ResizeBuffers(FrameCount, width, height, desc.BufferDesc.Format, desc.Flags));
+        m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
+        BuildRtv();
+
+        BuildDepthStencilBuffer(width, height);
+        BuildDsv();
+
+        m_scenes[m_currentScene]->OnResize(width, height);
+
+        ThrowIfFailed(m_commandList->Close());
+        ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
+        m_commandQueue.Get()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+        WaitForPreviousFrame();
+    }
+    m_win32App->SetWindowVisible(!minimized);
 }
 
 void Framework::OnDestroy()
@@ -158,7 +204,7 @@ void Framework::InitWnd(HINSTANCE hInstance)
     m_win32App->CreateWnd(this, hInstance);
 }
 
-void Framework::LoadFactoryAndDevice()
+void Framework::BuildFactoryAndDevice()
 {
     UINT dxgiFactoryFlags = 0;
 
@@ -201,10 +247,10 @@ void Framework::LoadFactoryAndDevice()
             IID_PPV_ARGS(&m_device)
         ));
     }
+    //ThrowIfFailed(m_factory->MakeWindowAssociation(m_win32App->GetHwnd(), DXGI_MWA_NO_ALT_ENTER));
 }
 
-// Load the rendering pipeline dependencies.
-void Framework::LoadPipeline()
+void Framework::BuildCommandQueueAndSwapChain()
 {
     // Describe and create the command queue.
     D3D12_COMMAND_QUEUE_DESC queueDesc = {};
@@ -232,92 +278,95 @@ void Framework::LoadPipeline()
         nullptr,
         &swapChain
     ));
-
-    // This sample does not support fullscreen transitions.
-    ThrowIfFailed(m_factory->MakeWindowAssociation(m_win32App->GetHwnd(), DXGI_MWA_NO_ALT_ENTER));
-
     ThrowIfFailed(swapChain.As(&m_swapChain));
     m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 
-    // Create descriptor heaps.
-    {
-        // Describe and create a render target view (RTV) descriptor heap.
-        D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
-        rtvHeapDesc.NumDescriptors = FrameCount;
-        rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-        rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-        ThrowIfFailed(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvHeap)));
-        m_rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+}
 
-        D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc;
-        dsvHeapDesc.NumDescriptors = 1;
-        dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-        dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-        dsvHeapDesc.NodeMask = 0;
-        ThrowIfFailed(m_device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(m_dsvHeap.GetAddressOf())));
-        m_dsvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-    }
-
+void Framework::BuildCommandListAndAllocator()
+{
     // Create the command allocator.
     ThrowIfFailed(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocator)));
 
     // Create the command list.
     ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocator.Get(), nullptr, IID_PPV_ARGS(&m_commandList)));
 
+}
 
-    // Create frame resources.
+void Framework::BuildRtvDescriptorHeap()
+{
+    D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
+    rtvHeapDesc.NumDescriptors = FrameCount;
+    rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+    rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+    ThrowIfFailed(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvHeap)));
+    m_rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+}
+
+void Framework::BuildRtv()
+{
+    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart());
+    for (UINT n = 0; n < FrameCount; n++)
     {
-        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart());
-
-        // Create a RTV for each frame.
-        for (UINT n = 0; n < FrameCount; n++)
-        {
-            ThrowIfFailed(m_swapChain->GetBuffer(n, IID_PPV_ARGS(&m_renderTargets[n])));
-            m_device->CreateRenderTargetView(m_renderTargets[n].Get(), nullptr, rtvHandle);
-            rtvHandle.Offset(1, m_rtvDescriptorSize);
-        }
+        ThrowIfFailed(m_swapChain->GetBuffer(n, IID_PPV_ARGS(&m_renderTargets[n])));
+        m_device->CreateRenderTargetView(m_renderTargets[n].Get(), nullptr, rtvHandle);
+        rtvHandle.Offset(1, m_rtvDescriptorSize);
     }
+}
 
-    // Create depth/stencil buffer and view
+void Framework::BuildDsvDescriptorHeap()
+{
+    D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc;
+    dsvHeapDesc.NumDescriptors = 1;
+    dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+    dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+    dsvHeapDesc.NodeMask = 0;
+    ThrowIfFailed(m_device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(m_dsvHeap.GetAddressOf())));
+    m_dsvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+}
+
+void Framework::BuildDepthStencilBuffer(UINT width, UINT height)
+{
+    D3D12_RESOURCE_DESC depthStencilDesc;
+    depthStencilDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+        DXGI_FORMAT_D24_UNORM_S8_UINT, // 깊이 및 스텐실 포맷
+        width, height,
+        1, 0, 1, 0, // MipLevels, ArraySize, SampleCount, Quality
+        D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL // 깊이-스텐실 플래그
+    );
+
+    D3D12_CLEAR_VALUE depthOptimizedClearValue;
+    depthOptimizedClearValue.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+    depthOptimizedClearValue.DepthStencil.Depth = 1.0f; // 깊이 초기값
+    depthOptimizedClearValue.DepthStencil.Stencil = 0;  // 스텐실 초기값
+
+    // 리소스 생성
+    m_device->CreateCommittedResource(
+        &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+        D3D12_HEAP_FLAG_NONE,
+        &depthStencilDesc,
+        D3D12_RESOURCE_STATE_COMMON,
+        &depthOptimizedClearValue,
+        IID_PPV_ARGS(&m_depthStencilBuffer)
+    );
+    m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_depthStencilBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_DEPTH_WRITE));
+}
+
+void Framework::BuildDsv()
+{
+    m_device->CreateDepthStencilView(m_depthStencilBuffer.Get(), nullptr, m_dsvHeap->GetCPUDescriptorHandleForHeapStart());
+}
+
+void Framework::BuildFence()
+{
+    ThrowIfFailed(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence)));
+    m_fenceValue = 1;
+
+    // Create an event handle to use for frame synchronization.
+    m_fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+    if (m_fenceEvent == nullptr)
     {
-        D3D12_RESOURCE_DESC depthStencilDesc;
-        depthStencilDesc = CD3DX12_RESOURCE_DESC::Tex2D(
-            DXGI_FORMAT_D24_UNORM_S8_UINT, // 깊이 및 스텐실 포맷
-            m_win32App->GetWidth(), m_win32App->GetHeight(),
-            1, 0, 1, 0, // MipLevels, ArraySize, SampleCount, Quality
-            D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL // 깊이-스텐실 플래그
-        );
-
-        D3D12_CLEAR_VALUE depthOptimizedClearValue;
-        depthOptimizedClearValue.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-        depthOptimizedClearValue.DepthStencil.Depth = 1.0f; // 깊이 초기값
-        depthOptimizedClearValue.DepthStencil.Stencil = 0;  // 스텐실 초기값
-
-        // 리소스 생성
-        m_device->CreateCommittedResource(
-            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
-            D3D12_HEAP_FLAG_NONE,
-            &depthStencilDesc,
-            D3D12_RESOURCE_STATE_COMMON,
-            &depthOptimizedClearValue,
-            IID_PPV_ARGS(&m_depthStencilBuffer)
-        );
-
-        m_device->CreateDepthStencilView(m_depthStencilBuffer.Get(), nullptr, m_dsvHeap->GetCPUDescriptorHandleForHeapStart());
-        m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_depthStencilBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_DEPTH_WRITE));
-    }
-
-    // Create synchronization objects.
-    {
-        ThrowIfFailed(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence)));
-        m_fenceValue = 1;
-
-        // Create an event handle to use for frame synchronization.
-        m_fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
-        if (m_fenceEvent == nullptr)
-        {
-            ThrowIfFailed(HRESULT_FROM_WIN32(GetLastError()));
-        }
+        ThrowIfFailed(HRESULT_FROM_WIN32(GetLastError()));
     }
 }
 
@@ -364,9 +413,10 @@ void Framework::PopulateCommandList()
 
 void Framework::BuildScenes(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
-    auto tmp = make_unique<Scene>(m_win32App->GetWidth(), m_win32App->GetHeight(), L"BaseScene");
-    tmp->OnInit(device, commandList);
-    m_scenes[tmp->GetSceneName()] = std::move(tmp);
+    wstring name = L"BaseScene";
+    m_scenes[name] = make_unique<Scene>(m_win32App->GetWidth(), m_win32App->GetHeight(), name);
+    m_scenes[name]->OnInit(device, commandList);
+    m_currentScene = name;
 }
 
 void Framework::WaitForPreviousFrame()

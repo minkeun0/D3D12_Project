@@ -17,6 +17,7 @@ public:
 	virtual void OnInit(HINSTANCE hInstance, int nCmdShow);
 	virtual void OnUpdate(GameTimer& gTimer);
 	virtual void OnRender(GameTimer& gTimer);
+	virtual void OnResize(UINT width, UINT height, bool minimized);
 	virtual void OnDestroy();
 
 	virtual void OnKeyDown(UINT8 /*key*/) {}
@@ -53,17 +54,28 @@ private:
 	ComPtr<ID3D12Fence> m_fence;
 	UINT64 m_fenceValue;
 
-	std::unordered_map<std::wstring, std::unique_ptr<Scene>> m_scenes;
+	unordered_map<wstring, unique_ptr<Scene>> m_scenes;
+	wstring m_currentScene;
 
-	void GetHardwareAdapter( _In_ IDXGIFactory1* pFactory, _Outptr_result_maybenull_ IDXGIAdapter1** ppAdapter, bool requestHighPerformanceAdapter = false);
-
+	void GetHardwareAdapter( 
+		_In_ IDXGIFactory1* pFactory, 
+		_Outptr_result_maybenull_ IDXGIAdapter1** ppAdapter, 
+		bool requestHighPerformanceAdapter = false
+	);
 	void InitWnd(HINSTANCE hInstance);
-	void LoadFactoryAndDevice();
-	void LoadPipeline();
+	void BuildFactoryAndDevice();
+	void BuildCommandQueueAndSwapChain();
+	void BuildCommandListAndAllocator();
+	void BuildRtvDescriptorHeap();
+	void BuildRtv();
+	void BuildDsvDescriptorHeap();
+	void BuildDepthStencilBuffer(UINT width, UINT height);
+	void BuildDsv();
+	void BuildFence();
+
 	void PopulateCommandList();
 	void BuildScenes(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
 	void WaitForPreviousFrame();
 	void CalculateFrame();
-
 };
 

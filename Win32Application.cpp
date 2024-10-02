@@ -15,7 +15,8 @@
 Win32Application::Win32Application(UINT width, UINT height, std::wstring name) : 
     m_title(name),
     m_width(width),
-    m_height(height)
+    m_height(height),
+    m_windowVisible(true)
 {
     m_aspectRatio = static_cast<float>(width) / static_cast<float>(height);
 }
@@ -57,6 +58,13 @@ void Win32Application::SetCustomWindowText(LPCWSTR text)
     SetWindowText(m_hwnd, windowText.c_str());
 }
 
+void Win32Application::OnResize(UINT width, UINT height)
+{
+    m_width = width;
+    m_height = height;
+    m_aspectRatio = static_cast<float>(width) / static_cast<float>(height);
+}
+
 // Main message handler for the sample.
 LRESULT CALLBACK Win32Application::WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -93,6 +101,15 @@ LRESULT CALLBACK Win32Application::WindowProc(HWND hWnd, UINT message, WPARAM wP
     //        pSample->OnRender();
     //    }
     //    return 0;
+
+    case WM_SIZE:
+        if (pSample)
+        {
+            RECT clientRect = {};
+            GetClientRect(hWnd, &clientRect);
+            pSample->OnResize(clientRect.right - clientRect.left, clientRect.bottom - clientRect.top, wParam == SIZE_MINIMIZED);
+        }
+        return 0;
 
     case WM_DESTROY:
         PostQuitMessage(0);
