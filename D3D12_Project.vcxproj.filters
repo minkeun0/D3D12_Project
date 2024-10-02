@@ -39,6 +39,9 @@
     <ClCompile Include="GameTimer.cpp">
       <Filter>리소스 파일\소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="MeshManager.cpp">
+      <Filter>리소스 파일\소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DXSampleHelper.h">
@@ -68,10 +71,10 @@
     <ClInclude Include="d3dx12.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="include\DirectXTex.h">
+    <ClInclude Include="GameTimer.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="GameTimer.h">
+    <ClInclude Include="MeshManager.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

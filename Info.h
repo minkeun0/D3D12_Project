@@ -17,3 +17,11 @@ struct CommonCB
     XMFLOAT4X4 view;
     XMFLOAT4X4 proj;
 };
+
+struct SubMeshData
+{
+	UINT vertexCountPerInstance;
+	UINT indexCountPerInstance;
+	UINT statIndexLocation;
+	UINT baseVertexLocation;
+};

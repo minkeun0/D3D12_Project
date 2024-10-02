@@ -5,15 +5,15 @@ Scene::Scene(UINT width, UINT height, std::wstring name) :
     m_viewport(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height)),
     m_scissorRect(0, 0, static_cast<LONG>(width), static_cast<LONG>(height)),
     m_name(name),
-    m_MappedData(nullptr)
+    m_mappedData(nullptr)
 {
     BuildProjMatrix();
+    m_meshManager = make_unique<MeshManager>();
 }
 
 void Scene::OnInit(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
     BuildObjects(device);
-    BuildMesh();
     BuildRootSignature(device);
     BuildPSO(device);
     BuildVertexBuffer(device, commandList);
@@ -29,13 +29,23 @@ void Scene::OnInit(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 
 void Scene::BuildObjects(ID3D12Device* device)
 {
-    auto tmp = std::make_unique<Object>(L"BaseObject");
-    tmp->AddComponent<Mesh>(make_shared<Mesh>());
+    auto tmp = make_unique<Object>(L"BaseObject");
+    tmp->AddComponent<Mesh>(make_shared<Mesh>(L"Box", m_meshManager->GetSubMeshData(L"Box")));
+    tmp->AddComponent<Position>(make_shared<Position>(3.0f, 1.0f, 2.0f, 1.0f)); // 초기 위치
+    tmp->AddComponent<Velocity>(make_shared<Velocity>(0.0f, 0.0f, 0.0f, 0.0f)); // 초당 속도변화
+    tmp->AddComponent<Rotation>(make_shared<Rotation>(0.0f, 0.0f, 0.0f, 0.0f)); // 초기 각도
+    tmp->AddComponent<Rotate>(make_shared<Rotate>(30.0f, 0.0f, 0.0f, 0.0f));    // 초당 각도변화
+    tmp->AddComponent<TransfromMatrix>(make_shared<TransfromMatrix>());
+    m_object[tmp->GetObjectName()] = std::move(tmp);
+
+    tmp = make_unique<Object>(L"PlayerObject");
+    tmp->AddComponent<Mesh>(make_shared<Mesh>(L"Box", m_meshManager->GetSubMeshData(L"Box")));
     tmp->AddComponent<Position>(make_shared<Position>(0.0f, 0.0f, 0.0f, 1.0f)); // 초기 위치
     tmp->AddComponent<Velocity>(make_shared<Velocity>(0.0f, 0.0f, 0.0f, 0.0f)); // 초당 속도변화
     tmp->AddComponent<Rotation>(make_shared<Rotation>(0.0f, 0.0f, 0.0f, 0.0f)); // 초기 각도
-    tmp->AddComponent<Rotate>(make_shared<Rotate>(0.0f, 90.0f, 0.0f, 0.0f));    // 초당 각도변화
-    m_Object[tmp->GetObjectName()] = std::move(tmp);
+    tmp->AddComponent<Rotate>(make_shared<Rotate>(0.0f, 10.0f, 0.0f, 0.0f));    // 초당 각도변화
+    tmp->AddComponent<TransfromMatrix>(make_shared<TransfromMatrix>());
+    m_object[tmp->GetObjectName()] = std::move(tmp);
 }
 
 void Scene::BuildRootSignature(ID3D12Device* device)
@@ -51,13 +61,14 @@ void Scene::BuildRootSignature(ID3D12Device* device)
         featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
     }
 
-    CD3DX12_DESCRIPTOR_RANGE1 ranges[2];
+    CD3DX12_DESCRIPTOR_RANGE1 ranges[2]{};
     ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
     ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
 
-    CD3DX12_ROOT_PARAMETER1 rootParameters[2];
+    CD3DX12_ROOT_PARAMETER1 rootParameters[3]{};
     rootParameters[0].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_VERTEX);
     rootParameters[1].InitAsDescriptorTable(1, &ranges[1], D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[2].InitAsConstants(16, 1, 0);
 
     D3D12_STATIC_SAMPLER_DESC sampler = {};
     sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
@@ -80,7 +91,6 @@ void Scene::BuildRootSignature(ID3D12Device* device)
         D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
         D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
         D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
-        //D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
 
     CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
     rootSignatureDesc.Init_1_1(_countof(rootParameters), rootParameters, 1, &sampler, rootSignatureFlags);
@@ -139,11 +149,12 @@ void Scene::BuildVertexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* c
     //m_vertexData.insert(m_vertexData.end(), meshData->GetData().begin(), meshData->GetData().end());
     //const UINT vertexBufferSize = m_vertexData.size() * sizeof(Vertex);
 
+    const UINT vertexBufferSize = m_meshManager->GetVertexBufferByteSize();
     // Create the vertex buffer.
     ThrowIfFailed(device->CreateCommittedResource(
         &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
         D3D12_HEAP_FLAG_NONE,
-        &CD3DX12_RESOURCE_DESC::Buffer(m_vertexDataSize),
+        &CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize),
         D3D12_RESOURCE_STATE_COMMON,
         nullptr,
         IID_PPV_ARGS(m_vertexBuffer_default.GetAddressOf())));
@@ -151,19 +162,19 @@ void Scene::BuildVertexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* c
     ThrowIfFailed(device->CreateCommittedResource(
         &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
         D3D12_HEAP_FLAG_NONE,
-        &CD3DX12_RESOURCE_DESC::Buffer(m_vertexDataSize),
+        &CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize),
         D3D12_RESOURCE_STATE_GENERIC_READ,
         nullptr,
         IID_PPV_ARGS(m_vertexBuffer_upload.GetAddressOf())));
 
     D3D12_SUBRESOURCE_DATA subResourceData = {};
-    subResourceData.pData = m_vertexData.data();
-    subResourceData.RowPitch = m_vertexDataSize;
+    subResourceData.pData = m_meshManager->GetVertexData();
+    subResourceData.RowPitch = vertexBufferSize;
     subResourceData.SlicePitch = subResourceData.RowPitch;
 
     commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_vertexBuffer_default.Get(),
         D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST));
-    UpdateSubresources<1>(commandList, m_vertexBuffer_default.Get(), m_vertexBuffer_upload.Get(), 0, 0, 1, &subResourceData);
+    UpdateSubresources(commandList, m_vertexBuffer_default.Get(), m_vertexBuffer_upload.Get(), 0, 0, 1, &subResourceData);
     commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_vertexBuffer_default.Get(),
         D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ));
 }
@@ -171,10 +182,11 @@ void Scene::BuildVertexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* c
 void Scene::BuildIndexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
     // Create the index buffer.
+    const UINT indexBufferSize = m_meshManager->GetindexBufferByteSize();
     ThrowIfFailed(device->CreateCommittedResource(
         &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
         D3D12_HEAP_FLAG_NONE,
-        &CD3DX12_RESOURCE_DESC::Buffer(m_indexDataSize),
+        &CD3DX12_RESOURCE_DESC::Buffer(indexBufferSize),
         D3D12_RESOURCE_STATE_COMMON,
         nullptr,
         IID_PPV_ARGS(m_indexBuffer_default.GetAddressOf())));
@@ -182,19 +194,19 @@ void Scene::BuildIndexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* co
     ThrowIfFailed(device->CreateCommittedResource(
         &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
         D3D12_HEAP_FLAG_NONE,
-        &CD3DX12_RESOURCE_DESC::Buffer(m_indexDataSize),
+        &CD3DX12_RESOURCE_DESC::Buffer(indexBufferSize),
         D3D12_RESOURCE_STATE_GENERIC_READ,
         nullptr,
         IID_PPV_ARGS(m_indexBuffer_upload.GetAddressOf())));
 
     D3D12_SUBRESOURCE_DATA subResourceData = {};
-    subResourceData.pData = m_indexData.data();
-    subResourceData.RowPitch = m_indexDataSize;
+    subResourceData.pData = m_meshManager->GetIndexData();
+    subResourceData.RowPitch = indexBufferSize;
     subResourceData.SlicePitch = subResourceData.RowPitch;
 
     commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_indexBuffer_default.Get(),
         D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST));
-    UpdateSubresources<1>(commandList, m_indexBuffer_default.Get(), m_indexBuffer_upload.Get(), 0, 0, 1, &subResourceData);
+    UpdateSubresources(commandList, m_indexBuffer_default.Get(), m_indexBuffer_upload.Get(), 0, 0, 1, &subResourceData);
     commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_indexBuffer_default.Get(),
         D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ));
 }
@@ -204,14 +216,14 @@ void Scene::BuildVertexBufferView()
     // Initialize the vertex buffer view.
     m_vertexBufferView.BufferLocation = m_vertexBuffer_default->GetGPUVirtualAddress();
     m_vertexBufferView.StrideInBytes = sizeof(Vertex);
-    m_vertexBufferView.SizeInBytes = m_vertexDataSize;
+    m_vertexBufferView.SizeInBytes = m_meshManager->GetVertexBufferByteSize();
 }
 
 void Scene::BuildIndexBufferView()
 {
     m_indexBufferView.BufferLocation = m_indexBuffer_default->GetGPUVirtualAddress();
     m_indexBufferView.Format = DXGI_FORMAT_R16_UINT;
-    m_indexBufferView.SizeInBytes = m_indexDataSize;
+    m_indexBufferView.SizeInBytes = m_meshManager->GetindexBufferByteSize();
 }
 
 void Scene::BuildDescriptorHeap(ID3D12Device* device)
@@ -240,7 +252,7 @@ void Scene::BuildConstantBuffer(ID3D12Device* device)
     // Map and initialize the constant buffer. We don't unmap this until the
     // app closes. Keeping things mapped for the lifetime of the resource is okay.
     CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
-    ThrowIfFailed(m_constantBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_MappedData)));
+    ThrowIfFailed(m_constantBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_mappedData)));
 }
 
 void Scene::BuildConstantBufferView(ID3D12Device* device)
@@ -309,54 +321,6 @@ UINT Scene::CalcConstantBufferByteSize(UINT byteSize)
     return (byteSize + 255) & ~255;
 }
 
-void Scene::BuildMesh()
-{
-    std::array<Vertex, 8> vertices =
-    {
-        Vertex({ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT2(0.0f , 1.0f) }),
-        Vertex({ XMFLOAT3(-1.0f, +1.0f, -1.0f), XMFLOAT2(0.0f , 0.0f) }),
-        Vertex({ XMFLOAT3(+1.0f, +1.0f, -1.0f), XMFLOAT2(1.0f , 0.0f) }),
-        Vertex({ XMFLOAT3(+1.0f, -1.0f, -1.0f), XMFLOAT2(1.0f , 1.0f) }),
-        Vertex({ XMFLOAT3(-1.0f, -1.0f, +1.0f), XMFLOAT2(1.0f , 1.0f) }),
-        Vertex({ XMFLOAT3(-1.0f, +1.0f, +1.0f), XMFLOAT2(1.0f , 0.0f) }),
-        Vertex({ XMFLOAT3(+1.0f, +1.0f, +1.0f), XMFLOAT2(0.0f , 0.0f) }),
-        Vertex({ XMFLOAT3(+1.0f, -1.0f, +1.0f), XMFLOAT2(0.0f , 1.0f) })
-    };
-
-    std::array<std::uint16_t, 36> indices =
-    {
-        // front face
-        0, 1, 2,
-        0, 2, 3,
-
-        // back face
-        4, 6, 5,
-        4, 7, 6,
-
-        // left face
-        4, 5, 1,
-        4, 1, 0,
-
-        // right face
-        3, 2, 6,
-        3, 6, 7,
-
-        // top face
-        1, 5, 6,
-        1, 6, 2,
-
-        // bottom face
-        4, 0, 3,
-        4, 3, 7
-    };
-
-    m_vertexData.insert(m_vertexData.end(), vertices.begin(), vertices.end());
-    m_indexData.insert(m_indexData.end(), indices.begin(), indices.end());
-
-    m_vertexDataSize = (UINT)vertices.size() * sizeof(Vertex);
-    m_indexDataSize = (UINT)indices.size() * sizeof(std::uint16_t);
-}
-
 void Scene::BuildProjMatrix()
 {
     XMMATRIX proj = XMMatrixPerspectiveFovLH(XM_PI * 0.25f, m_viewport.Width / m_viewport.Height, 1.0f, 1000.0f);
@@ -381,25 +345,30 @@ void Scene::SetDescriptorHeaps(ID3D12GraphicsCommandList* commandList)
 // Update frame-based values.
 void Scene::OnUpdate(GameTimer& gTimer)
 {
-    auto& currentObject = m_Object[L"BaseObject"];
+    for(auto& object : m_object)
+    {
+        auto& currentObject = object.second;
+        // 회전 행렬
+        auto rotationData = currentObject->GetComponent<Rotation>();
+        auto rotateData = currentObject->GetComponent<Rotate>();
+        rotationData->SetRotation(XMVectorAdd(rotationData->GetRotation(), rotateData->GetRotate() * gTimer.DeltaTime()));
+        XMMATRIX rotate = XMMatrixRotationRollPitchYawFromVector(rotationData->GetRotation() * (XM_PI / 180.0f)); // 도를 라디안으로 변경
 
-    // 회전 행렬
-    auto rotationData = currentObject->GetComponent<Rotation>();
-    auto rotateData = currentObject->GetComponent<Rotate>();
-    rotationData->SetRotation(XMVectorAdd(rotationData->GetRotation(), rotateData->GetRotate() * gTimer.DeltaTime()));
-    XMMATRIX rotate = XMMatrixRotationRollPitchYawFromVector(rotationData->GetRotation() * (XM_PI / 180.0f)); // 도를 라디안으로 변경
+        // 이동 행렬
+        auto positionData = currentObject->GetComponent<Position>();
+        auto velocityData = currentObject->GetComponent<Velocity>();
+        positionData->SetPosition(XMVectorAdd(positionData->GetPosition(), velocityData->GetVelocity() * gTimer.DeltaTime()));
+        XMMATRIX translate = XMMatrixTranslationFromVector(positionData->GetPosition());
 
-    // 이동 행렬
-    auto positionData = currentObject->GetComponent<Position>();
-    auto velocityData = currentObject->GetComponent<Velocity>();
-    positionData->SetPosition(XMVectorAdd(positionData->GetPosition(), velocityData->GetVelocity() * gTimer.DeltaTime()));
-    XMMATRIX translate = XMMatrixTranslationFromVector(positionData->GetPosition());
-    
-    // 월드 행렬
-    XMMATRIX world = rotate * translate;
+        // 월드 행렬
+        XMMATRIX world = rotate * translate;
+        auto matrixData = currentObject->GetComponent<TransfromMatrix>();
+        matrixData->SetMatrix(world);
+    }
+   
 
     // 카메라 행렬.
-    XMVECTOR eye = XMVectorSet(0.0f, 5.0f, -10.0f, 1.0f);
+    XMVECTOR eye = XMVectorSet(0.0f, 5.0f, -5.0f, 1.0f);
     XMVECTOR target = XMVectorZero();
     XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
     XMMATRIX view = XMMatrixLookAtLH(eye, target, up);
@@ -408,26 +377,36 @@ void Scene::OnUpdate(GameTimer& gTimer)
     XMMATRIX proj = XMLoadFloat4x4(&m_proj);
 
     // 최종 변환 행렬
-    XMMATRIX worldViewProj = world * view * proj;
+    XMMATRIX ViewProj = view * proj;
 
     // 최종 행렬 전치
-    XMFLOAT4X4 transMatrix;
-    XMStoreFloat4x4(&transMatrix, XMMatrixTranspose(worldViewProj));
+    XMFLOAT4X4 ViewProjMatrix;
+    XMStoreFloat4x4(&ViewProjMatrix, ViewProj);
 
-    memcpy(m_MappedData, &transMatrix, sizeof(XMFLOAT4X4)); // 처음 매개변수는 시작주소
+    memcpy(m_mappedData, &ViewProjMatrix, sizeof(XMFLOAT4X4)); // 처음 매개변수는 시작주소
 }
 
 // Render the scene.
 void Scene::OnRender(ID3D12GraphicsCommandList* commandList)
 {
+    commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+    commandList->IASetIndexBuffer(&m_indexBufferView);
+    //
     CD3DX12_GPU_DESCRIPTOR_HANDLE hDescriptor(m_descriptorHeap->GetGPUDescriptorHandleForHeapStart());
     commandList->SetGraphicsRootDescriptorTable(0, hDescriptor);
     hDescriptor.Offset(1, m_cbvsrvuavDescriptorSize);
     commandList->SetGraphicsRootDescriptorTable(1, hDescriptor);
-    commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-    commandList->IASetIndexBuffer(&m_indexBufferView);
-    commandList->DrawIndexedInstanced(m_indexData.size(), 1, 0, 0, 0);
+    //
+    for (auto& object : m_object)
+    {
+        auto& currntObject = object.second;
+        XMFLOAT4X4 world;
+        XMStoreFloat4x4(&world, currntObject->GetComponent<TransfromMatrix>()->GetMatrix());
+        commandList->SetGraphicsRoot32BitConstants(2, 16, &world, 0);
+        SubMeshData tmp = currntObject->GetComponent<Mesh>()->GetSubMeshData();
+        commandList->DrawIndexedInstanced(tmp.indexCountPerInstance, 1, tmp.statIndexLocation, tmp.baseVertexLocation, 0);
+    }
 }
 
 void Scene::OnResize(UINT width, UINT height)

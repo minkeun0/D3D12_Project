@@ -11,12 +11,12 @@ public:
 class Mesh : public Component
 { 
 public:
-	void LoadMesh();
-	vector<Vertex>& GetData() { return m_data; }
-	UINT GetByteSize() { return m_byteSize; }
+	Mesh(wstring name, SubMeshData subMeshData) : m_name(name), m_subMeshData(subMeshData) {}
+	SubMeshData& GetSubMeshData() { return m_subMeshData; }
+	wstring GetName() { return m_name; }
 private:
-	vector<Vertex> m_data;
-	UINT m_byteSize;
+	wstring m_name;
+	SubMeshData m_subMeshData;
 };
 
 class Position : public Component
@@ -63,12 +63,11 @@ private:
 	XMFLOAT4 m_rotate;
 };
 
-//class WorldMatrix : public Component
-//{
-//public:
-//	WorldMatrix() { XMStoreFloat4x4(&m_worldMatrix, XMMatrixIdentity()); }
-//private:
-//	XMFLOAT4X4 m_worldMatrix;
-//};
-
-
+class TransfromMatrix : public Component
+{
+public:
+	XMMATRIX GetMatrix() { return XMLoadFloat4x4(&m_Matrix); }
+	void SetMatrix(XMMATRIX matrix) { XMStoreFloat4x4(&m_Matrix, matrix); }
+private:
+	XMFLOAT4X4 m_Matrix;
+};

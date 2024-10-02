@@ -1,6 +1,7 @@
 #pragma once
 #include "stdafx.h"
 #include "Object.h"
+#include "MeshManager.h"
 
 using Microsoft::WRL::ComPtr;
 
@@ -24,9 +25,9 @@ public:
     std::wstring GetSceneName() const;
 private:
     std::wstring m_name;
-
-    std::unordered_map<std::wstring, std::unique_ptr<Object>> m_Object;
-
+    std::unordered_map<std::wstring, std::unique_ptr<Object>> m_object;
+    unique_ptr<MeshManager> m_meshManager;
+    //
     CD3DX12_VIEWPORT m_viewport;
     CD3DX12_RECT m_scissorRect;
     ComPtr<ID3D12RootSignature> m_rootSignature;
@@ -35,10 +36,6 @@ private:
     ComPtr<ID3D12DescriptorHeap> m_descriptorHeap;
     UINT m_cbvsrvuavDescriptorSize;
     //
-    vector<Vertex> m_vertexData;
-    vector<uint16_t> m_indexData;
-    UINT m_vertexDataSize;
-    UINT m_indexDataSize;
     ComPtr<ID3D12Resource> m_vertexBuffer_default;
     ComPtr<ID3D12Resource> m_indexBuffer_default;
     ComPtr<ID3D12Resource> m_vertexBuffer_upload;
@@ -50,7 +47,7 @@ private:
     ComPtr<ID3D12Resource> m_textureBuffer_upload;
     //
     ComPtr<ID3D12Resource> m_constantBuffer;
-    UINT8* m_MappedData;
+    UINT8* m_mappedData;
     //
     XMFLOAT4X4 m_proj;
     //
@@ -67,6 +64,5 @@ private:
     void BuildTextureBufferView(ID3D12Device* device);
     void BuildDescriptorHeap(ID3D12Device* device);
     UINT CalcConstantBufferByteSize(UINT byteSize);
-    void BuildMesh();
     void BuildProjMatrix();
 };

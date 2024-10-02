@@ -1,5 +1,10 @@
 cbuffer SceneConstantBuffer : register(b0)
 {
+    float4x4 viewProj;
+};
+
+cbuffer WoldTranslate : register(b1)
+{
     float4x4 world;
 };
 
@@ -22,7 +27,7 @@ PSInput VSMain(VSInput input)
 {
     PSInput output;
     
-    float4 tmp = mul(input.position, world);
+    float4 tmp = mul(mul(input.position, transpose(world)), transpose(viewProj));
     
     output.position = tmp;
     output.uv = input.uv;
