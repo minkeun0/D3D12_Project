@@ -19,6 +19,9 @@ public:
     virtual void OnResize(UINT width, UINT height);
     virtual void OnDestroy();
 
+    virtual void OnKeyDown(UINT8 key);
+    virtual void OnKeyUp(UINT8 key);
+
     void SetState(ID3D12GraphicsCommandList* commandList);
     void SetDescriptorHeaps(ID3D12GraphicsCommandList* commandList);
 

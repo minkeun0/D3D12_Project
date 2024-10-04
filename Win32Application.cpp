@@ -80,12 +80,12 @@ LRESULT CALLBACK Win32Application::WindowProc(HWND hWnd, UINT message, WPARAM wP
         }
         return 0;
 
-    case WM_KEYDOWN:
-        if (pSample)
-        {
-            pSample->OnKeyDown(static_cast<UINT8>(wParam));
-        }
-        return 0;
+    //case WM_KEYDOWN:
+    //    if (pSample)
+    //    {
+    //        pSample->OnKeyDown(static_cast<UINT8>(wParam));
+    //    }
+    //    return 0;
 
     case WM_KEYUP:
         if (pSample)
@@ -94,13 +94,16 @@ LRESULT CALLBACK Win32Application::WindowProc(HWND hWnd, UINT message, WPARAM wP
         }
         return 0;
 
-    //case WM_PAINT:
-    //    if (pSample)
-    //    {
-    //        pSample->OnUpdate();
-    //        pSample->OnRender();
-    //    }
-    //    return 0;
+    case WM_PAINT:
+        if (pSample)
+        {
+            GameTimer& timer = pSample->GetTimer();
+            timer.Tick();
+            pSample->CalculateFrame();
+            pSample->OnUpdate(timer);
+            pSample->OnRender(timer);
+        }
+        return 0;
 
     case WM_SIZE:
         if (pSample)

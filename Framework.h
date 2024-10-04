@@ -13,17 +13,17 @@ public:
 	//시발점 시발점 시발점 시발점
 	virtual int Run(HINSTANCE hInstance, int nCmdShow);
 	//시발점 시발점 시발점 시발점
-
+	void CalculateFrame();
+	GameTimer& GetTimer();
 	virtual void OnInit(HINSTANCE hInstance, int nCmdShow);
 	virtual void OnUpdate(GameTimer& gTimer);
 	virtual void OnRender(GameTimer& gTimer);
 	virtual void OnResize(UINT width, UINT height, bool minimized);
 	virtual void OnDestroy();
 
-	virtual void OnKeyDown(UINT8 /*key*/) {}
-	virtual void OnKeyUp(UINT8 /*key*/) {}
+	virtual void OnKeyDown(UINT8 key);
+	virtual void OnKeyUp(UINT8 key);
 
-private:
 	unique_ptr<Win32Application> m_win32App;
 
 	GameTimer m_Timer;
@@ -76,6 +76,5 @@ private:
 	void PopulateCommandList();
 	void BuildScenes(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
 	void WaitForPreviousFrame();
-	void CalculateFrame();
 };
 

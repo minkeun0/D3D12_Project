@@ -29,23 +29,23 @@ void Scene::OnInit(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 
 void Scene::BuildObjects(ID3D12Device* device)
 {
-    auto tmp = make_unique<Object>(L"BaseObject");
-    tmp->AddComponent<Mesh>(make_shared<Mesh>(L"Box", m_meshManager->GetSubMeshData(L"Box")));
-    tmp->AddComponent<Position>(make_shared<Position>(3.0f, 1.0f, 2.0f, 1.0f)); // 초기 위치
-    tmp->AddComponent<Velocity>(make_shared<Velocity>(0.0f, 0.0f, 0.0f, 0.0f)); // 초당 속도변화
-    tmp->AddComponent<Rotation>(make_shared<Rotation>(0.0f, 0.0f, 0.0f, 0.0f)); // 초기 각도
-    tmp->AddComponent<Rotate>(make_shared<Rotate>(30.0f, 0.0f, 0.0f, 0.0f));    // 초당 각도변화
-    tmp->AddComponent<TransfromMatrix>(make_shared<TransfromMatrix>());
-    m_object[tmp->GetObjectName()] = std::move(tmp);
-
-    tmp = make_unique<Object>(L"PlayerObject");
+    auto tmp = make_unique<PlayerObject>(L"PlayerObject");
     tmp->AddComponent<Mesh>(make_shared<Mesh>(L"Box", m_meshManager->GetSubMeshData(L"Box")));
     tmp->AddComponent<Position>(make_shared<Position>(0.0f, 0.0f, 0.0f, 1.0f)); // 초기 위치
     tmp->AddComponent<Velocity>(make_shared<Velocity>(0.0f, 0.0f, 0.0f, 0.0f)); // 초당 속도변화
     tmp->AddComponent<Rotation>(make_shared<Rotation>(0.0f, 0.0f, 0.0f, 0.0f)); // 초기 각도
-    tmp->AddComponent<Rotate>(make_shared<Rotate>(0.0f, 10.0f, 0.0f, 0.0f));    // 초당 각도변화
-    tmp->AddComponent<TransfromMatrix>(make_shared<TransfromMatrix>());
+    tmp->AddComponent<Rotate>(make_shared<Rotate>(0.0f, 360.0f, 0.0f, 0.0f));    // 초당 각도변화
+    tmp->AddComponent<WorldMatrix>(make_shared<WorldMatrix>());
     m_object[tmp->GetObjectName()] = std::move(tmp);
+
+    auto tmp1 = make_unique<SampleObject>(L"BaseObject");
+    tmp1->AddComponent<Mesh>(make_shared<Mesh>(L"Box", m_meshManager->GetSubMeshData(L"Box")));
+    tmp1->AddComponent<Position>(make_shared<Position>(1.0f, 0.0f, 0.0f, 1.0f)); // 초기 위치
+    tmp1->AddComponent<Velocity>(make_shared<Velocity>(0.0f, 0.0f, 0.0f, 0.0f)); // 초당 속도변화
+    tmp1->AddComponent<Rotation>(make_shared<Rotation>(0.0f, 0.0f, 0.0f, 0.0f)); // 초기 각도
+    tmp1->AddComponent<Rotate>(make_shared<Rotate>(0.0f, 50.0f, 0.0f, 0.0f));    // 초당 각도변화
+    tmp1->AddComponent<WorldMatrix>(make_shared<WorldMatrix>());
+    m_object[tmp1->GetObjectName()] = std::move(tmp1);
 }
 
 void Scene::BuildRootSignature(ID3D12Device* device)
@@ -62,13 +62,13 @@ void Scene::BuildRootSignature(ID3D12Device* device)
     }
 
     CD3DX12_DESCRIPTOR_RANGE1 ranges[2]{};
-    ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+    ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
     ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
 
     CD3DX12_ROOT_PARAMETER1 rootParameters[3]{};
     rootParameters[0].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_VERTEX);
     rootParameters[1].InitAsDescriptorTable(1, &ranges[1], D3D12_SHADER_VISIBILITY_PIXEL);
-    rootParameters[2].InitAsConstants(16, 1, 0);
+    rootParameters[2].InitAsConstants(16, 0, 0);
 
     D3D12_STATIC_SAMPLER_DESC sampler = {};
     sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
@@ -345,27 +345,19 @@ void Scene::SetDescriptorHeaps(ID3D12GraphicsCommandList* commandList)
 // Update frame-based values.
 void Scene::OnUpdate(GameTimer& gTimer)
 {
-    for(auto& object : m_object)
+    for (auto& currentObject : m_object)
     {
-        auto& currentObject = object.second;
-        // 회전 행렬
-        auto rotationData = currentObject->GetComponent<Rotation>();
-        auto rotateData = currentObject->GetComponent<Rotate>();
-        rotationData->SetRotation(XMVectorAdd(rotationData->GetRotation(), rotateData->GetRotate() * gTimer.DeltaTime()));
-        XMMATRIX rotate = XMMatrixRotationRollPitchYawFromVector(rotationData->GetRotation() * (XM_PI / 180.0f)); // 도를 라디안으로 변경
-
-        // 이동 행렬
-        auto positionData = currentObject->GetComponent<Position>();
-        auto velocityData = currentObject->GetComponent<Velocity>();
-        positionData->SetPosition(XMVectorAdd(positionData->GetPosition(), velocityData->GetVelocity() * gTimer.DeltaTime()));
-        XMMATRIX translate = XMMatrixTranslationFromVector(positionData->GetPosition());
-
-        // 월드 행렬
-        XMMATRIX world = rotate * translate;
-        auto matrixData = currentObject->GetComponent<TransfromMatrix>();
-        matrixData->SetMatrix(world);
+        currentObject.second->OnUpdate(gTimer);
     }
-   
+
+    shared_ptr<WorldMatrix> matrixData = nullptr;
+    XMMATRIX world;
+    m_object[L"BaseObject"]->GetComponent(&matrixData);
+    world = matrixData->GetMatrix();
+    m_object[L"PlayerObject"]->GetComponent(&matrixData);
+    world = world * matrixData->GetMatrix();
+    m_object[L"BaseObject"]->GetComponent(&matrixData);
+    matrixData->SetMatrix(world);
 
     // 카메라 행렬.
     XMVECTOR eye = XMVectorSet(0.0f, 5.0f, -5.0f, 1.0f);
@@ -380,10 +372,7 @@ void Scene::OnUpdate(GameTimer& gTimer)
     XMMATRIX ViewProj = view * proj;
 
     // 최종 행렬 전치
-    XMFLOAT4X4 ViewProjMatrix;
-    XMStoreFloat4x4(&ViewProjMatrix, ViewProj);
-
-    memcpy(m_mappedData, &ViewProjMatrix, sizeof(XMFLOAT4X4)); // 처음 매개변수는 시작주소
+    memcpy(m_mappedData, &XMMatrixTranspose(ViewProj), sizeof(XMMATRIX)); // 처음 매개변수는 시작주소
 }
 
 // Render the scene.
@@ -398,14 +387,9 @@ void Scene::OnRender(ID3D12GraphicsCommandList* commandList)
     hDescriptor.Offset(1, m_cbvsrvuavDescriptorSize);
     commandList->SetGraphicsRootDescriptorTable(1, hDescriptor);
     //
-    for (auto& object : m_object)
+    for (auto& currentObject : m_object)
     {
-        auto& currntObject = object.second;
-        XMFLOAT4X4 world;
-        XMStoreFloat4x4(&world, currntObject->GetComponent<TransfromMatrix>()->GetMatrix());
-        commandList->SetGraphicsRoot32BitConstants(2, 16, &world, 0);
-        SubMeshData tmp = currntObject->GetComponent<Mesh>()->GetSubMeshData();
-        commandList->DrawIndexedInstanced(tmp.indexCountPerInstance, 1, tmp.statIndexLocation, tmp.baseVertexLocation, 0);
+        currentObject.second->OnRender(commandList);
     }
 }
 
@@ -420,6 +404,59 @@ void Scene::OnDestroy()
 {
     CD3DX12_RANGE Range(0, CalcConstantBufferByteSize(sizeof(ObjectCB)));
     m_constantBuffer->Unmap(0, &Range);
+}
+
+void Scene::OnKeyDown(UINT8 key)
+{
+    shared_ptr<Velocity> v = nullptr;
+    m_object[L"PlayerObject"]->GetComponent(&v);
+    switch (key)
+    {
+    case 0x57:
+        v->SetVelocity((v->GetVelocity() + XMVECTOR({ 0, 0, 1, 0 })));
+        break;
+    case 0x41:
+        v->SetVelocity((v->GetVelocity() + XMVECTOR({ -1, 0, 0, 0 })));
+        //v->SetVelocity((XMVectorOrInt(v->GetVelocity() , XMVECTOR({ -1, 0, 0, 0 }))));
+        break;
+    case 0x53:
+        v->SetVelocity((v->GetVelocity() + XMVECTOR({ 0, 0, -1, 0 })));
+        //v->SetVelocity((XMVectorOrInt(v->GetVelocity() , XMVECTOR({ 0, 0, -1, 0 }))));
+        break;
+    case 0x44:
+        v->SetVelocity((v->GetVelocity() + XMVECTOR({ 1, 0, 0, 0 })));
+        //v->SetVelocity((XMVectorOrInt(v->GetVelocity() , XMVECTOR({ 1, 0, 0, 0 }))));
+        break;
+    default:
+        break;
+    }
+}
+
+void Scene::OnKeyUp(UINT8 key)
+{
+    shared_ptr<Velocity> v = nullptr;
+    m_object[L"PlayerObject"]->GetComponent(&v);
+    switch (key)
+    {
+    case 0x57:
+       //v->SetVelocity(XMVectorXorInt(v->GetVelocity(), XMVECTOR({ 0, 0, 1, 0 })));
+       v->SetVelocity( XMVECTOR({ 0, 0, 0, 0 }));
+        break;
+    case 0x41:
+        //v->SetVelocity(XMVectorXorInt(v->GetVelocity(), XMVECTOR({ -1, 0, 0, 0 })));
+        v->SetVelocity(XMVECTOR({ 0, 0, 0, 0 }));
+        break;
+    case 0x53:
+        //v->SetVelocity(XMVectorXorInt(v->GetVelocity(), XMVECTOR({ 0, 0, -1, 0 })));
+        v->SetVelocity(XMVECTOR({ 0, 0, 0, 0 }));
+        break;
+    case 0x44:
+        //v->SetVelocity(XMVectorXorInt(v->GetVelocity(), XMVECTOR({ 1, 0, 0, 0 })));
+        v->SetVelocity(XMVECTOR({ 0, 0, 0, 0 }));
+        break;
+    default:
+        break;
+    }
 }
 
 std::wstring Scene::GetSceneName() const

@@ -1,12 +1,13 @@
-cbuffer SceneConstantBuffer : register(b0)
+cbuffer WoldTranslate : register(b0)
+{
+    float4x4 world;
+};
+
+cbuffer SceneConstantBuffer : register(b1)
 {
     float4x4 viewProj;
 };
 
-cbuffer WoldTranslate : register(b1)
-{
-    float4x4 world;
-};
 
 Texture2D g_texture : register(t0);
 SamplerState g_sampler : register(s0);
@@ -27,7 +28,7 @@ PSInput VSMain(VSInput input)
 {
     PSInput output;
     
-    float4 tmp = mul(mul(input.position, transpose(world)), transpose(viewProj));
+    float4 tmp = mul(input.position, mul(world, viewProj));
     
     output.position = tmp;
     output.uv = input.uv;

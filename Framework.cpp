@@ -29,13 +29,13 @@ int Framework::Run(HINSTANCE hInstance, int nCmdShow)
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         }
-        else
-        {
-            m_Timer.Tick();
-            CalculateFrame();
-            OnUpdate(m_Timer);
-            OnRender(m_Timer);
-        }
+        //else
+        //{
+        //    m_Timer.Tick();
+        //    CalculateFrame();
+        //    OnUpdate(m_Timer);
+        //    OnRender(m_Timer);
+        //}
     }
 
     OnDestroy();
@@ -133,6 +133,16 @@ void Framework::OnDestroy()
     // cleaned up by the destructor.
     WaitForPreviousFrame();
     CloseHandle(m_fenceEvent);
+}
+
+void Framework::OnKeyDown(UINT8 key)
+{
+    m_scenes[m_currentScene]->OnKeyDown(key);
+}
+
+void Framework::OnKeyUp(UINT8 key)
+{
+    m_scenes[m_currentScene]->OnKeyUp(key);
 }
 
 // Helper function for acquiring the first available hardware adapter that supports Direct3D 12.
@@ -454,5 +464,10 @@ void Framework::CalculateFrame()
     }
 
 
+}
+
+GameTimer& Framework::GetTimer()
+{
+    return m_Timer;
 }
 
