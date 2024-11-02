@@ -5,6 +5,3 @@ x64/
 x86/
 *.vs
 *.sln
-*.user
-*.vcxproj
-*.filters
