@@ -44,6 +44,14 @@ inline void ThrowIfFailed(HRESULT hr)
     }
 }
 
+inline void ThrowIfFailed(bool result)
+{
+    if (!result)
+    {
+        throw std::runtime_error("exception");
+    }
+}
+
 inline void GetAssetsPath(_Out_writes_(pathSize) WCHAR* path, UINT pathSize)
 {
     if (path == nullptr)

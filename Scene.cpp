@@ -14,6 +14,7 @@ Scene::Scene(UINT width, UINT height, std::wstring name) :
 void Scene::OnInit(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
     BuildObjects(device);
+    BuildFbxBase();
     BuildRootSignature(device);
     BuildPSO(device);
     BuildVertexBuffer(device, commandList);
@@ -34,7 +35,7 @@ void Scene::BuildObjects(ID3D12Device* device)
     tmp->AddComponent<Position>(make_shared<Position>(0.0f, 0.0f, 0.0f, 1.0f)); // 초기 위치
     tmp->AddComponent<Velocity>(make_shared<Velocity>(0.0f, 0.0f, 0.0f, 0.0f)); // 초당 속도변화
     tmp->AddComponent<Rotation>(make_shared<Rotation>(0.0f, 0.0f, 0.0f, 0.0f)); // 초기 각도
-    tmp->AddComponent<Rotate>(make_shared<Rotate>(0.0f, 360.0f, 0.0f, 0.0f));    // 초당 각도변화
+    tmp->AddComponent<Rotate>(make_shared<Rotate>(0.0f, 30.0f, 0.0f, 0.0f));    // 초당 각도변화
     tmp->AddComponent<WorldMatrix>(make_shared<WorldMatrix>());
     m_object[tmp->GetObjectName()] = std::move(tmp);
 
@@ -46,6 +47,12 @@ void Scene::BuildObjects(ID3D12Device* device)
     tmp1->AddComponent<Rotate>(make_shared<Rotate>(0.0f, 50.0f, 0.0f, 0.0f));    // 초당 각도변화
     tmp1->AddComponent<WorldMatrix>(make_shared<WorldMatrix>());
     m_object[tmp1->GetObjectName()] = std::move(tmp1);
+}
+
+void Scene::BuildFbxBase()
+{
+    m_fbxBase = make_unique<FbxBase>();
+    m_fbxBase->ImportFbxToScene("Gunship.fbx");
 }
 
 void Scene::BuildRootSignature(ID3D12Device* device)
@@ -72,9 +79,9 @@ void Scene::BuildRootSignature(ID3D12Device* device)
 
     D3D12_STATIC_SAMPLER_DESC sampler = {};
     sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
-    sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-    sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-    sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+    sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+    sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+    sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
     sampler.MipLODBias = 0;
     sampler.MaxAnisotropy = 0;
     sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;

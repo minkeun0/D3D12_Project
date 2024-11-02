@@ -41,10 +41,10 @@ void MeshManager::BuildBox(float width, float height, float depth)
 	float d2 = 0.5f * depth;
 
 	// Fill in the front face vertex data.
-	v[0] = { {-w2, -h2, -d2} , {0.0f, 1.0f} };
+	v[0] = { {-w2, -h2, -d2} , {0.0f, 3.0f} };
 	v[1] = { {-w2, +h2, -d2} , {0.0f, 0.0f} };
-	v[2] = { {+w2, +h2, -d2} , {1.0f, 0.0f} };
-	v[3] = { {+w2, -h2, -d2} , {1.0f, 1.0f} };
+	v[2] = { {+w2, +h2, -d2} , {3.0f, 0.0f} };
+	v[3] = { {+w2, -h2, -d2} , {3.0f, 3.0f} };
 
 	// Fill in the back face vertex data.
 	v[4] = { {-w2, -h2, +d2}, {1.0f, 1.0f} };

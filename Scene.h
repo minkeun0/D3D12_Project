@@ -2,6 +2,7 @@
 #include "stdafx.h"
 #include "Object.h"
 #include "MeshManager.h"
+#include "FbxBase.h"
 
 using Microsoft::WRL::ComPtr;
 
@@ -30,6 +31,7 @@ private:
     std::wstring m_name;
     std::unordered_map<std::wstring, std::unique_ptr<Object>> m_object;
     unique_ptr<MeshManager> m_meshManager;
+    unique_ptr<FbxBase> m_fbxBase;
     //
     CD3DX12_VIEWPORT m_viewport;
     CD3DX12_RECT m_scissorRect;
@@ -55,6 +57,7 @@ private:
     XMFLOAT4X4 m_proj;
     //
     void BuildObjects(ID3D12Device* device);
+    void BuildFbxBase();
     void BuildRootSignature(ID3D12Device* device);
     void BuildPSO(ID3D12Device* device);
     void BuildVertexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
