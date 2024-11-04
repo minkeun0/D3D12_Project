@@ -1,7 +1,6 @@
 Textures/
 DirectXTK12-main/
 D3D12_Project/
-x64/
 x86/
 *.vs
 *.sln
