@@ -4,6 +4,7 @@
 struct Vertex
 {
     XMFLOAT3 position;
+    XMFLOAT3 normal;
     XMFLOAT2 uv;
 };
 
@@ -22,6 +23,7 @@ struct SubMeshData
 {
 	UINT vertexCountPerInstance;
 	UINT indexCountPerInstance;
+	UINT startVertexLocation;
 	UINT statIndexLocation;
 	UINT baseVertexLocation;
 };

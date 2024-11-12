@@ -1,79 +1,75 @@
 #pragma once
 #include "stdafx.h"
 #include "Info.h"
+#include <variant>
 
-class Component
+class Object;
+
+struct Component // 객체로 만들지 않는 클래스
 {
-public:
+	Component() = default;
+	Component(Object* root) : mRoot{root} {}
 	virtual ~Component() = default;
+	Object* mRoot;
 };
 
-class Mesh : public Component
+struct NeedVector : Component // 객체로 만들지 않는 클래스
+{
+	NeedVector() = default;
+	NeedVector(float x, float y, float z, float w, Object* root) : Component{root}, mFloat4 { x, y, z, w } {}
+	XMVECTOR& GetXMVECTOR() { return XMLoadFloat4(&mFloat4); }
+	void SetXMVECTOR(XMVECTOR& v) { XMStoreFloat4(&mFloat4, v); }
+	XMFLOAT4 mFloat4;
+};
+
+struct World : public Component
+{
+	World() = default;
+	World(Object* root) : Component{ root }, mWorld{} {}
+	XMMATRIX GetXMMATRIX() { return XMLoadFloat4x4(&mWorld); }
+	void SetXMMATRIX(XMMATRIX& m) { XMStoreFloat4x4(&mWorld, m); }
+	XMFLOAT4X4 mWorld;
+};
+
+struct Mesh : public Component
 { 
-public:
-	Mesh(wstring name, SubMeshData subMeshData) : m_name(name), m_subMeshData(subMeshData) {}
-	SubMeshData GetSubMeshData() { return m_subMeshData; }
-	wstring GetName() { return m_name; }
-private:
-	wstring m_name;
-	SubMeshData m_subMeshData;
+	Mesh() = default;
+	Mesh(SubMeshData& subMeshData, Object* root) : Component{ root }, mSubMeshData{ subMeshData } {}
+	SubMeshData mSubMeshData;
 };
 
-class Position : public Component
+struct Position : public NeedVector
 {
-public:
-	Position(float x, float y, float z, float w) : m_position(x, y, z, w), m_modify(true) {}
-	XMVECTOR GetPosition() { return XMLoadFloat4(&m_position); }
-	void SetPosition(XMVECTOR position) { XMStoreFloat4(&m_position, position); }
-	bool GetModify() { return m_modify; }
-	void SetModify(bool ox) { m_modify = ox; }
-private:
-	bool m_modify;
-	XMFLOAT4 m_position;
+	Position() = default;
+	Position(float x, float y, float z, float w, Object* root) : NeedVector{ x, y, z, w , root}, mModify(true) {}
+	bool mModify;
 };
 
-class Velocity : public Component
+struct Velocity : public NeedVector
 {
-public:
-	Velocity(float x, float y, float z, float w) : m_velocity(x, y, z, w) {}
-	XMVECTOR GetVelocity() { return XMLoadFloat4(&m_velocity); }
-	void SetVelocity(XMVECTOR velocity) { XMStoreFloat4(&m_velocity ,velocity); }
-private:
-	XMFLOAT4 m_velocity;
+	Velocity() = default;
+	Velocity(float x, float y, float z, float w, Object* root) : NeedVector{ x, y, z, w, root } {}
 };
 
-class Rotation : public Component
+struct Rotation : public NeedVector
 {
-public:
-	Rotation(float x, float y, float z, float w) : m_rotation(x, y, z, w), m_modify(true) {}
-	XMVECTOR GetRotation() { return XMLoadFloat4(&m_rotation); }
-	void SetRotation(XMVECTOR rotation) { XMStoreFloat4(&m_rotation, rotation); }
-	bool GetModify() { return m_modify; }
-	void SetModify(bool ox) { m_modify = ox; }
-private:
-	bool m_modify;
-	XMFLOAT4 m_rotation;
+	Rotation() = default;
+	Rotation(float x, float y, float z, float w, Object* root) : NeedVector{ x, y, z, w, root }, mModify(true) {}
+	bool mModify;
 };
 
-class Rotate : public Component
+struct Rotate : public NeedVector
 {
-public:
-	Rotate(float x, float y, float z, float w) : m_rotate(x, y, z, w) {}
-	XMVECTOR GetRotate() { return XMLoadFloat4(&m_rotate); }
-	void SetRotate(XMVECTOR rotate) { XMStoreFloat4(&m_rotate, rotate); }
-private:
-	XMFLOAT4 m_rotate;
+	Rotate() = default;
+	Rotate(float x, float y, float z, float w, Object* root) : NeedVector{ x, y, z, w, root } {}
 };
 
-class WorldMatrix : public Component
+struct Scale : public NeedVector
 {
-public:
-	WorldMatrix() : m_modify(true) {}
-	XMMATRIX GetMatrix() { return XMLoadFloat4x4(&m_world); }
-	void SetMatrix(XMMATRIX world) { XMStoreFloat4x4(&m_world, world); }
-	bool GetModify() { return m_modify; }
-	void SetModify(bool ox) { m_modify = ox; }
-private:
-	bool m_modify;
-	XMFLOAT4X4 m_world;
+	Scale() = default;
+	Scale(float x, Object* root) : NeedVector{ x, x, x, x, root }, mScaleValue{x} {}
+	float mScaleValue;
 };
+
+
+using ComponentVariant = variant<Mesh, Position, Velocity, Rotation, Rotate, Scale, World>;

@@ -29,13 +29,13 @@ int Framework::Run(HINSTANCE hInstance, int nCmdShow)
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         }
-        //else
-        //{
-        //    m_Timer.Tick();
-        //    CalculateFrame();
-        //    OnUpdate(m_Timer);
-        //    OnRender(m_Timer);
-        //}
+        else
+        {
+            m_Timer.Tick();
+            CalculateFrame();
+            OnUpdate(m_Timer);
+            OnRender(m_Timer);
+        }
     }
 
     OnDestroy();

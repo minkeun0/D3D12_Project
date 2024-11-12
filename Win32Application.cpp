@@ -13,10 +13,11 @@
 #include "Framework.h"
 
 Win32Application::Win32Application(UINT width, UINT height, std::wstring name) : 
-    m_title(name),
-    m_width(width),
-    m_height(height),
-    m_windowVisible(true)
+    m_hwnd{ nullptr },
+    m_width{ width },
+    m_height{ height },
+    m_title{ name },
+    m_windowVisible{ true }
 {
     m_aspectRatio = static_cast<float>(width) / static_cast<float>(height);
 }
@@ -80,28 +81,17 @@ LRESULT CALLBACK Win32Application::WindowProc(HWND hWnd, UINT message, WPARAM wP
         }
         return 0;
 
-    //case WM_KEYDOWN:
-    //    if (pSample)
-    //    {
-    //        pSample->OnKeyDown(static_cast<UINT8>(wParam));
-    //    }
-    //    return 0;
+    case WM_KEYDOWN:
+        if (pSample)
+        {
+            pSample->OnKeyDown(static_cast<UINT8>(wParam));
+        }
+        return 0;
 
     case WM_KEYUP:
         if (pSample)
         {
             pSample->OnKeyUp(static_cast<UINT8>(wParam));
-        }
-        return 0;
-
-    case WM_PAINT:
-        if (pSample)
-        {
-            GameTimer& timer = pSample->GetTimer();
-            timer.Tick();
-            pSample->CalculateFrame();
-            pSample->OnUpdate(timer);
-            pSample->OnRender(timer);
         }
         return 0;
 

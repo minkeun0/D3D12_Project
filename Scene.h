@@ -1,10 +1,7 @@
 #pragma once
 #include "stdafx.h"
 #include "Object.h"
-#include "MeshManager.h"
-#include "FbxBase.h"
-
-using Microsoft::WRL::ComPtr;
+#include "ResourceManager.h"
 
 class GameTimer;
 
@@ -12,7 +9,7 @@ class Scene
 {
 public:
     Scene() = default;
-    Scene(UINT width, UINT height, std::wstring name);
+    Scene(UINT width, UINT height, wstring name);
 
     virtual void OnInit(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
     virtual void OnUpdate(GameTimer& gTimer);
@@ -26,12 +23,19 @@ public:
     void SetState(ID3D12GraphicsCommandList* commandList);
     void SetDescriptorHeaps(ID3D12GraphicsCommandList* commandList);
 
-    std::wstring GetSceneName() const;
+    wstring GetSceneName() const;
+    ResourceManager& GetResourceManager();
+
+    template<typename T>
+    void AddObj(const wstring& name, T&& object) { m_objects.emplace(name, move(object)); }
+
+    template<typename T>
+    T& GetObj(const wstring& name) { return get<T>(m_objects.at(name)); }
+
 private:
-    std::wstring m_name;
-    std::unordered_map<std::wstring, std::unique_ptr<Object>> m_object;
-    unique_ptr<MeshManager> m_meshManager;
-    unique_ptr<FbxBase> m_fbxBase;
+    wstring m_name;
+    unordered_map<wstring, ObjectVariant> m_objects;
+    unique_ptr<ResourceManager> m_resourceManager;
     //
     CD3DX12_VIEWPORT m_viewport;
     CD3DX12_RECT m_scissorRect;
@@ -57,13 +61,12 @@ private:
     XMFLOAT4X4 m_proj;
     //
     void BuildObjects(ID3D12Device* device);
-    void BuildFbxBase();
     void BuildRootSignature(ID3D12Device* device);
     void BuildPSO(ID3D12Device* device);
     void BuildVertexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
-    void BuildIndexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
+    //void BuildIndexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
     void BuildVertexBufferView();
-    void BuildIndexBufferView();
+    //void BuildIndexBufferView();
     void BuildConstantBuffer(ID3D12Device* device);
     void BuildConstantBufferView(ID3D12Device* device);
     void BuildTextureBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);

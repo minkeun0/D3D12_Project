@@ -39,10 +39,10 @@
     <ClCompile Include="GameTimer.cpp">
       <Filter>리소스 파일\소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="MeshManager.cpp">
+    <ClCompile Include="FbxExtractor.cpp">
       <Filter>리소스 파일\소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="FbxBase.cpp">
+    <ClCompile Include="ResourceManager.cpp">
       <Filter>리소스 파일\소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
@@ -77,10 +77,10 @@
     <ClInclude Include="GameTimer.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="MeshManager.h">
+    <ClInclude Include="FbxExtractor.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="FbxBase.h">
+    <ClInclude Include="ResourceManager.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
