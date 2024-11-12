@@ -32,6 +32,8 @@ public:
     template<typename T>
     T& GetObj(const wstring& name) { return get<T>(m_objects.at(name)); }
 
+    UINT8* GetConstantBufferMappedData();
+
 private:
     wstring m_name;
     unordered_map<wstring, ObjectVariant> m_objects;

@@ -11,6 +11,7 @@
 
 #include "Win32Application.h"
 #include "Framework.h"
+#include <WindowsX.h>
 
 Win32Application::Win32Application(UINT width, UINT height, std::wstring name) : 
     m_hwnd{ nullptr },
@@ -92,6 +93,12 @@ LRESULT CALLBACK Win32Application::WindowProc(HWND hWnd, UINT message, WPARAM wP
         if (pSample)
         {
             pSample->OnKeyUp(static_cast<UINT8>(wParam));
+        }
+        return 0;
+
+    case WM_MOUSEMOVE:
+        if (pSample) {
+            pSample->m_scenes.at(pSample->m_currentScene).get()->GetObj<CameraObject>(L"CameraObject").OnMouseInput(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
         }
         return 0;
 

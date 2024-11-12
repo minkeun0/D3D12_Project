@@ -5,7 +5,8 @@ cbuffer WoldTranslate : register(b0)
 
 cbuffer SceneConstantBuffer : register(b1)
 {
-    float4x4 viewProj;
+    float4x4 view;
+    float4x4 proj;
 };
 
 Texture2D Texture : register(t0);
@@ -28,7 +29,7 @@ struct VSOutput
 VSOutput VSMain(VSInput input)
 {    
     VSOutput output;
-    output.position = mul(input.position, mul(world, viewProj));
+    output.position = mul(input.position, mul(world, mul(view, proj)));
     float3 n = mul(input.normal.xyz, (float3x3) world); // fbx 파일에서 읽어올때 회전을 시켜서 읽어 오는게 더 좋을지도...
     output.normal = float4(n, 0);
     output.uv = input.uv;

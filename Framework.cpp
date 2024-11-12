@@ -1,5 +1,6 @@
 #include "Framework.h"
 #include "DXSampleHelper.h"
+#include <DirectXColors.h>
 
 Framework::Framework(HINSTANCE hInstance, int nCmdShow, UINT width, UINT height, std::wstring name) :
     m_frameIndex(0),
@@ -406,8 +407,8 @@ void Framework::PopulateCommandList()
     m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 
     // Record commands.
-    const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
-    m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+    
+    m_commandList->ClearRenderTargetView(rtvHandle, Colors::LightSteelBlue, 0, nullptr);
     m_commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1, 0, 0, nullptr);
 
     // Rendering

@@ -28,16 +28,17 @@ void ResourceManager::LoadFbx(const string& fileName)
 void ResourceManager::CreatePlane(const string& name, float size)
 {
 	float halfSize = size / 2;
+	float wrap = 30;
 	vector<Vertex> vertexData;
 
 	// Æò¸é
 	{
 		vertexData.push_back(Vertex{ {-halfSize, 0, halfSize},{0,1,0},{0,0} });
-		vertexData.push_back(Vertex{ {halfSize, 0, halfSize},{0,1,0},{halfSize,0} });
-		vertexData.push_back(Vertex{ {-halfSize, 0, -halfSize},{0,1,0},{0,halfSize} });
-		vertexData.push_back(Vertex{ {-halfSize, 0, -halfSize},{0,1,0},{0,halfSize} });
-		vertexData.push_back(Vertex{ {halfSize, 0, halfSize},{0,1,0},{halfSize,0} });
-		vertexData.push_back(Vertex{ {halfSize, 0, -halfSize},{0,1,0},{halfSize,halfSize} });
+		vertexData.push_back(Vertex{ {halfSize, 0, halfSize},{0,1,0},{wrap,0} });
+		vertexData.push_back(Vertex{ {-halfSize, 0, -halfSize},{0,1,0},{0,wrap} });
+		vertexData.push_back(Vertex{ {-halfSize, 0, -halfSize},{0,1,0},{0,wrap} });
+		vertexData.push_back(Vertex{ {halfSize, 0, halfSize},{0,1,0},{wrap,0} });
+		vertexData.push_back(Vertex{ {halfSize, 0, -halfSize},{0,1,0},{wrap,wrap} });
 	}
 
 	SubMeshData subData{};

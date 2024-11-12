@@ -45,6 +45,10 @@ void Scene::BuildObjects(ID3D12Device* device)
     player.AddComponent(World{ &player });
     player.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("1P(boy).fbx"), &player });
 
+    AddObj(L"CameraObject", CameraObject{30.f, this });
+    CameraObject& camera = GetObj<CameraObject>(L"CameraObject");
+    camera.AddComponent(Position{ 0.f, 0.f, 0.f, 0.f, &camera });
+
     AddObj(L"PlaneObject", TestObject{ this });
     TestObject& plane = GetObj<TestObject>(L"PlaneObject");
     plane.AddComponent(Position{ 0.f, 0.f, 0.f, 1.f, &plane });
@@ -58,21 +62,21 @@ void Scene::BuildObjects(ID3D12Device* device)
 
     AddObj(L"TestObject", TestObject{ this });
     TestObject& test = GetObj<TestObject>(L"TestObject");
-    test.AddComponent(Position{ 20.f, 0.f, 0.f, 1.f, &test });
+    test.AddComponent(Position{ 20.f, 100.f, 0.f, 1.f, &test });
     test.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &test });
     test.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &test });
     test.AddComponent(Rotate{ 0.0f, 10.0f, 0.0f, 0.0f, &test });
-    test.AddComponent(Scale{ 0.01f, &test });
+    test.AddComponent(Scale{ 0.05f, &test });
     test.AddComponent(World{ &test });
     test.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("FlyerPlayership.fbx") , &test });
 
     AddObj(L"TestObject1", TestObject{ this });
     TestObject& test1 = GetObj<TestObject>(L"TestObject1");
-    test1.AddComponent(Position{ -20.f, 0.f, 0.f, 1.f, &test1 });
+    test1.AddComponent(Position{ -20.f, 10.f, 0.f, 1.f, &test1 });
     test1.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &test1 });
     test1.AddComponent(Rotation{ -90.0f, 0.0f, 0.0f, 0.0f, &test1});
     test1.AddComponent(Rotate{ 0.0f, 10.0f, 0.0f, 0.0f, &test1 });
-    test1.AddComponent(Scale{ 0.1f, &test1 });
+    test1.AddComponent(Scale{ 0.3f, &test1 });
     test1.AddComponent(World{ &test1 });
     test1.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("god.fbx") , &test1 });
 
@@ -82,7 +86,7 @@ void Scene::BuildObjects(ID3D12Device* device)
     test2.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &test2 });
     test2.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &test2 });
     test2.AddComponent(Rotate{ 0.0f, 10.0f, 0.0f, 0.0f, &test2 });
-    test2.AddComponent(Scale{ 1.f, &test2 });
+    test2.AddComponent(Scale{ 3.f, &test2 });
     test2.AddComponent(World{ &test2 });
     test2.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("Gunship.fbx") , &test2 });
 
@@ -275,7 +279,7 @@ void Scene::BuildDescriptorHeap(ID3D12Device* device)
 
 void Scene::BuildConstantBuffer(ID3D12Device* device)
 {
-    const UINT constantBufferSize = CalcConstantBufferByteSize(sizeof(ObjectCB));    // CB size is required to be 256-byte aligned.
+    const UINT constantBufferSize = CalcConstantBufferByteSize(sizeof(CommonCB));    // CB size is required to be 256-byte aligned.
 
     ThrowIfFailed(device->CreateCommittedResource(
         &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
@@ -386,21 +390,8 @@ void Scene::OnUpdate(GameTimer& gTimer)
         visit([&gTimer](auto& arg) {arg.OnUpdate(gTimer); }, value);
     }
 
-
-    // 카메라 행렬.
-    XMVECTOR eye = XMVectorSet(0.0f, 3.0f, -20.0f, 1.0f);
-    XMVECTOR target = XMVectorZero();
-    XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-    XMMATRIX view = XMMatrixLookAtLH(eye, target, up);
-
-    // 투영 행렬
-    XMMATRIX proj = XMLoadFloat4x4(&m_proj);
-
-    // 최종 변환 행렬
-    XMMATRIX ViewProj = view * proj;
-
-    // 최종 행렬 전치
-    memcpy(m_mappedData, &XMMatrixTranspose(ViewProj), sizeof(XMMATRIX)); // 처음 매개변수는 시작주소
+    //투영행렬 쉐이더로 전달
+    memcpy(m_mappedData + 64, &XMMatrixTranspose(XMLoadFloat4x4(&m_proj)), sizeof(XMMATRIX)); // 처음 매개변수는 시작주소
 }
 
 // Render the scene.
@@ -451,4 +442,10 @@ std::wstring Scene::GetSceneName() const
 ResourceManager& Scene::GetResourceManager()
 {
     return *(m_resourceManager.get());
+}
+
+UINT8* Scene::GetConstantBufferMappedData()
+{
+    // TODO: 여기에 return 문을 삽입합니다.
+    return m_mappedData;
 }

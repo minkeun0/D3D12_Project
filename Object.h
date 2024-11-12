@@ -39,6 +39,25 @@ public:
 	void OnKeyboardInput(const GameTimer& gTimer);
 };
 
+class CameraObject : public Object
+{
+public:
+	CameraObject() = default;
+	CameraObject(float radius, Scene* root);
+	virtual void OnUpdate(GameTimer& gTimer);
+	virtual void OnRender(ID3D12GraphicsCommandList* commandList);
+	void OnMouseInput(WPARAM wParam, int x, int y);
+	void SetXMMATRIX(XMMATRIX m);
+	XMMATRIX& GetXMMATRIX();
+private:
+	int mLastPosX;
+	int mLastPosY;
+	float mTheta;
+	float mPhi;
+	float mRadius;
+	XMFLOAT4X4 mViewMatrix;
+};
+
 class TestObject : public Object
 {
 public:
@@ -48,4 +67,4 @@ public:
 	virtual void OnRender(ID3D12GraphicsCommandList* commandList);
 };
 
-using ObjectVariant = variant<PlayerObject, TestObject>;
+using ObjectVariant = variant<PlayerObject, CameraObject, TestObject>;

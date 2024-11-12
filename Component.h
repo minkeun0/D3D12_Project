@@ -71,5 +71,15 @@ struct Scale : public NeedVector
 	float mScaleValue;
 };
 
+//struct CameraPosition : NeedVector
+//{
+//	CameraPosition() = default;
+//	CameraPosition(float x, float y, float z, float w, Object* root) :
+//		NeedVector{ x,y,z,w,root }, mLastPosX{}, mLastPosY{}, mTheta{}, mPhi{} {}
+//	int mLastPosX;
+//	int mLastPosY;
+//	float mTheta;
+//	float mPhi;
+//};
 
 using ComponentVariant = variant<Mesh, Position, Velocity, Rotation, Rotate, Scale, World>;
