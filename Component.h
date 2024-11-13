@@ -38,6 +38,13 @@ struct Mesh : public Component
 	SubMeshData mSubMeshData;
 };
 
+struct Texture : public Component
+{
+	Texture() = default;
+	Texture(int descriptorStartIndex, Object* root) : Component{ root }, mDescriptorStartIndex{descriptorStartIndex} {}
+	int mDescriptorStartIndex;
+};
+
 struct Position : public NeedVector
 {
 	Position() = default;
@@ -82,4 +89,4 @@ struct Scale : public NeedVector
 //	float mPhi;
 //};
 
-using ComponentVariant = variant<Mesh, Position, Velocity, Rotation, Rotate, Scale, World>;
+using ComponentVariant = variant<Mesh, Position, Velocity, Rotation, Rotate, Scale, World, Texture>;

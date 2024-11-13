@@ -99,7 +99,7 @@ void FbxExtractor::ExtractMeshData(std::vector<Vertex>& pVertices)
 					lVector2 = lUV->GetDirectArray().GetAt(j);
 				}
 				lVertex.uv.x = (float)lVector2[0];
-				lVertex.uv.y = (float)lVector2[1];
+				lVertex.uv.y = 1.0f - (float)lVector2[1];
 			}
 			pVertices.push_back(lVertex);
 		}

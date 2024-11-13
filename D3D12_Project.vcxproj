@@ -136,6 +136,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Component.cpp" />
+    <ClCompile Include="DDSTextureLoader12.cpp" />
     <ClCompile Include="FbxExtractor.cpp" />
     <ClCompile Include="Framework.cpp" />
     <ClCompile Include="GameTimer.cpp" />
@@ -149,6 +150,7 @@
   <ItemGroup>
     <ClInclude Include="Component.h" />
     <ClInclude Include="d3dx12.h" />
+    <ClInclude Include="DDSTextureLoader12.h" />
     <ClInclude Include="DXSampleHelper.h" />
     <ClInclude Include="FbxExtractor.h" />
     <ClInclude Include="Framework.h" />

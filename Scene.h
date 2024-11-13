@@ -2,6 +2,7 @@
 #include "stdafx.h"
 #include "Object.h"
 #include "ResourceManager.h"
+#include <utility>
 
 class GameTimer;
 
@@ -13,7 +14,7 @@ public:
 
     virtual void OnInit(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
     virtual void OnUpdate(GameTimer& gTimer);
-    virtual void OnRender(ID3D12GraphicsCommandList* commandList);
+    virtual void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
     virtual void OnResize(UINT width, UINT height);
     virtual void OnDestroy();
 
@@ -33,7 +34,7 @@ public:
     T& GetObj(const wstring& name) { return get<T>(m_objects.at(name)); }
 
     UINT8* GetConstantBufferMappedData();
-
+    ID3D12DescriptorHeap* GetDescriptorHeap();
 private:
     wstring m_name;
     unordered_map<wstring, ObjectVariant> m_objects;
@@ -48,14 +49,16 @@ private:
     UINT m_cbvsrvuavDescriptorSize;
     //
     ComPtr<ID3D12Resource> m_vertexBuffer_default;
-    ComPtr<ID3D12Resource> m_indexBuffer_default;
+    //ComPtr<ID3D12Resource> m_indexBuffer_default;
     ComPtr<ID3D12Resource> m_vertexBuffer_upload;
-    ComPtr<ID3D12Resource> m_indexBuffer_upload;
+    //ComPtr<ID3D12Resource> m_indexBuffer_upload;
     D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
-    D3D12_INDEX_BUFFER_VIEW m_indexBufferView;
+    //D3D12_INDEX_BUFFER_VIEW m_indexBufferView;
     //
-    ComPtr<ID3D12Resource> m_textureBuffer_default;
-    ComPtr<ID3D12Resource> m_textureBuffer_upload;
+    unordered_map<wstring, int> m_subTextureData;
+    vector<wstring> m_DDSFileName;
+    vector<ComPtr<ID3D12Resource>> m_textureBuffer_defaults;
+    vector<ComPtr<ID3D12Resource>> m_textureBuffer_uploads;
     //
     ComPtr<ID3D12Resource> m_constantBuffer;
     UINT8* m_mappedData;

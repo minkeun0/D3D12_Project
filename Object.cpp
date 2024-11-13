@@ -26,8 +26,11 @@ void PlayerObject::OnUpdate(GameTimer& gTimer)
     GetComponent<World>().SetXMMATRIX(world);
 };
 
-void PlayerObject::OnRender(ID3D12GraphicsCommandList* commandList)
+void PlayerObject::OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
+    CD3DX12_GPU_DESCRIPTOR_HANDLE hDescriptor(m_root->GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart());
+    hDescriptor.Offset(1+GetComponent<Texture>().mDescriptorStartIndex, device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+    commandList->SetGraphicsRootDescriptorTable(1, hDescriptor);
     commandList->SetGraphicsRoot32BitConstants(2, 16, &XMMatrixTranspose(GetComponent<World>().GetXMMATRIX()), 0);
     //commandList->DrawIndexedInstanced(tmp.indexCountPerInstance, 1, tmp.statIndexLocation, tmp.baseVertexLocation, 0);
     commandList->DrawInstanced(GetComponent<Mesh>().mSubMeshData.vertexCountPerInstance, 1, GetComponent<Mesh>().mSubMeshData.startVertexLocation, 0);
@@ -44,24 +47,30 @@ void PlayerObject::OnKeyboardInput(const GameTimer& gTimer)
     XMVECTOR forward = XMVector4Transform(XMVECTOR{ 0, 0, speed, 0 }, XMMatrixTranspose(view));
     XMVECTOR right = XMVector4Transform(XMVECTOR{ speed, 0, 0, 0 }, XMMatrixTranspose(view));
 
+    //forward = XMVectorSetY(forward, 0.f);
+
     if (GetAsyncKeyState('W') & 0x8000) {
         GetComponent<Velocity>().SetXMVECTOR(forward);
         GetComponent<Position>().SetXMVECTOR(GetComponent<Position>().GetXMVECTOR() + GetComponent<Velocity>().GetXMVECTOR() * gTimer.DeltaTime());
     }
     if (GetAsyncKeyState('S') & 0x8000) {
-        GetComponent<Velocity>().SetXMVECTOR(-forward);
+        GetComponent<Velocity>().SetXMVECTOR(- forward);
         GetComponent<Position>().SetXMVECTOR(GetComponent<Position>().GetXMVECTOR() + GetComponent<Velocity>().GetXMVECTOR() * gTimer.DeltaTime());
     }
-
     if (GetAsyncKeyState('A') & 0x8000) {
         GetComponent<Velocity>().SetXMVECTOR(-right);
         GetComponent<Position>().SetXMVECTOR(GetComponent<Position>().GetXMVECTOR() + GetComponent<Velocity>().GetXMVECTOR() * gTimer.DeltaTime());
     }
-
     if (GetAsyncKeyState('D') & 0x8000) {
         GetComponent<Velocity>().SetXMVECTOR(right);
         GetComponent<Position>().SetXMVECTOR(GetComponent<Position>().GetXMVECTOR() + GetComponent<Velocity>().GetXMVECTOR() * gTimer.DeltaTime());
     }
+
+    if (GetAsyncKeyState('P') & 0x8000) {
+        XMFLOAT4 pos = GetComponent<Position>().mFloat4;
+        OutputDebugStringA(string{ to_string(pos.x) + "," + to_string(pos.y) + "," + to_string(pos.z) + "\n"}.c_str());
+    }
+
 }
 
 TestObject::TestObject(Scene* root) : Object{root}
@@ -83,8 +92,11 @@ void TestObject::OnUpdate(GameTimer& gTimer)
     GetComponent<World>().SetXMMATRIX(scale * rotate * translate);
 }
 
-void TestObject::OnRender(ID3D12GraphicsCommandList* commandList)
+void TestObject::OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
+    CD3DX12_GPU_DESCRIPTOR_HANDLE hDescriptor(m_root->GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart());
+    hDescriptor.Offset(1 + GetComponent<Texture>().mDescriptorStartIndex, device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+    commandList->SetGraphicsRootDescriptorTable(1, hDescriptor);
     commandList->SetGraphicsRoot32BitConstants(2, 16, &XMMatrixTranspose(GetComponent<World>().GetXMMATRIX()), 0);
     //commandList->DrawIndexedInstanced(tmp.indexCountPerInstance, 1, tmp.statIndexLocation, tmp.baseVertexLocation, 0);
     commandList->DrawInstanced(GetComponent<Mesh>().mSubMeshData.vertexCountPerInstance, 1, GetComponent<Mesh>().mSubMeshData.startVertexLocation, 0);
@@ -118,13 +130,13 @@ void CameraObject::OnUpdate(GameTimer& gTimer)
     memcpy(m_root->GetConstantBufferMappedData(), &XMMatrixTranspose(GetXMMATRIX()), sizeof(XMMATRIX)); // 처음 매개변수는 시작주소
 }
 
-void CameraObject::OnRender(ID3D12GraphicsCommandList* commandList)
+void CameraObject::OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
 }
 
 void CameraObject::OnMouseInput(WPARAM wParam, int x, int y)
 {
-    OutputDebugStringA((to_string(x) + " : " + to_string(y) + "\n").c_str());
+    //OutputDebugStringA((to_string(x) + " : " + to_string(y) + "\n").c_str());
     //if (mLastPosX == -1 || mLastPosY == -1) {
     //    mLastPosX = x;
     //    mLastPosY = y;
@@ -136,7 +148,9 @@ void CameraObject::OnMouseInput(WPARAM wParam, int x, int y)
         mPhi -= XMConvertToRadians(dy * 0.1f);
 
         // 각도 clamp
-        mPhi = mPhi < 0.1 ? 0.1 : (mPhi > XM_PI - 0.1 ? XM_PI - 0.1 : mPhi);
+        float min = 0.1f;
+        float max = XM_PI - 0.1f;
+        mPhi = mPhi < min ? min : (mPhi > max ? max : mPhi);
     };
 
     mLastPosX = x;

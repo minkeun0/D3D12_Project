@@ -10,11 +10,32 @@ Scene::Scene(UINT width, UINT height, std::wstring name) :
 {
     BuildProjMatrix();
     m_resourceManager = make_unique<ResourceManager>();
-    m_resourceManager->CreatePlane("Plane", 500);
+    m_resourceManager->CreatePlane("Plane", 5000);
     m_resourceManager->LoadFbx("Gunship.fbx");
     m_resourceManager->LoadFbx("1P(boy).fbx");
     m_resourceManager->LoadFbx("god.fbx");
     m_resourceManager->LoadFbx("FlyerPlayership.fbx");
+    m_resourceManager->LoadFbx("sister.fbx");
+
+    int i = 0;
+    m_DDSFileName.push_back(L"./Textures/boy.dds");
+    m_subTextureData.insert({ L"boy", i++ });
+    m_DDSFileName.push_back(L"./Textures/bricks3.dds");
+    m_subTextureData.insert({ L"bricks3", i++ });
+    m_DDSFileName.push_back(L"./Textures/checkboard.dds");
+    m_subTextureData.insert({ L"checkboard", i++ });
+    m_DDSFileName.push_back(L"./Textures/grass.dds");
+    m_subTextureData.insert({ L"grass", i++ });
+    m_DDSFileName.push_back(L"./Textures/tile.dds");
+    m_subTextureData.insert({ L"tile", i++ });
+    m_DDSFileName.push_back(L"./Textures/WireFence.dds");
+    m_subTextureData.insert({ L"WireFence", i++ });
+    m_DDSFileName.push_back(L"./Textures/god.dds");
+    m_subTextureData.insert({ L"god", i++ });
+    m_DDSFileName.push_back(L"./Textures/Gunship.dds");
+    m_subTextureData.insert({ L"Gunship", i++ });
+    m_DDSFileName.push_back(L"./Textures/sister.dds");
+    m_subTextureData.insert({ L"sister", i++ });
 }
 
 void Scene::OnInit(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
@@ -37,13 +58,14 @@ void Scene::BuildObjects(ID3D12Device* device)
 {
     AddObj(L"PlayerObject", PlayerObject{ this });
     PlayerObject& player = GetObj<PlayerObject>(L"PlayerObject");
-    player.AddComponent(Position{ 0.f, 10.f, 0.f, 1.f, &player });
+    player.AddComponent(Position{ 0.f, 12.f, -60.f, 1.f, &player });
     player.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &player });
     player.AddComponent(Rotation{ -90.0f, 0.0f, 0.0f, 0.0f, &player });
     player.AddComponent(Rotate{ 0.0f, 10.0f, 0.0f, 0.0f, &player });
     player.AddComponent(Scale{ 0.1f, &player });
     player.AddComponent(World{ &player });
     player.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("1P(boy).fbx"), &player });
+    player.AddComponent(Texture{ m_subTextureData.at(L"boy"), &player});
 
     AddObj(L"CameraObject", CameraObject{30.f, this });
     CameraObject& camera = GetObj<CameraObject>(L"CameraObject");
@@ -58,37 +80,40 @@ void Scene::BuildObjects(ID3D12Device* device)
     plane.AddComponent(Scale{ 1.f, &plane });
     plane.AddComponent(World{ &plane });
     plane.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("Plane") , &plane });
-
+    plane.AddComponent(Texture{ m_subTextureData.at(L"tile"), &plane });
 
     AddObj(L"TestObject", TestObject{ this });
     TestObject& test = GetObj<TestObject>(L"TestObject");
-    test.AddComponent(Position{ 20.f, 100.f, 0.f, 1.f, &test });
+    test.AddComponent(Position{ 50.f, 20.f, 0.f, 1.f, &test });
     test.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &test });
-    test.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &test });
+    test.AddComponent(Rotation{ -90.0f, 0.0f, 0.0f, 0.0f, &test });
     test.AddComponent(Rotate{ 0.0f, 10.0f, 0.0f, 0.0f, &test });
-    test.AddComponent(Scale{ 0.05f, &test });
+    test.AddComponent(Scale{ 0.25f, &test });
     test.AddComponent(World{ &test });
-    test.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("FlyerPlayership.fbx") , &test });
+    test.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("sister.fbx") , &test });
+    test.AddComponent(Texture{ m_subTextureData.at(L"sister"), &test });
 
     AddObj(L"TestObject1", TestObject{ this });
     TestObject& test1 = GetObj<TestObject>(L"TestObject1");
-    test1.AddComponent(Position{ -20.f, 10.f, 0.f, 1.f, &test1 });
+    test1.AddComponent(Position{ -20.f, 15.f, 0.f, 1.f, &test1 });
     test1.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &test1 });
     test1.AddComponent(Rotation{ -90.0f, 0.0f, 0.0f, 0.0f, &test1});
     test1.AddComponent(Rotate{ 0.0f, 10.0f, 0.0f, 0.0f, &test1 });
-    test1.AddComponent(Scale{ 0.3f, &test1 });
+    test1.AddComponent(Scale{ 0.25f, &test1 });
     test1.AddComponent(World{ &test1 });
-    test1.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("god.fbx") , &test1 });
+    test1.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("god.fbx"), &test1 });
+    test1.AddComponent(Texture{ m_subTextureData.at(L"god"), &test1 });
 
     AddObj(L"TestObject2", TestObject{ this });
     TestObject& test2 = GetObj<TestObject>(L"TestObject2");
-    test2.AddComponent(Position{ 0.f, 0.f, 10.f, 1.f, &test2 });
+    test2.AddComponent(Position{ 0.f, 0.f, 100.f, 1.f, &test2 });
     test2.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &test2 });
     test2.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &test2 });
     test2.AddComponent(Rotate{ 0.0f, 10.0f, 0.0f, 0.0f, &test2 });
-    test2.AddComponent(Scale{ 3.f, &test2 });
+    test2.AddComponent(Scale{ 5.f, &test2 });
     test2.AddComponent(World{ &test2 });
     test2.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("Gunship.fbx") , &test2 });
+    test2.AddComponent(Texture{ m_subTextureData.at(L"Gunship"), &test2 });
 
 }
 
@@ -269,7 +294,7 @@ void Scene::BuildVertexBufferView()
 void Scene::BuildDescriptorHeap(ID3D12Device* device)
 {
     D3D12_DESCRIPTOR_HEAP_DESC HeapDesc = {};
-    HeapDesc.NumDescriptors = 2;
+    HeapDesc.NumDescriptors = static_cast<UINT>(1 + m_DDSFileName.size());
     HeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
     HeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
     ThrowIfFailed(device->CreateDescriptorHeap(&HeapDesc, IID_PPV_ARGS(m_descriptorHeap.GetAddressOf())));
@@ -298,34 +323,45 @@ void Scene::BuildConstantBuffer(ID3D12Device* device)
 void Scene::BuildConstantBufferView(ID3D12Device* device)
 {
     // Describe and create a constant buffer view.
-    D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
+    D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc{};
     cbvDesc.BufferLocation = m_constantBuffer->GetGPUVirtualAddress();
-    cbvDesc.SizeInBytes = CalcConstantBufferByteSize(sizeof(ObjectCB));
-    device->CreateConstantBufferView(&cbvDesc, m_descriptorHeap->GetCPUDescriptorHandleForHeapStart());
+    cbvDesc.SizeInBytes = CalcConstantBufferByteSize(sizeof(CommonCB));
+
+    CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(m_descriptorHeap->GetCPUDescriptorHandleForHeapStart());
+    hDescriptor.Offset(0, m_cbvsrvuavDescriptorSize);
+
+    device->CreateConstantBufferView(&cbvDesc, hDescriptor);
 
 }
 
 void Scene::BuildTextureBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
-    // Note: ComPtr's are CPU objects but this resource needs to stay in scope until
-// the command list that references it has finished executing on the GPU.
-// We will flush the GPU at the end of this method to ensure the resource is not
-// prematurely destroyed.
-
     // Create the texture.
+    for(auto& fileName: m_DDSFileName)
     {
+        ComPtr<ID3D12Resource> defaultBuffer;
+        ComPtr<ID3D12Resource> uploadBuffer;
+
+        // DDSTexture 를 사용하는 방식
+        unique_ptr<uint8_t[]> ddsData;
         vector<D3D12_SUBRESOURCE_DATA> subresources;
-        //unique_ptr<uint8_t[]> ddsData;
-        //ThrowIfFailed(LoadDDSTextureFromFile(device, L"./Textures/tree02S.dds", m_textureBuffer_default.GetAddressOf(),ddsData, subresources));
+        ThrowIfFailed(LoadDDSTextureFromFile(device, fileName.c_str(), defaultBuffer.GetAddressOf(), ddsData, subresources));
 
-        ScratchImage image;
-        ThrowIfFailed(LoadFromDDSFile(L"./Textures/grass.dds", DDS_FLAGS_NONE, nullptr, image));
-        TexMetadata metadata = image.GetMetadata();
+        //// DirectTex를 사용하는 방식
+        //ScratchImage image;
+        //TexMetadata metadata;
 
-        ThrowIfFailed(CreateTexture(device, metadata, &m_textureBuffer_default));
-        ThrowIfFailed(PrepareUpload(device, image.GetImages(), image.GetImageCount(), metadata, subresources));
+        //ThrowIfFailed(LoadFromDDSFile(L"./Textures/grass.dds", DDS_FLAGS_NONE, &metadata, image));
+        ////metadata = image.GetMetadata(); // 이코드를 사용하고 위 코드의 3번째 인자를 nullptr로 해도 된다.
 
-        const UINT64 uploadBufferSize = GetRequiredIntermediateSize(m_textureBuffer_default.Get(), 0, subresources.size());
+        //ThrowIfFailed(CreateTexture(device, metadata, m_textureBuffer_default.GetAddressOf()));
+        //ThrowIfFailed(PrepareUpload(device, image.GetImages(), image.GetImageCount(), metadata, subresources));
+
+        const UINT64 uploadBufferSize = GetRequiredIntermediateSize(defaultBuffer.Get(), 0, subresources.size());
+        
+        OutputDebugStringA(string{ "current texture subresource size = " + to_string(subresources.size()) + "\n"}.c_str());
+        OutputDebugStringA(string{ "current texture mip level = " + to_string(defaultBuffer->GetDesc().MipLevels) + "\n"}.c_str());
+        OutputDebugStringA(string{ "current texture format = " + to_string(defaultBuffer->GetDesc().Format) + "\n"}.c_str());
 
         // Create the GPU upload buffer.
         ThrowIfFailed(device->CreateCommittedResource(
@@ -334,26 +370,32 @@ void Scene::BuildTextureBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* 
             &CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize),
             D3D12_RESOURCE_STATE_GENERIC_READ,
             nullptr,
-            IID_PPV_ARGS(m_textureBuffer_upload.GetAddressOf())));
+            IID_PPV_ARGS(uploadBuffer.GetAddressOf())));
         
-        UpdateSubresources(commandList, m_textureBuffer_default.Get(), m_textureBuffer_upload.Get(), 0, 0, static_cast<UINT>(subresources.size()), subresources.data());
-        commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_textureBuffer_default.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
+        UpdateSubresources(commandList, defaultBuffer.Get(), uploadBuffer.Get(), 0, 0, static_cast<UINT>(subresources.size()), subresources.data());
+        commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(defaultBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
+
+        m_textureBuffer_defaults.push_back(move(defaultBuffer));
+        m_textureBuffer_uploads.push_back(move(uploadBuffer));
     }
 }
 
 void Scene::BuildTextureBufferView(ID3D12Device* device)
 {
     // Describe and create a SRV for the texture.
-    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
-    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    srvDesc.Format = m_textureBuffer_default->GetDesc().Format;
-    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-    srvDesc.Texture2D.MipLevels = m_textureBuffer_default->GetDesc().MipLevels;
+    for (int i = 0; i < m_DDSFileName.size(); ++i)
+    {
+        D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
+        srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        srvDesc.Format = m_textureBuffer_defaults[i]->GetDesc().Format;
+        srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+        srvDesc.Texture2D.MipLevels = m_textureBuffer_defaults[i]->GetDesc().MipLevels;
 
-    CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(m_descriptorHeap->GetCPUDescriptorHandleForHeapStart());
-    hDescriptor.Offset(1, m_cbvsrvuavDescriptorSize);
+        CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(m_descriptorHeap->GetCPUDescriptorHandleForHeapStart());
+        hDescriptor.Offset(1 + i, m_cbvsrvuavDescriptorSize); // 1 + i  에서 1의 의미는 이전에 만들어진 constant buffer view의 수 이다. 아직 한 개만 있음 
 
-    device->CreateShaderResourceView(m_textureBuffer_default.Get(), &srvDesc, hDescriptor);
+        device->CreateShaderResourceView(m_textureBuffer_defaults[i].Get(), &srvDesc, hDescriptor);
+    }
 }
 
 UINT Scene::CalcConstantBufferByteSize(UINT byteSize)
@@ -395,7 +437,7 @@ void Scene::OnUpdate(GameTimer& gTimer)
 }
 
 // Render the scene.
-void Scene::OnRender(ID3D12GraphicsCommandList* commandList)
+void Scene::OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
     commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
@@ -403,12 +445,10 @@ void Scene::OnRender(ID3D12GraphicsCommandList* commandList)
     //
     CD3DX12_GPU_DESCRIPTOR_HANDLE hDescriptor(m_descriptorHeap->GetGPUDescriptorHandleForHeapStart());
     commandList->SetGraphicsRootDescriptorTable(0, hDescriptor);
-    hDescriptor.Offset(1, m_cbvsrvuavDescriptorSize);
-    commandList->SetGraphicsRootDescriptorTable(1, hDescriptor);
-    //
+
     for (auto& [key, value] : m_objects)
     {
-        visit([&commandList](auto& arg) {arg.OnRender(commandList); }, value);
+        visit([&device, &commandList](auto& arg) {arg.OnRender(device, commandList); }, value);
     }
 }
 
@@ -448,4 +488,9 @@ UINT8* Scene::GetConstantBufferMappedData()
 {
     // TODO: 여기에 return 문을 삽입합니다.
     return m_mappedData;
+}
+
+ID3D12DescriptorHeap* Scene::GetDescriptorHeap()
+{
+    return m_descriptorHeap.Get();
 }

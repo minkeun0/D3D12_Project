@@ -17,7 +17,7 @@ public:
 	GameTimer& GetTimer();
 	virtual void OnInit(HINSTANCE hInstance, int nCmdShow);
 	virtual void OnUpdate(GameTimer& gTimer);
-	virtual void OnRender(GameTimer& gTimer);
+	virtual void OnRender();
 	virtual void OnResize(UINT width, UINT height, bool minimized);
 	virtual void OnDestroy();
 

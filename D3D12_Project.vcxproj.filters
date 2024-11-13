@@ -45,6 +45,9 @@
     <ClCompile Include="ResourceManager.cpp">
       <Filter>리소스 파일\소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="DDSTextureLoader12.cpp">
+      <Filter>리소스 파일\소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DXSampleHelper.h">
@@ -81,6 +84,9 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="ResourceManager.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="DDSTextureLoader12.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

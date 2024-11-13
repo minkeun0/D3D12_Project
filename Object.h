@@ -15,7 +15,7 @@ public:
 
 	//virtual void OnInit(ID3D12Device* device);
 	virtual void OnUpdate(GameTimer& gTimer) = 0;
-	virtual void OnRender(ID3D12GraphicsCommandList * commandList) = 0;
+	virtual void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList * commandList) = 0;
 	//virtual void OnDestroy();
 
 	template<typename T>
@@ -35,7 +35,7 @@ public:
 	PlayerObject() = default;
 	PlayerObject(Scene* root);
 	virtual void OnUpdate(GameTimer& gTimer);
-	virtual void OnRender(ID3D12GraphicsCommandList* commandList);
+	virtual void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
 	void OnKeyboardInput(const GameTimer& gTimer);
 };
 
@@ -45,7 +45,7 @@ public:
 	CameraObject() = default;
 	CameraObject(float radius, Scene* root);
 	virtual void OnUpdate(GameTimer& gTimer);
-	virtual void OnRender(ID3D12GraphicsCommandList* commandList);
+	virtual void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
 	void OnMouseInput(WPARAM wParam, int x, int y);
 	void SetXMMATRIX(XMMATRIX m);
 	XMMATRIX& GetXMMATRIX();
@@ -64,7 +64,7 @@ public:
 	TestObject() = default;
 	TestObject(Scene* root);
 	virtual void OnUpdate(GameTimer& gTimer);
-	virtual void OnRender(ID3D12GraphicsCommandList* commandList);
+	virtual void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
 };
 
 using ObjectVariant = variant<PlayerObject, CameraObject, TestObject>;

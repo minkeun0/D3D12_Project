@@ -28,7 +28,7 @@ void ResourceManager::LoadFbx(const string& fileName)
 void ResourceManager::CreatePlane(const string& name, float size)
 {
 	float halfSize = size / 2;
-	float wrap = 30;
+	float wrap = 100;
 	vector<Vertex> vertexData;
 
 	// Æò¸é

@@ -35,7 +35,7 @@ int Framework::Run(HINSTANCE hInstance, int nCmdShow)
             m_Timer.Tick();
             CalculateFrame();
             OnUpdate(m_Timer);
-            OnRender(m_Timer);
+            OnRender();
         }
     }
 
@@ -77,7 +77,7 @@ void Framework::OnUpdate(GameTimer& gTimer)
 }
 
 // Render the scene.
-void Framework::OnRender(GameTimer& gTimer)
+void Framework::OnRender()
 {
     // Record all the commands we need to render the scene into the command list.
     PopulateCommandList();
@@ -412,7 +412,7 @@ void Framework::PopulateCommandList()
     m_commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1, 0, 0, nullptr);
 
     // Rendering
-    m_scenes[L"BaseScene"]->OnRender(m_commandList.Get());
+    m_scenes[L"BaseScene"]->OnRender(m_device.Get(), m_commandList.Get());
     // Rendering
     
     // Indicate that the back buffer will now be used to present.
