@@ -23,7 +23,6 @@
 #include <array>
 
 #include <fbxsdk.h>
-#include "./include/DirectXTex.h"
 #include "DDSTextureLoader12.h"
 
 using namespace std;

@@ -71,7 +71,8 @@ void FbxExtractor::ExtractMeshData(std::vector<Vertex>& pVertices)
 		ptr<FbxGeometryElementNormal> lNormal = lMesh->GetElementNormal();
 		ptr<FbxGeometryElementUV> lUV = lMesh->GetElementUV();
 
-		for (int i = 0; i < lMesh->GetPolygonVertexCount(); ++i) {
+		int polygonVertexCount = lMesh->GetPolygonVertexCount();
+		for (int i = 0; i < polygonVertexCount; ++i) {
 			Vertex lVertex{};
 			FbxVector4 lVector4 = lMesh->GetControlPointAt(lVertices[i]);
 			lVertex.position.x = (float)lVector4[0];
@@ -101,13 +102,16 @@ void FbxExtractor::ExtractMeshData(std::vector<Vertex>& pVertices)
 				lVertex.uv.x = (float)lVector2[0];
 				lVertex.uv.y = 1.0f - (float)lVector2[1];
 			}
+			else {
+				lVertex.uv.x = 0.5f;//(float)(i / polygonVertexCount);
+				lVertex.uv.y = 0.5f;//(float)(i / polygonVertexCount);
+			}
 			pVertices.push_back(lVertex);
 		}
 
 		break;
 	}
 	Clear();
-	mFbxScene->Clear();
 	mFbxScene->Destroy();
 }
 
@@ -118,40 +122,6 @@ State FbxExtractor::GetState()
 
 void FbxExtractor::Clear()
 {
-}
-
-void FbxExtractor::ExtractControlPointData(ptr<FbxMesh>& pMesh, Vertex& pVertex)
-{
-	for (int i = 0; i < pMesh->GetPolygonVertexCount(); ++i) {
-	}
-}
-
-void FbxExtractor::ExtractNormalData(ptr<FbxMesh>& pMesh, Vertex& pVertices)
-{
-	ptr<FbxGeometryElementNormal> lNormal = pMesh->GetElementNormal();
-	if (!lNormal || lNormal->GetMappingMode() != FbxGeometryElement::eByPolygonVertex) {
-		if (!pMesh->GenerateNormals(true, false, false)) throw std::runtime_error("Error At GenerateNormals");
-		mState.GenerateNormals = true;
-	}
-
-	if (lNormal->GetMappingMode() == FbxGeometryElement::eByPolygonVertex) {
-		switch (lNormal->GetReferenceMode())
-		{
-		case FbxGeometryElement::eDirect:
-			for (int i = 0; i < lNormal->GetDirectArray().GetCount(); ++i) {
-				FbxVector4 lVector = lNormal->GetDirectArray().GetAt(i);
-				Vertex lVertex;
-
-
-			}
-			break;
-		case FbxGeometryElement::eIndexToDirect:
-			break;
-		default:
-			throw std::runtime_error("Invailed reference mode");
-			break;
-		}
-	}
 }
 
 void FbxExtractor::CheckMeshDataState(ptr<FbxMesh>& pMesh)
@@ -188,8 +158,10 @@ void FbxExtractor::CheckMeshDataState(ptr<FbxMesh>& pMesh)
 	ptr<FbxGeometryElementUV> lUV = pMesh->GetElementUV();
 	if (!lUV) {
 		mState.UV = false;
+		OutputDebugStringA("No uv\n");
 	}
 	else {
+		mState.UV = true;
 		if (lUV->GetMappingMode() != FbxGeometryElement::eByPolygonVertex) {
 			throw std::runtime_error("UV mapping mode");
 		}

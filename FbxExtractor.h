@@ -26,8 +26,6 @@ private:
 	void Clear();
 	void RemoveBadPolygons();
 	bool ConvertNodeAttributePolygonsTriangulate(ptr<FbxNode>&);
-	void ExtractControlPointData(ptr<FbxMesh>&, Vertex&);
-	void ExtractNormalData(ptr<FbxMesh>&, Vertex&);
 	void CheckMeshDataState(ptr<FbxMesh>&);
 
 	ptr<FbxManager> mFbxManager;

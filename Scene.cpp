@@ -16,6 +16,9 @@ Scene::Scene(UINT width, UINT height, std::wstring name) :
     m_resourceManager->LoadFbx("god.fbx");
     m_resourceManager->LoadFbx("FlyerPlayership.fbx");
     m_resourceManager->LoadFbx("sister.fbx");
+    m_resourceManager->LoadFbx("humanoid.fbx");
+    m_resourceManager->LoadFbx("map_terrain.fbx");
+    m_resourceManager->LoadFbx("house_attach.fbx");
 
     int i = 0;
     m_DDSFileName.push_back(L"./Textures/boy.dds");
@@ -36,6 +39,10 @@ Scene::Scene(UINT width, UINT height, std::wstring name) :
     m_subTextureData.insert({ L"Gunship", i++ });
     m_DDSFileName.push_back(L"./Textures/sister.dds");
     m_subTextureData.insert({ L"sister", i++ });
+    m_DDSFileName.push_back(L"./Textures/water1.dds");
+    m_subTextureData.insert({ L"water1", i++ });
+    m_DDSFileName.push_back(L"./Textures/PP_Color_Palette.dds");
+    m_subTextureData.insert({ L"PP_Color_Palette", i++ });
 }
 
 void Scene::OnInit(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
@@ -106,14 +113,36 @@ void Scene::BuildObjects(ID3D12Device* device)
 
     AddObj(L"TestObject2", TestObject{ this });
     TestObject& test2 = GetObj<TestObject>(L"TestObject2");
-    test2.AddComponent(Position{ 0.f, 0.f, 100.f, 1.f, &test2 });
+    test2.AddComponent(Position{ 0.f, 0.f, 0.f, 1.f, &test2 });
     test2.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &test2 });
     test2.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &test2 });
-    test2.AddComponent(Rotate{ 0.0f, 10.0f, 0.0f, 0.0f, &test2 });
-    test2.AddComponent(Scale{ 5.f, &test2 });
+    test2.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &test2 });
+    test2.AddComponent(Scale{ 0.07f, &test2 });
     test2.AddComponent(World{ &test2 });
-    test2.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("Gunship.fbx") , &test2 });
-    test2.AddComponent(Texture{ m_subTextureData.at(L"Gunship"), &test2 });
+    test2.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("map_terrain.fbx") , &test2 });
+    test2.AddComponent(Texture{ m_subTextureData.at(L"PP_Color_Palette"), &test2 });
+
+    AddObj(L"TestObject3", TestObject{ this });
+    TestObject& test3 = GetObj<TestObject>(L"TestObject3");
+    test3.AddComponent(Position{ 0.f, 0.f, 0.f, 1.f, &test3 });
+    test3.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &test3 });
+    test3.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &test3 });
+    test3.AddComponent(Rotate{ 0.0f, 10.0f, 0.0f, 0.0f, &test3 });
+    test3.AddComponent(Scale{ 0.2f, &test3 });
+    test3.AddComponent(World{ &test3 });
+    test3.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("humanoid.fbx") , &test3 });
+    test3.AddComponent(Texture{ m_subTextureData.at(L"water1"), &test3 });
+
+    AddObj(L"TestObject4", TestObject{ this });
+    TestObject& test4 = GetObj<TestObject>(L"TestObject4");
+    test4.AddComponent(Position{ 0.f, 0.f, 0.f, 1.f, &test4 });
+    test4.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &test4 });
+    test4.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &test4 });
+    test4.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &test4 });
+    test4.AddComponent(Scale{ 0.5f, &test4 });
+    test4.AddComponent(World{ &test4 });
+    test4.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("house_attach.fbx") , &test4 });
+    test4.AddComponent(Texture{ m_subTextureData.at(L"PP_Color_Palette"), &test4 });
 
 }
 
