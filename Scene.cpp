@@ -10,13 +10,13 @@ Scene::Scene(UINT width, UINT height, std::wstring name) :
 {
     BuildProjMatrix();
     m_resourceManager = make_unique<ResourceManager>();
+    m_resourceManager->LoadFbx("humanoid.fbx");
     m_resourceManager->CreatePlane("Plane", 5000);
-    m_resourceManager->LoadFbx("Gunship.fbx");
+    m_resourceManager->LoadFbx("202409working_low_tiger.fbx");
     m_resourceManager->LoadFbx("1P(boy).fbx");
     m_resourceManager->LoadFbx("god.fbx");
     m_resourceManager->LoadFbx("FlyerPlayership.fbx");
     m_resourceManager->LoadFbx("sister.fbx");
-    m_resourceManager->LoadFbx("humanoid.fbx");
     m_resourceManager->LoadFbx("map_terrain.fbx");
     m_resourceManager->LoadFbx("house_attach.fbx");
 
@@ -43,6 +43,8 @@ Scene::Scene(UINT width, UINT height, std::wstring name) :
     m_subTextureData.insert({ L"water1", i++ });
     m_DDSFileName.push_back(L"./Textures/PP_Color_Palette.dds");
     m_subTextureData.insert({ L"PP_Color_Palette", i++ });
+    m_DDSFileName.push_back(L"./Textures/tigercolor.dds");
+    m_subTextureData.insert({ L"tigercolor", i++ });
 }
 
 void Scene::OnInit(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
@@ -65,10 +67,10 @@ void Scene::BuildObjects(ID3D12Device* device)
 {
     AddObj(L"PlayerObject", PlayerObject{ this });
     PlayerObject& player = GetObj<PlayerObject>(L"PlayerObject");
-    player.AddComponent(Position{ 0.f, 12.f, -60.f, 1.f, &player });
+    player.AddComponent(Position{ 0.f, 20.f, -60.f, 1.f, &player });
     player.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &player });
-    player.AddComponent(Rotation{ -90.0f, 0.0f, 0.0f, 0.0f, &player });
-    player.AddComponent(Rotate{ 0.0f, 10.0f, 0.0f, 0.0f, &player });
+    player.AddComponent(Rotation{ -90.0f, 200.0f, 0.0f, 0.0f, &player });
+    player.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &player });
     player.AddComponent(Scale{ 0.1f, &player });
     player.AddComponent(World{ &player });
     player.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("1P(boy).fbx"), &player });
@@ -91,10 +93,10 @@ void Scene::BuildObjects(ID3D12Device* device)
 
     AddObj(L"TestObject", TestObject{ this });
     TestObject& test = GetObj<TestObject>(L"TestObject");
-    test.AddComponent(Position{ 50.f, 20.f, 0.f, 1.f, &test });
+    test.AddComponent(Position{ 50.f, 25.f, -50.f, 1.f, &test });
     test.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &test });
-    test.AddComponent(Rotation{ -90.0f, 0.0f, 0.0f, 0.0f, &test });
-    test.AddComponent(Rotate{ 0.0f, 10.0f, 0.0f, 0.0f, &test });
+    test.AddComponent(Rotation{ -90.0f, 20.0f, 0.0f, 0.0f, &test });
+    test.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &test });
     test.AddComponent(Scale{ 0.25f, &test });
     test.AddComponent(World{ &test });
     test.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("sister.fbx") , &test });
@@ -102,10 +104,10 @@ void Scene::BuildObjects(ID3D12Device* device)
 
     AddObj(L"TestObject1", TestObject{ this });
     TestObject& test1 = GetObj<TestObject>(L"TestObject1");
-    test1.AddComponent(Position{ -20.f, 15.f, 0.f, 1.f, &test1 });
+    test1.AddComponent(Position{ 0.f, 35.f, 0.f, 1.f, &test1 });
     test1.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &test1 });
     test1.AddComponent(Rotation{ -90.0f, 0.0f, 0.0f, 0.0f, &test1});
-    test1.AddComponent(Rotate{ 0.0f, 10.0f, 0.0f, 0.0f, &test1 });
+    test1.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &test1 });
     test1.AddComponent(Scale{ 0.25f, &test1 });
     test1.AddComponent(World{ &test1 });
     test1.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("god.fbx"), &test1 });
@@ -124,26 +126,26 @@ void Scene::BuildObjects(ID3D12Device* device)
 
     AddObj(L"TestObject3", TestObject{ this });
     TestObject& test3 = GetObj<TestObject>(L"TestObject3");
-    test3.AddComponent(Position{ 0.f, 0.f, 0.f, 1.f, &test3 });
+    test3.AddComponent(Position{ -50.f, 18.f, -100.f, 1.f, &test3 });
     test3.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &test3 });
-    test3.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &test3 });
-    test3.AddComponent(Rotate{ 0.0f, 10.0f, 0.0f, 0.0f, &test3 });
-    test3.AddComponent(Scale{ 0.2f, &test3 });
+    test3.AddComponent(Rotation{ -90.0f, 90.0f, 0.0f, 0.0f, &test3 });
+    test3.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &test3 });
+    test3.AddComponent(Scale{ 2.f, &test3 });
     test3.AddComponent(World{ &test3 });
-    test3.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("humanoid.fbx") , &test3 });
-    test3.AddComponent(Texture{ m_subTextureData.at(L"water1"), &test3 });
+    test3.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("202409working_low_tiger.fbx") , &test3 });
+    test3.AddComponent(Texture{ m_subTextureData.at(L"tigercolor"), &test3 });
 
     AddObj(L"TestObject4", TestObject{ this });
     TestObject& test4 = GetObj<TestObject>(L"TestObject4");
-    test4.AddComponent(Position{ 0.f, 0.f, 0.f, 1.f, &test4 });
+    test4.AddComponent(Position{ 0.f, 40.f, 0.f, 1.f, &test4 });
     test4.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &test4 });
-    test4.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &test4 });
+    test4.AddComponent(Rotation{ -90.0f, 0.0f, 0.0f, 0.0f, &test4 });
     test4.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &test4 });
-    test4.AddComponent(Scale{ 0.5f, &test4 });
+    test4.AddComponent(Scale{ 0.2f, &test4 });
     test4.AddComponent(World{ &test4 });
-    test4.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("house_attach.fbx") , &test4 });
+    test4.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("humanoid.fbx"), &test4 });
     test4.AddComponent(Texture{ m_subTextureData.at(L"PP_Color_Palette"), &test4 });
-
+    test4.AddComponent(Animation{ GetResourceManager().GetAnimationData("humanoid.fbx"), &test4 });
 }
 
 void Scene::BuildRootSignature(ID3D12Device* device)
@@ -163,10 +165,11 @@ void Scene::BuildRootSignature(ID3D12Device* device)
     ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
     ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
 
-    CD3DX12_ROOT_PARAMETER1 rootParameters[3] = {};
+    CD3DX12_ROOT_PARAMETER1 rootParameters[4] = {};
     rootParameters[0].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_VERTEX);
     rootParameters[1].InitAsDescriptorTable(1, &ranges[1], D3D12_SHADER_VISIBILITY_PIXEL);
     rootParameters[2].InitAsConstants(16, 0, 0);
+    rootParameters[3].InitAsConstants(1, 2, 0);
 
     D3D12_STATIC_SAMPLER_DESC sampler{};
     sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
@@ -220,7 +223,9 @@ void Scene::BuildPSO(ID3D12Device* device)
     {
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
         { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "WEIGHT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 32, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "BONEINDEX", 0, DXGI_FORMAT_R32G32B32A32_UINT, 0, 48, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
     };
 
     // Describe and create the graphics pipeline state object (PSO).

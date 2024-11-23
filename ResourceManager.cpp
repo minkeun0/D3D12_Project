@@ -13,13 +13,18 @@ void ResourceManager::LoadFbx(const string& fileName)
 {
 	mFbxExtractor->ImportFbxFile(fileName);
 	
-	vector<Vertex> vertexData;
-	mFbxExtractor->ExtractMeshData(vertexData);
+	mFbxExtractor->ExtractDataFromFbx();
+
+	vector<Vertex>& vertexData = mFbxExtractor->GetVertices();
 	
 	SubMeshData subData{};
 	subData.vertexCountPerInstance = vertexData.size();
 	subData.startVertexLocation = mVertexBuffer.size();
 	mSubMeshData[fileName] = subData;
+
+	SkinnedData animData;
+	animData.Set(mFbxExtractor->GetBoneHierarchyIndex(), mFbxExtractor->GetOffsetMatrix(), mFbxExtractor->GetAnimation());
+	mAnimData.emplace(fileName ,animData);
 
 	mVertexBuffer.insert(mVertexBuffer.end(), vertexData.begin(), vertexData.end());
 	OutputDebugStringA(string{"##### " + (to_string(mVertexBuffer.size()) + "\n")}.c_str());
@@ -63,7 +68,10 @@ size_t ResourceManager::GetVertexBufferSize()
 
 SubMeshData& ResourceManager::GetSubMeshData(const string& fileName)
 {
-	auto& value = mSubMeshData.find(fileName);
-	if (value == mSubMeshData.end()) throw std::runtime_error("");
-	return value->second;
+	return mSubMeshData.at(fileName);
+}
+
+SkinnedData& ResourceManager::GetAnimationData(const string& fileName)
+{
+	return mAnimData.at(fileName);
 }

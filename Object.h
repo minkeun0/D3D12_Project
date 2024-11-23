@@ -24,6 +24,12 @@ public:
 	template <typename T>
 	T& GetComponent() { return get<T>(m_components.at(typeid(T).name())); }
 
+	template <typename T>
+	bool FindComponent() { 
+		auto& it = m_components.find(typeid(T).name());
+		return it == m_components.end() ? false : true;
+	}
+
 protected:
 	Scene* m_root;
 	unordered_map<string, ComponentVariant> m_components;

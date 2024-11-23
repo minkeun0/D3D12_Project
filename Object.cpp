@@ -24,6 +24,7 @@ void PlayerObject::OnUpdate(GameTimer& gTimer)
     // 월드 행렬 = 크기 행렬 * 회전 행렬 * 이동 행렬
     XMMATRIX world = scale * rotate * translate;
     GetComponent<World>().SetXMMATRIX(world);
+
 };
 
 void PlayerObject::OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
@@ -32,6 +33,8 @@ void PlayerObject::OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* com
     hDescriptor.Offset(1+GetComponent<Texture>().mDescriptorStartIndex, device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
     commandList->SetGraphicsRootDescriptorTable(1, hDescriptor);
     commandList->SetGraphicsRoot32BitConstants(2, 16, &XMMatrixTranspose(GetComponent<World>().GetXMMATRIX()), 0);
+    int isAnimate = FindComponent<Animation>();
+    commandList->SetGraphicsRoot32BitConstants(3, 1, &isAnimate, 0);
     //commandList->DrawIndexedInstanced(tmp.indexCountPerInstance, 1, tmp.statIndexLocation, tmp.baseVertexLocation, 0);
     commandList->DrawInstanced(GetComponent<Mesh>().mSubMeshData.vertexCountPerInstance, 1, GetComponent<Mesh>().mSubMeshData.startVertexLocation, 0);
 }
@@ -90,6 +93,18 @@ void TestObject::OnUpdate(GameTimer& gTimer)
 
     // 월드 행렬 = 크기 행렬 * 회전 행렬 * 이동 행렬
     GetComponent<World>().SetXMMATRIX(scale * rotate * translate);
+    
+    //애니메이션 유무
+    int isAnimate = FindComponent<Animation>();
+    if (isAnimate) {
+        vector<XMFLOAT4X4> finalTransforms;
+        Animation& animComponent = GetComponent<Animation>();
+        SkinnedData* animData = animComponent.mAnimData;
+        animComponent.time += gTimer.DeltaTime();
+        if (animComponent.time > animData->GetClipEndTime("run")) animComponent.time = 0.f;
+        animData->GetFinalTransforms("run", animComponent.time, finalTransforms);
+        memcpy(m_root->GetConstantBufferMappedData() + sizeof(XMFLOAT4X4) * 2, finalTransforms.data(), sizeof(XMFLOAT4X4) * 90); // 처음 매개변수는 시작주소
+    }
 }
 
 void TestObject::OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
@@ -98,6 +113,8 @@ void TestObject::OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* comma
     hDescriptor.Offset(1 + GetComponent<Texture>().mDescriptorStartIndex, device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
     commandList->SetGraphicsRootDescriptorTable(1, hDescriptor);
     commandList->SetGraphicsRoot32BitConstants(2, 16, &XMMatrixTranspose(GetComponent<World>().GetXMMATRIX()), 0);
+    int isAnimate = FindComponent<Animation>();
+    commandList->SetGraphicsRoot32BitConstants(3, 1, &isAnimate, 0);
     //commandList->DrawIndexedInstanced(tmp.indexCountPerInstance, 1, tmp.statIndexLocation, tmp.baseVertexLocation, 0);
     commandList->DrawInstanced(GetComponent<Mesh>().mSubMeshData.vertexCountPerInstance, 1, GetComponent<Mesh>().mSubMeshData.startVertexLocation, 0);
 }

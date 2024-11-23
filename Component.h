@@ -2,7 +2,7 @@
 #include "stdafx.h"
 #include "Info.h"
 #include <variant>
-
+#include "FbxExtractor.h"
 class Object;
 
 struct Component // 객체로 만들지 않는 클래스
@@ -43,6 +43,14 @@ struct Texture : public Component
 	Texture() = default;
 	Texture(int descriptorStartIndex, Object* root) : Component{ root }, mDescriptorStartIndex{descriptorStartIndex} {}
 	int mDescriptorStartIndex;
+};
+
+struct Animation : public Component
+{
+	Animation() = default;
+	Animation(SkinnedData& animData, Object* root) : Component{ root }, mAnimData{ &animData }, time{0.f} {}
+	SkinnedData* mAnimData;
+	float time;
 };
 
 struct Position : public NeedVector
@@ -89,4 +97,4 @@ struct Scale : public NeedVector
 //	float mPhi;
 //};
 
-using ComponentVariant = variant<Mesh, Position, Velocity, Rotation, Rotate, Scale, World, Texture>;
+using ComponentVariant = variant<Mesh, Position, Velocity, Rotation, Rotate, Scale, World, Texture, Animation>;
