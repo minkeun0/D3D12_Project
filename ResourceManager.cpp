@@ -28,6 +28,8 @@ void ResourceManager::LoadFbx(const string& fileName)
 
 	mVertexBuffer.insert(mVertexBuffer.end(), vertexData.begin(), vertexData.end());
 	OutputDebugStringA(string{"##### " + (to_string(mVertexBuffer.size()) + "\n")}.c_str());
+
+	mFbxExtractor->ResetAndClear();
 }
 
 void ResourceManager::CreatePlane(const string& name, float size)

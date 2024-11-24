@@ -28,6 +28,8 @@ bool FbxExtractor::ImportFbxFile(const std::string& fileName)
 
 	mFbxScene = FbxScene::Create(mFbxManager, "");
 	if(!mFbxImporter->Import(mFbxScene)) return false;
+	
+	ConvertSceneAxisSystem();
 
 	mFbxImporter->Destroy();
 	return true;
@@ -48,6 +50,7 @@ bool FbxExtractor::ConvertScenePolygonsTriangulate()
 
 void FbxExtractor::ExtractDataFromFbx()
 {
+
 	ptr<FbxNode> rootNode = mFbxScene->GetRootNode();
 
 	int childCount = rootNode->GetChildCount();
@@ -56,10 +59,23 @@ void FbxExtractor::ExtractDataFromFbx()
 	}
 
 	if(mBone) ExtractAnimationData(rootNode);
+}
 
-	mFbxScene->Destroy();
-	mBone = false;
-	mIsFirst = true;
+void FbxExtractor::ConvertSceneAxisSystem()
+{
+	FbxAxisSystem axisSystem{ FbxAxisSystem::eZAxis, FbxAxisSystem::eParityOdd, FbxAxisSystem::eLeftHanded };
+	axisSystem.DeepConvertScene(mFbxScene);
+
+	int up{ -2 };
+	int upSign{ -2 };
+	int front{ -2 };
+	int frontSign{ -2 };
+	int coor{ -2 };
+	up = mFbxScene->GetGlobalSettings().GetAxisSystem().GetUpVector(upSign);
+	front = mFbxScene->GetGlobalSettings().GetAxisSystem().GetFrontVector(frontSign);
+	coor = mFbxScene->GetGlobalSettings().GetAxisSystem().GetCoorSystem();
+	OutputDebugStringA((" 상하축 = " + to_string(up) + " 전방축 = " + to_string(front) + " 좌표계의 시스템 =  " + to_string(coor) + "\n").c_str());
+	OutputDebugStringA((" 상하축의 방향 = " + to_string(upSign) + " 전방축의 방향 = " + to_string(frontSign) + "\n").c_str());
 }
 
 void FbxExtractor::TraverseNode(ptr<FbxNode> node)
@@ -99,7 +115,6 @@ void FbxExtractor::TraverseNodeForAnimation(ptr<FbxNode> node, ptr<FbxTakeInfo> 
 
 		FbxLongLong startFrame = takeInfo->mLocalTimeSpan.GetStart().GetFrameCount(timeMode);
 		FbxLongLong stopFrame = takeInfo->mLocalTimeSpan.GetStop().GetFrameCount(timeMode);
-
 		Keyframe keyframe;
 		FbxTime currentTime;
 		BoneAnimation boneAnimation;
@@ -107,9 +122,9 @@ void FbxExtractor::TraverseNodeForAnimation(ptr<FbxNode> node, ptr<FbxTakeInfo> 
 			currentTime.SetFrame(frame, timeMode);
 			keyframe.TimePos = static_cast<float>(currentTime.GetSecondDouble());
 			FbxAMatrix& localMatrix = node->EvaluateLocalTransform(currentTime);
-			keyframe.Translation = ToXMFloat3(localMatrix.GetT());
 			keyframe.Scale = ToXMFloat3(localMatrix.GetS());
 			keyframe.RotationQuat = ToXMFloat4(localMatrix.GetQ());
+			keyframe.Translation = ToXMFloat3(localMatrix.GetT());
 			boneAnimation.Keyframes.push_back(keyframe);
 		}
 		mAnimations[takeInfo->mName.Buffer()].BoneAnimations.push_back(boneAnimation);
@@ -290,6 +305,19 @@ unordered_map<string, AnimationClip>& FbxExtractor::GetAnimation()
 	return mAnimations;
 }
 
+void FbxExtractor::ResetAndClear()
+{
+	mFbxScene->Destroy();
+	mBone = false;
+	mIsFirst = true;
+	mAnimations.clear();
+	mOffsetMatrix.clear();
+	mBoneHierarchyName.clear();
+	mBoneHierarchyIndex.clear();
+	mVertices.clear();
+	mControlPointsWeight.clear();
+}
+
 bool FbxExtractor::ConvertNodeAttributePolygonsTriangulate(ptr<FbxNode> node)
 {
 	FbxGeometryConverter lConverter{ mFbxManager };
@@ -456,7 +484,6 @@ void FbxExtractor::ExtractWeightAndOffsetMatrix(ptr<FbxMesh> mesh)
 			cluster->GetTransformLinkMatrix(transformLinkMatrix);
 
 			mOffsetMatrix[linkNodeIndex] = ToXMFloat4x4(transformLinkMatrix.Inverse() * transformMatrix);
-			//mOffsetMatrix[linkNodeIndex] = ToXMFloat4x4(transformLinkMatrix.Inverse());
 
 			ptr<int> indices = cluster->GetControlPointIndices();
 			ptr<double> weights = cluster->GetControlPointWeights();

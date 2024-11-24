@@ -26,8 +26,10 @@ public:
 	vector<vector<pair<int, float>>>& GetControlPointsWeight();
 	vector<XMFLOAT4X4>& GetOffsetMatrix();
 	unordered_map<string, AnimationClip>& GetAnimation();
+	void ResetAndClear();
 
 private:
+	void ConvertSceneAxisSystem();
 	inline void TraverseNode(ptr<FbxNode>);
 	inline void TraverseNodeForAnimation(ptr<FbxNode>, ptr<FbxTakeInfo>, FbxTime::EMode);
 	void ExtractMeshData(ptr<FbxNode>);

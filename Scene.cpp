@@ -10,15 +10,14 @@ Scene::Scene(UINT width, UINT height, std::wstring name) :
 {
     BuildProjMatrix();
     m_resourceManager = make_unique<ResourceManager>();
-    m_resourceManager->LoadFbx("humanoid.fbx");
     m_resourceManager->CreatePlane("Plane", 5000);
     m_resourceManager->LoadFbx("202409working_low_tiger.fbx");
     m_resourceManager->LoadFbx("1P(boy).fbx");
     m_resourceManager->LoadFbx("god.fbx");
-    m_resourceManager->LoadFbx("FlyerPlayership.fbx");
     m_resourceManager->LoadFbx("sister.fbx");
     m_resourceManager->LoadFbx("map_terrain.fbx");
     m_resourceManager->LoadFbx("house_attach.fbx");
+    m_resourceManager->LoadFbx("humanoid.fbx");
 
     int i = 0;
     m_DDSFileName.push_back(L"./Textures/boy.dds");
@@ -67,16 +66,16 @@ void Scene::BuildObjects(ID3D12Device* device)
 {
     AddObj(L"PlayerObject", PlayerObject{ this });
     PlayerObject& player = GetObj<PlayerObject>(L"PlayerObject");
-    player.AddComponent(Position{ 0.f, 20.f, -60.f, 1.f, &player });
+    player.AddComponent(Position{ 0.f, 20.f, -150.f, 1.f, &player });
     player.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &player });
-    player.AddComponent(Rotation{ -90.0f, 200.0f, 0.0f, 0.0f, &player });
+    player.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &player });
     player.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &player });
     player.AddComponent(Scale{ 0.1f, &player });
     player.AddComponent(World{ &player });
     player.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("1P(boy).fbx"), &player });
     player.AddComponent(Texture{ m_subTextureData.at(L"boy"), &player});
 
-    AddObj(L"CameraObject", CameraObject{30.f, this });
+    AddObj(L"CameraObject", CameraObject{50.f, this });
     CameraObject& camera = GetObj<CameraObject>(L"CameraObject");
     camera.AddComponent(Position{ 0.f, 0.f, 0.f, 0.f, &camera });
 
@@ -95,7 +94,7 @@ void Scene::BuildObjects(ID3D12Device* device)
     TestObject& test = GetObj<TestObject>(L"TestObject");
     test.AddComponent(Position{ 50.f, 25.f, -50.f, 1.f, &test });
     test.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &test });
-    test.AddComponent(Rotation{ -90.0f, 20.0f, 0.0f, 0.0f, &test });
+    test.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &test });
     test.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &test });
     test.AddComponent(Scale{ 0.25f, &test });
     test.AddComponent(World{ &test });
@@ -106,7 +105,7 @@ void Scene::BuildObjects(ID3D12Device* device)
     TestObject& test1 = GetObj<TestObject>(L"TestObject1");
     test1.AddComponent(Position{ 0.f, 35.f, 0.f, 1.f, &test1 });
     test1.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &test1 });
-    test1.AddComponent(Rotation{ -90.0f, 0.0f, 0.0f, 0.0f, &test1});
+    test1.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &test1});
     test1.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &test1 });
     test1.AddComponent(Scale{ 0.25f, &test1 });
     test1.AddComponent(World{ &test1 });
@@ -117,7 +116,7 @@ void Scene::BuildObjects(ID3D12Device* device)
     TestObject& test2 = GetObj<TestObject>(L"TestObject2");
     test2.AddComponent(Position{ 0.f, 0.f, 0.f, 1.f, &test2 });
     test2.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &test2 });
-    test2.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &test2 });
+    test2.AddComponent(Rotation{ -90.0f, 0.0f, 0.0f, 0.0f, &test2 });
     test2.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &test2 });
     test2.AddComponent(Scale{ 0.07f, &test2 });
     test2.AddComponent(World{ &test2 });
@@ -128,7 +127,7 @@ void Scene::BuildObjects(ID3D12Device* device)
     TestObject& test3 = GetObj<TestObject>(L"TestObject3");
     test3.AddComponent(Position{ -50.f, 18.f, -100.f, 1.f, &test3 });
     test3.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &test3 });
-    test3.AddComponent(Rotation{ -90.0f, 90.0f, 0.0f, 0.0f, &test3 });
+    test3.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &test3 });
     test3.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &test3 });
     test3.AddComponent(Scale{ 2.f, &test3 });
     test3.AddComponent(World{ &test3 });
@@ -137,11 +136,11 @@ void Scene::BuildObjects(ID3D12Device* device)
 
     AddObj(L"TestObject4", TestObject{ this });
     TestObject& test4 = GetObj<TestObject>(L"TestObject4");
-    test4.AddComponent(Position{ 0.f, 40.f, 0.f, 1.f, &test4 });
+    test4.AddComponent(Position{ 0.f, 10.f, -100.f, 1.f, &test4 });
     test4.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &test4 });
-    test4.AddComponent(Rotation{ -90.0f, 0.0f, 0.0f, 0.0f, &test4 });
+    test4.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &test4 });
     test4.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &test4 });
-    test4.AddComponent(Scale{ 0.2f, &test4 });
+    test4.AddComponent(Scale{ 0.05f, &test4 });
     test4.AddComponent(World{ &test4 });
     test4.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("humanoid.fbx"), &test4 });
     test4.AddComponent(Texture{ m_subTextureData.at(L"PP_Color_Palette"), &test4 });

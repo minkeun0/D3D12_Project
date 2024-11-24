@@ -101,8 +101,8 @@ void TestObject::OnUpdate(GameTimer& gTimer)
         Animation& animComponent = GetComponent<Animation>();
         SkinnedData* animData = animComponent.mAnimData;
         animComponent.time += gTimer.DeltaTime();
-        if (animComponent.time > animData->GetClipEndTime("run")) animComponent.time = 0.f;
-        animData->GetFinalTransforms("run", animComponent.time, finalTransforms);
+        if (animComponent.time > animData->GetClipEndTime("punch")) animComponent.time = 0.f;
+        animData->GetFinalTransforms("punch", animComponent.time, finalTransforms);
         memcpy(m_root->GetConstantBufferMappedData() + sizeof(XMFLOAT4X4) * 2, finalTransforms.data(), sizeof(XMFLOAT4X4) * 90); // 처음 매개변수는 시작주소
     }
 }
