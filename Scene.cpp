@@ -80,7 +80,7 @@ void Scene::BuildObjects(ID3D12Device* device)
     player.AddComponent(Gravity{ 2.f, &player });
 
 
-    AddObj(L"CameraObject", CameraObject{50.f, this });
+    AddObj(L"CameraObject", CameraObject{70.f, this });
     CameraObject& camera = GetObj<CameraObject>(L"CameraObject");
     camera.AddComponent(Position{ 0.f, 0.f, 0.f, 0.f, &camera });
 
@@ -94,31 +94,31 @@ void Scene::BuildObjects(ID3D12Device* device)
     plane.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("Plane") , &plane });
     plane.AddComponent(Texture{ m_subTextureData.at(L"grass"), &plane });
 
-    AddObj(L"TestObject", TestObject{ this });
-    TestObject& test = GetObj<TestObject>(L"TestObject");
-    test.AddComponent(Position{ 50.f, 25.f, -50.f, 1.f, &test });
-    test.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &test });
-    test.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &test });
-    test.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &test });
-    test.AddComponent(Scale{ 0.25f, &test });
-    test.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("sister.fbx") , &test });
-    test.AddComponent(Texture{ m_subTextureData.at(L"sister"), &test });
-    test.AddComponent(Gravity{ 2.f, &test });
+    //AddObj(L"TestObject", TestObject{ this });
+    //TestObject& test = GetObj<TestObject>(L"TestObject");
+    //test.AddComponent(Position{ 50.f, 25.f, -50.f, 1.f, &test });
+    //test.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &test });
+    //test.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &test });
+    //test.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &test });
+    //test.AddComponent(Scale{ 0.25f, &test });
+    //test.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("sister.fbx") , &test });
+    //test.AddComponent(Texture{ m_subTextureData.at(L"sister"), &test });
+    //test.AddComponent(Gravity{ 2.f, &test });
 
-    AddObj(L"TestObject1", TestObject{ this });
-    TestObject& test1 = GetObj<TestObject>(L"TestObject1");
-    test1.AddComponent(Position{ 0.f, 35.f, 0.f, 1.f, &test1 });
-    test1.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &test1 });
-    test1.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &test1});
-    test1.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &test1 });
-    test1.AddComponent(Scale{ 0.25f, &test1 });
-    test1.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("god.fbx"), &test1 });
-    test1.AddComponent(Texture{ m_subTextureData.at(L"god"), &test1 });
-    test1.AddComponent(Gravity{ 2.f, &test1 });
+    //AddObj(L"TestObject1", TestObject{ this });
+    //TestObject& test1 = GetObj<TestObject>(L"TestObject1");
+    //test1.AddComponent(Position{ 0.f, 35.f, 0.f, 1.f, &test1 });
+    //test1.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &test1 });
+    //test1.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &test1});
+    //test1.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &test1 });
+    //test1.AddComponent(Scale{ 0.25f, &test1 });
+    //test1.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("god.fbx"), &test1 });
+    //test1.AddComponent(Texture{ m_subTextureData.at(L"god"), &test1 });
+    //test1.AddComponent(Gravity{ 2.f, &test1 });
 
     AddObj(L"TestObject2", TestObject{ this });
     TestObject& test2 = GetObj<TestObject>(L"TestObject2");
-    test2.AddComponent(Position{ 0.f, -10.f, 0.f, 1.f, &test2 });
+    test2.AddComponent(Position{ 0.f, -13.f, 0.f, 1.f, &test2 });
     test2.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &test2 });
     test2.AddComponent(Rotation{ -90.0f, 0.0f, 0.0f, 0.0f, &test2 });
     test2.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &test2 });
@@ -126,16 +126,16 @@ void Scene::BuildObjects(ID3D12Device* device)
     test2.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("map_terrain.fbx") , &test2 });
     test2.AddComponent(Texture{ m_subTextureData.at(L"PP_Color_Palette"), &test2 });
 
-    AddObj(L"TestObject3", TestObject{ this });
-    TestObject& test3 = GetObj<TestObject>(L"TestObject3");
-    test3.AddComponent(Position{ -50.f, 18.f, -100.f, 1.f, &test3 });
-    test3.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &test3 });
-    test3.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &test3 });
-    test3.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &test3 });
-    test3.AddComponent(Scale{ 2.f, &test3 });
-    test3.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("202409working_low_tiger.fbx") , &test3 });
-    test3.AddComponent(Texture{ m_subTextureData.at(L"tigercolor"), &test3 });
-    test3.AddComponent(Gravity{ 2.f, &test3 });
+    //AddObj(L"TestObject3", TestObject{ this });
+    //TestObject& test3 = GetObj<TestObject>(L"TestObject3");
+    //test3.AddComponent(Position{ -50.f, 18.f, -100.f, 1.f, &test3 });
+    //test3.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &test3 });
+    //test3.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &test3 });
+    //test3.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &test3 });
+    //test3.AddComponent(Scale{ 2.f, &test3 });
+    //test3.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("202409working_low_tiger.fbx") , &test3 });
+    //test3.AddComponent(Texture{ m_subTextureData.at(L"tigercolor"), &test3 });
+    //test3.AddComponent(Gravity{ 2.f, &test3 });
 
     AddObj(L"TestObject4", TestObject{ this });
     TestObject& test4 = GetObj<TestObject>(L"TestObject4");

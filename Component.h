@@ -17,7 +17,7 @@ struct NeedVector : Component // 객체로 만들지 않는 클래스
 {
 	NeedVector() = default;
 	NeedVector(float x, float y, float z, float w, Object* root) : Component{root}, mFloat4 { x, y, z, w } {}
-	XMVECTOR& GetXMVECTOR() { return XMLoadFloat4(&mFloat4); }
+	XMVECTOR GetXMVECTOR() { return XMLoadFloat4(&mFloat4); }
 	void SetXMVECTOR(XMVECTOR& v) {
 		XMStoreFloat4(&mFloat4, v);
 	}
@@ -50,9 +50,11 @@ struct Texture : public Component
 struct Animation : public Component
 {
 	Animation() = default;
-	Animation(unordered_map<string, SkinnedData>& animData, Object* root) : Component{ root }, mAnimData{ &animData }, time{0.f} {}
+	Animation(unordered_map<string, SkinnedData>& animData, Object* root) : Component{ root }, mAnimData{ &animData }, mAnimationTime{ 0.f }, mSleepTime{ 0.f }, mCurrentFileName{} {}
 	unordered_map<string, SkinnedData>* mAnimData;
-	float time;
+	float mAnimationTime;
+	float mSleepTime;
+	string mCurrentFileName;
 };
 
 struct Position : public NeedVector
