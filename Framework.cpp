@@ -17,7 +17,7 @@ int Framework::Run(HINSTANCE hInstance, int nCmdShow)
     OnInit(hInstance, nCmdShow);
 
     ShowWindow(m_win32App->GetHwnd(), nCmdShow);
-
+    ShowCursor(false);
     m_Timer.Reset();
 
     // Main loop.
@@ -73,7 +73,7 @@ void Framework::OnInit(HINSTANCE hInstance, int nCmdShow)
 
 void Framework::OnUpdate(GameTimer& gTimer)
 {
-    m_scenes[L"BaseScene"]->OnUpdate(gTimer);
+    m_scenes[L"BaseScene"].OnUpdate(gTimer);
 }
 
 // Render the scene.
@@ -118,7 +118,7 @@ void Framework::OnResize(UINT width, UINT height, bool minimized)
         BuildDepthStencilBuffer(width, height);
         BuildDsv();
 
-        m_scenes[m_currentScene]->OnResize(width, height);
+        m_scenes[m_currentSceneName].OnResize(width, height);
 
         ThrowIfFailed(m_commandList->Close());
         ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
@@ -138,12 +138,12 @@ void Framework::OnDestroy()
 
 void Framework::OnKeyDown(UINT8 key)
 {
-    m_scenes[m_currentScene]->OnKeyDown(key);
+    m_scenes[m_currentSceneName].OnKeyDown(key);
 }
 
 void Framework::OnKeyUp(UINT8 key)
 {
-    m_scenes[m_currentScene]->OnKeyUp(key);
+    m_scenes[m_currentSceneName].OnKeyUp(key);
 }
 
 // Helper function for acquiring the first available hardware adapter that supports Direct3D 12.
@@ -394,8 +394,8 @@ void Framework::PopulateCommandList()
     ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), nullptr));
 
     // Set
-    m_scenes[L"BaseScene"]->SetState(m_commandList.Get());
-    m_scenes[L"BaseScene"]->SetDescriptorHeaps(m_commandList.Get());
+    m_scenes[L"BaseScene"].SetState(m_commandList.Get());
+    m_scenes[L"BaseScene"].SetDescriptorHeaps(m_commandList.Get());
     // Set
     
     // Indicate that the back buffer will be used as a render target.
@@ -412,7 +412,7 @@ void Framework::PopulateCommandList()
     m_commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1, 0, 0, nullptr);
 
     // Rendering
-    m_scenes[L"BaseScene"]->OnRender(m_device.Get(), m_commandList.Get());
+    m_scenes[L"BaseScene"].OnRender(m_device.Get(), m_commandList.Get());
     // Rendering
     
     // Indicate that the back buffer will now be used to present.
@@ -425,9 +425,9 @@ void Framework::PopulateCommandList()
 void Framework::BuildScenes(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
     wstring name = L"BaseScene";
-    m_scenes[name] = make_unique<Scene>(m_win32App->GetWidth(), m_win32App->GetHeight(), name);
-    m_scenes[name]->OnInit(device, commandList);
-    m_currentScene = name;
+    m_scenes[name] = Scene{ m_win32App->GetWidth(), m_win32App->GetHeight(), name };
+    m_scenes[name].OnInit(device, commandList);
+    m_currentSceneName = name;
 }
 
 void Framework::WaitForPreviousFrame()
@@ -470,5 +470,20 @@ void Framework::CalculateFrame()
 GameTimer& Framework::GetTimer()
 {
     return m_Timer;
+}
+
+Scene& Framework::GetScene(const wstring& name)
+{
+    return m_scenes.at(name);
+}
+
+const wstring& Framework::GetCurrentSceneName()
+{
+    return m_currentSceneName;
+}
+
+Win32Application* Framework::GetWin32App()
+{
+    return m_win32App.get();
 }
 

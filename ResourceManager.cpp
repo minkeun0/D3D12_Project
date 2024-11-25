@@ -9,25 +9,26 @@ ResourceManager::~ResourceManager()
 {
 }
 
-void ResourceManager::LoadFbx(const string& fileName)
+void ResourceManager::LoadFbx(const string& fileName, bool onlyAnimation, bool zUp)
 {
-	mFbxExtractor->ImportFbxFile(fileName);
+	mFbxExtractor->ImportFbxFile(fileName, onlyAnimation, zUp);
 	
 	mFbxExtractor->ExtractDataFromFbx();
 
-	vector<Vertex>& vertexData = mFbxExtractor->GetVertices();
-	
-	SubMeshData subData{};
-	subData.vertexCountPerInstance = vertexData.size();
-	subData.startVertexLocation = mVertexBuffer.size();
-	mSubMeshData[fileName] = subData;
+	if (onlyAnimation == false) {
+		vector<Vertex>& vertexData = mFbxExtractor->GetVertices();
+		SubMeshData subData{};
+		subData.vertexCountPerInstance = vertexData.size();
+		subData.startVertexLocation = mVertexBuffer.size();
+		mSubMeshData[fileName] = subData;
+		mVertexBuffer.insert(mVertexBuffer.end(), vertexData.begin(), vertexData.end());
+		OutputDebugStringA(string{ "##### " + (to_string(mVertexBuffer.size()) + "\n") }.c_str());
+	}
 
 	SkinnedData animData;
 	animData.Set(mFbxExtractor->GetBoneHierarchyIndex(), mFbxExtractor->GetOffsetMatrix(), mFbxExtractor->GetAnimation());
 	mAnimData.emplace(fileName ,animData);
 
-	mVertexBuffer.insert(mVertexBuffer.end(), vertexData.begin(), vertexData.end());
-	OutputDebugStringA(string{"##### " + (to_string(mVertexBuffer.size()) + "\n")}.c_str());
 
 	mFbxExtractor->ResetAndClear();
 }
@@ -73,7 +74,7 @@ SubMeshData& ResourceManager::GetSubMeshData(const string& fileName)
 	return mSubMeshData.at(fileName);
 }
 
-SkinnedData& ResourceManager::GetAnimationData(const string& fileName)
+unordered_map<string, SkinnedData>& ResourceManager::GetAnimationData()
 {
-	return mAnimData.at(fileName);
+	return mAnimData;
 }

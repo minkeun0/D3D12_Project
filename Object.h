@@ -18,6 +18,8 @@ public:
 	virtual void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList * commandList) = 0;
 	//virtual void OnDestroy();
 
+	void BuildConstantBuffer(ID3D12Device* device);
+
 	template<typename T>
 	void AddComponent(T&& component) { m_components.emplace(typeid(T).name(), move(component)); }
 
@@ -33,6 +35,10 @@ public:
 protected:
 	Scene* m_root;
 	unordered_map<string, ComponentVariant> m_components;
+
+	// 오브젝트 마다 독립적인 CB
+	UINT8* m_mappedData;
+	ComPtr<ID3D12Resource> m_constantBuffer;
 };
 
 class PlayerObject : public Object
@@ -43,6 +49,8 @@ public:
 	virtual void OnUpdate(GameTimer& gTimer);
 	virtual void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
 	void OnKeyboardInput(const GameTimer& gTimer);
+private:
+	XMMATRIX mRotation;
 };
 
 class CameraObject : public Object

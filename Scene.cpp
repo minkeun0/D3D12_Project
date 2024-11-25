@@ -11,13 +11,16 @@ Scene::Scene(UINT width, UINT height, std::wstring name) :
     BuildProjMatrix();
     m_resourceManager = make_unique<ResourceManager>();
     m_resourceManager->CreatePlane("Plane", 5000);
-    m_resourceManager->LoadFbx("202409working_low_tiger.fbx");
-    m_resourceManager->LoadFbx("1P(boy).fbx");
-    m_resourceManager->LoadFbx("god.fbx");
-    m_resourceManager->LoadFbx("sister.fbx");
-    m_resourceManager->LoadFbx("map_terrain.fbx");
-    m_resourceManager->LoadFbx("house_attach.fbx");
-    m_resourceManager->LoadFbx("humanoid.fbx");
+    m_resourceManager->LoadFbx("202409working_low_tiger.fbx", false, false);
+    m_resourceManager->LoadFbx("1P(boy-walk).fbx", false, false);
+    m_resourceManager->LoadFbx("god.fbx", false, false);
+    m_resourceManager->LoadFbx("sister.fbx", false, false);
+    m_resourceManager->LoadFbx("map_terrain.fbx", false, true);
+    m_resourceManager->LoadFbx("house_attach.fbx", false, false);
+    m_resourceManager->LoadFbx("humanoid.fbx", false, true);
+    m_resourceManager->LoadFbx("1P(boy-idle).fbx", true, false);
+    m_resourceManager->LoadFbx("1P(boy-jump).fbx", true, false);
+    m_resourceManager->LoadFbx("1P(boy-run).fbx", true, false);
 
     int i = 0;
     m_DDSFileName.push_back(L"./Textures/boy.dds");
@@ -68,12 +71,14 @@ void Scene::BuildObjects(ID3D12Device* device)
     PlayerObject& player = GetObj<PlayerObject>(L"PlayerObject");
     player.AddComponent(Position{ 0.f, 20.f, -150.f, 1.f, &player });
     player.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &player });
-    player.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &player });
+    player.AddComponent(Rotation{ 0.0f, 180.0f, 0.0f, 0.0f, &player });
     player.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &player });
     player.AddComponent(Scale{ 0.1f, &player });
-    player.AddComponent(World{ &player });
-    player.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("1P(boy).fbx"), &player });
+    player.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("1P(boy-walk).fbx"), &player });
     player.AddComponent(Texture{ m_subTextureData.at(L"boy"), &player});
+    player.AddComponent(Animation{ GetResourceManager().GetAnimationData(), &player });
+    player.AddComponent(Gravity{ 2.f, &player });
+
 
     AddObj(L"CameraObject", CameraObject{50.f, this });
     CameraObject& camera = GetObj<CameraObject>(L"CameraObject");
@@ -86,9 +91,8 @@ void Scene::BuildObjects(ID3D12Device* device)
     plane.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &plane });
     plane.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &plane });
     plane.AddComponent(Scale{ 1.f, &plane });
-    plane.AddComponent(World{ &plane });
     plane.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("Plane") , &plane });
-    plane.AddComponent(Texture{ m_subTextureData.at(L"tile"), &plane });
+    plane.AddComponent(Texture{ m_subTextureData.at(L"grass"), &plane });
 
     AddObj(L"TestObject", TestObject{ this });
     TestObject& test = GetObj<TestObject>(L"TestObject");
@@ -97,9 +101,9 @@ void Scene::BuildObjects(ID3D12Device* device)
     test.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &test });
     test.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &test });
     test.AddComponent(Scale{ 0.25f, &test });
-    test.AddComponent(World{ &test });
     test.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("sister.fbx") , &test });
     test.AddComponent(Texture{ m_subTextureData.at(L"sister"), &test });
+    test.AddComponent(Gravity{ 2.f, &test });
 
     AddObj(L"TestObject1", TestObject{ this });
     TestObject& test1 = GetObj<TestObject>(L"TestObject1");
@@ -108,18 +112,17 @@ void Scene::BuildObjects(ID3D12Device* device)
     test1.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &test1});
     test1.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &test1 });
     test1.AddComponent(Scale{ 0.25f, &test1 });
-    test1.AddComponent(World{ &test1 });
     test1.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("god.fbx"), &test1 });
     test1.AddComponent(Texture{ m_subTextureData.at(L"god"), &test1 });
+    test1.AddComponent(Gravity{ 2.f, &test1 });
 
     AddObj(L"TestObject2", TestObject{ this });
     TestObject& test2 = GetObj<TestObject>(L"TestObject2");
-    test2.AddComponent(Position{ 0.f, 0.f, 0.f, 1.f, &test2 });
+    test2.AddComponent(Position{ 0.f, -10.f, 0.f, 1.f, &test2 });
     test2.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &test2 });
     test2.AddComponent(Rotation{ -90.0f, 0.0f, 0.0f, 0.0f, &test2 });
     test2.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &test2 });
     test2.AddComponent(Scale{ 0.07f, &test2 });
-    test2.AddComponent(World{ &test2 });
     test2.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("map_terrain.fbx") , &test2 });
     test2.AddComponent(Texture{ m_subTextureData.at(L"PP_Color_Palette"), &test2 });
 
@@ -130,9 +133,9 @@ void Scene::BuildObjects(ID3D12Device* device)
     test3.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &test3 });
     test3.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &test3 });
     test3.AddComponent(Scale{ 2.f, &test3 });
-    test3.AddComponent(World{ &test3 });
     test3.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("202409working_low_tiger.fbx") , &test3 });
     test3.AddComponent(Texture{ m_subTextureData.at(L"tigercolor"), &test3 });
+    test3.AddComponent(Gravity{ 2.f, &test3 });
 
     AddObj(L"TestObject4", TestObject{ this });
     TestObject& test4 = GetObj<TestObject>(L"TestObject4");
@@ -141,10 +144,11 @@ void Scene::BuildObjects(ID3D12Device* device)
     test4.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &test4 });
     test4.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &test4 });
     test4.AddComponent(Scale{ 0.05f, &test4 });
-    test4.AddComponent(World{ &test4 });
     test4.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("humanoid.fbx"), &test4 });
     test4.AddComponent(Texture{ m_subTextureData.at(L"PP_Color_Palette"), &test4 });
-    test4.AddComponent(Animation{ GetResourceManager().GetAnimationData("humanoid.fbx"), &test4 });
+    test4.AddComponent(Animation{ GetResourceManager().GetAnimationData(), &test4 });
+    test4.AddComponent(Gravity{ 2.f, &test4 });
+
 }
 
 void Scene::BuildRootSignature(ID3D12Device* device)
@@ -161,14 +165,13 @@ void Scene::BuildRootSignature(ID3D12Device* device)
     }
 
     CD3DX12_DESCRIPTOR_RANGE1 ranges[2] = {};
-    ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+    ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
     ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
 
-    CD3DX12_ROOT_PARAMETER1 rootParameters[4] = {};
+    CD3DX12_ROOT_PARAMETER1 rootParameters[3] = {};
     rootParameters[0].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_VERTEX);
     rootParameters[1].InitAsDescriptorTable(1, &ranges[1], D3D12_SHADER_VISIBILITY_PIXEL);
-    rootParameters[2].InitAsConstants(16, 0, 0);
-    rootParameters[3].InitAsConstants(1, 2, 0);
+    rootParameters[2].InitAsConstantBufferView(1);
 
     D3D12_STATIC_SAMPLER_DESC sampler{};
     sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
@@ -350,7 +353,11 @@ void Scene::BuildConstantBuffer(ID3D12Device* device)
     // Map and initialize the constant buffer. We don't unmap this until the
     // app closes. Keeping things mapped for the lifetime of the resource is okay.
     CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
-    ThrowIfFailed(m_constantBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_mappedData)));
+    ThrowIfFailed(m_constantBuffer->Map(0, &readRange, &m_mappedData));
+
+    for (auto& [key, value] : m_objects) {
+        visit([&device](auto& arg) {arg.BuildConstantBuffer(device); }, value);
+    }
 }
 
 void Scene::BuildConstantBufferView(ID3D12Device* device)
@@ -466,7 +473,7 @@ void Scene::OnUpdate(GameTimer& gTimer)
     }
 
     //투영행렬 쉐이더로 전달
-    memcpy(m_mappedData + 64, &XMMatrixTranspose(XMLoadFloat4x4(&m_proj)), sizeof(XMMATRIX)); // 처음 매개변수는 시작주소
+    memcpy(static_cast<UINT8*>(m_mappedData) + sizeof(XMMATRIX), &XMMatrixTranspose(XMLoadFloat4x4(&m_proj)), sizeof(XMMATRIX)); // 처음 매개변수는 시작주소
 }
 
 // Render the scene.
@@ -517,7 +524,7 @@ ResourceManager& Scene::GetResourceManager()
     return *(m_resourceManager.get());
 }
 
-UINT8* Scene::GetConstantBufferMappedData()
+void* Scene::GetConstantBufferMappedData()
 {
     // TODO: 여기에 return 문을 삽입합니다.
     return m_mappedData;

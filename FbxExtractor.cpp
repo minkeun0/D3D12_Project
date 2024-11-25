@@ -8,7 +8,8 @@ FbxExtractor::FbxExtractor() :
 	mFbxScene{nullptr},
 	mUV{true},
 	mIsFirst{true},
-	mBone{false}
+	mBone{false},
+	mOnlyAnimation{false}
 {
 	mFbxManager = FbxManager::Create();
 	mFbxIOS = FbxIOSettings::Create(mFbxManager, IOSROOT);
@@ -20,7 +21,7 @@ FbxExtractor::~FbxExtractor()
 	mFbxManager->Destroy();
 }
 
-bool FbxExtractor::ImportFbxFile(const std::string& fileName)
+bool FbxExtractor::ImportFbxFile(const std::string& fileName, bool onlyAnimation, bool zUp)
 {
 
 	mFbxImporter = FbxImporter::Create(mFbxManager, "");
@@ -29,7 +30,10 @@ bool FbxExtractor::ImportFbxFile(const std::string& fileName)
 	mFbxScene = FbxScene::Create(mFbxManager, "");
 	if(!mFbxImporter->Import(mFbxScene)) return false;
 	
-	ConvertSceneAxisSystem();
+	if (zUp) ConvertSceneAxisSystem(FbxAxisSystem::eZAxis, FbxAxisSystem::eParityOdd, FbxAxisSystem::eLeftHanded);
+	else ConvertSceneAxisSystem(FbxAxisSystem::eYAxis, FbxAxisSystem::eParityOdd, FbxAxisSystem::eLeftHanded);
+
+	mOnlyAnimation = onlyAnimation;
 
 	mFbxImporter->Destroy();
 	return true;
@@ -59,11 +63,12 @@ void FbxExtractor::ExtractDataFromFbx()
 	}
 
 	if(mBone) ExtractAnimationData(rootNode);
+
 }
 
-void FbxExtractor::ConvertSceneAxisSystem()
+void FbxExtractor::ConvertSceneAxisSystem(FbxAxisSystem::EUpVector u, FbxAxisSystem::EFrontVector f, FbxAxisSystem::ECoordSystem c)
 {
-	FbxAxisSystem axisSystem{ FbxAxisSystem::eZAxis, FbxAxisSystem::eParityOdd, FbxAxisSystem::eLeftHanded };
+	FbxAxisSystem axisSystem{ u, f, c };
 	axisSystem.DeepConvertScene(mFbxScene);
 
 	int up{ -2 };
@@ -89,6 +94,7 @@ void FbxExtractor::TraverseNode(ptr<FbxNode> node)
 		case FbxNodeAttribute::eSkeleton:
 			mBone = true;
 			ExtractBoneHierarchy(node);
+
 			break;
 		case FbxNodeAttribute::eMesh:
 			if (mIsFirst != true) break;

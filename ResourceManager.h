@@ -8,12 +8,12 @@ class ResourceManager
 public:
 	ResourceManager();
 	~ResourceManager();
-	void LoadFbx(const string& fileName);
+	void LoadFbx(const string& fileName, bool onlyAnimation, bool zUp);
 	void CreatePlane(const string& name, float size);
 	Vertex* GetVertexBuffer();
 	size_t GetVertexBufferSize();
 	SubMeshData& GetSubMeshData(const string& fileName);
-	SkinnedData& GetAnimationData(const string& fileName);
+	unordered_map<string, SkinnedData>& GetAnimationData();
 private:
 
 	unique_ptr<FbxExtractor> mFbxExtractor;

@@ -18,18 +18,20 @@ struct NeedVector : Component // 객체로 만들지 않는 클래스
 	NeedVector() = default;
 	NeedVector(float x, float y, float z, float w, Object* root) : Component{root}, mFloat4 { x, y, z, w } {}
 	XMVECTOR& GetXMVECTOR() { return XMLoadFloat4(&mFloat4); }
-	void SetXMVECTOR(XMVECTOR& v) { XMStoreFloat4(&mFloat4, v); }
+	void SetXMVECTOR(XMVECTOR& v) {
+		XMStoreFloat4(&mFloat4, v);
+	}
 	XMFLOAT4 mFloat4;
 };
 
-struct World : public Component
-{
-	World() = default;
-	World(Object* root) : Component{ root }, mWorld{} {}
-	XMMATRIX GetXMMATRIX() { return XMLoadFloat4x4(&mWorld); }
-	void SetXMMATRIX(XMMATRIX& m) { XMStoreFloat4x4(&mWorld, m); }
-	XMFLOAT4X4 mWorld;
-};
+//struct World : public Component
+//{
+//	World() = default;
+//	World(Object* root) : Component{ root }, mWorld{} {}
+//	XMMATRIX GetXMMATRIX() { return XMLoadFloat4x4(&mWorld); }
+//	void SetXMMATRIX(XMMATRIX& m) { XMStoreFloat4x4(&mWorld, m); }
+//	XMFLOAT4X4 mWorld;
+//};
 
 struct Mesh : public Component
 { 
@@ -48,8 +50,8 @@ struct Texture : public Component
 struct Animation : public Component
 {
 	Animation() = default;
-	Animation(SkinnedData& animData, Object* root) : Component{ root }, mAnimData{ &animData }, time{0.f} {}
-	SkinnedData* mAnimData;
+	Animation(unordered_map<string, SkinnedData>& animData, Object* root) : Component{ root }, mAnimData{ &animData }, time{0.f} {}
+	unordered_map<string, SkinnedData>* mAnimData;
 	float time;
 };
 
@@ -86,6 +88,13 @@ struct Scale : public NeedVector
 	float mScaleValue;
 };
 
+struct Gravity : public NeedVector
+{
+	Gravity() = default;
+	Gravity(float value, Object* root) : NeedVector{ 0.f, -value, 0.f, 0.f, root }, mGravityTime{0.f} {}
+	float mGravityTime;
+};
+
 //struct CameraPosition : NeedVector
 //{
 //	CameraPosition() = default;
@@ -97,4 +106,4 @@ struct Scale : public NeedVector
 //	float mPhi;
 //};
 
-using ComponentVariant = variant<Mesh, Position, Velocity, Rotation, Rotate, Scale, World, Texture, Animation>;
+using ComponentVariant = variant<Mesh, Position, Velocity, Rotation, Rotate, Scale, Texture, Animation, Gravity>;

@@ -33,9 +33,26 @@ public:
     template<typename T>
     T& GetObj(const wstring& name) { return get<T>(m_objects.at(name)); }
 
-    UINT8* GetConstantBufferMappedData();
+    void* GetConstantBufferMappedData();
     ID3D12DescriptorHeap* GetDescriptorHeap();
+
+    UINT CalcConstantBufferByteSize(UINT byteSize);
+
 private:
+    void BuildObjects(ID3D12Device* device);
+    void BuildRootSignature(ID3D12Device* device);
+    void BuildPSO(ID3D12Device* device);
+    void BuildVertexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
+    //void BuildIndexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
+    void BuildVertexBufferView();
+    //void BuildIndexBufferView();
+    void BuildConstantBuffer(ID3D12Device* device);
+    void BuildConstantBufferView(ID3D12Device* device);
+    void BuildTextureBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
+    void BuildTextureBufferView(ID3D12Device* device);
+    void BuildDescriptorHeap(ID3D12Device* device);
+    void BuildProjMatrix();
+
     wstring m_name;
     unordered_map<wstring, ObjectVariant> m_objects;
     unique_ptr<ResourceManager> m_resourceManager;
@@ -61,22 +78,7 @@ private:
     vector<ComPtr<ID3D12Resource>> m_textureBuffer_uploads;
     //
     ComPtr<ID3D12Resource> m_constantBuffer;
-    UINT8* m_mappedData;
+    void* m_mappedData;
     //
     XMFLOAT4X4 m_proj;
-    //
-    void BuildObjects(ID3D12Device* device);
-    void BuildRootSignature(ID3D12Device* device);
-    void BuildPSO(ID3D12Device* device);
-    void BuildVertexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
-    //void BuildIndexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
-    void BuildVertexBufferView();
-    //void BuildIndexBufferView();
-    void BuildConstantBuffer(ID3D12Device* device);
-    void BuildConstantBufferView(ID3D12Device* device);
-    void BuildTextureBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
-    void BuildTextureBufferView(ID3D12Device* device);
-    void BuildDescriptorHeap(ID3D12Device* device);
-    UINT CalcConstantBufferByteSize(UINT byteSize);
-    void BuildProjMatrix();
 };

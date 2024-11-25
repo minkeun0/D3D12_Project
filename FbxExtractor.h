@@ -18,7 +18,7 @@ class FbxExtractor
 public:
 	FbxExtractor();
 	~FbxExtractor();
-	bool ImportFbxFile(const string&);
+	bool ImportFbxFile(const string&, bool ,bool);
 	void ExtractDataFromFbx();
 	vector<Vertex>& GetVertices();
 	//vector<pair<string, int>>& GetBoneHierarchy();
@@ -29,7 +29,7 @@ public:
 	void ResetAndClear();
 
 private:
-	void ConvertSceneAxisSystem();
+	void ConvertSceneAxisSystem(FbxAxisSystem::EUpVector, FbxAxisSystem::EFrontVector, FbxAxisSystem::ECoordSystem);
 	inline void TraverseNode(ptr<FbxNode>);
 	inline void TraverseNodeForAnimation(ptr<FbxNode>, ptr<FbxTakeInfo>, FbxTime::EMode);
 	void ExtractMeshData(ptr<FbxNode>);
@@ -70,5 +70,6 @@ private:
 	bool mIsFirst;
 	bool mBone;
 	bool mNormalize;
+	bool mOnlyAnimation;
 };
 

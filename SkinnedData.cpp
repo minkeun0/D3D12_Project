@@ -139,7 +139,7 @@ void SkinnedData::Set(std::vector<int>& boneHierarchy,
 void SkinnedData::GetFinalTransforms(const std::string& clipName, float timePos,  std::vector<XMFLOAT4X4>& finalTransforms)const
 {
 	UINT numBones = mBoneOffsets.size();
-	finalTransforms.resize(numBones);
+	//finalTransforms.resize(numBones);
 	std::vector<XMFLOAT4X4> toParentTransforms(numBones);
 
 	// Interpolate all the bones of this clip at the given time instance.

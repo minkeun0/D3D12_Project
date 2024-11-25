@@ -1,19 +1,16 @@
-cbuffer WoldTranslate : register(b0)
+cbuffer WoldTranslate : register(b1)
 {
     float4x4 world;
+    float4x4 finalTranforms[90];
+    int isAnimation;
 };
 
-cbuffer SceneConstantBuffer : register(b1)
+cbuffer SceneConstantBuffer : register(b0)
 {
     float4x4 view;
     float4x4 proj;
-    float4x4 finalTranforms[90];
 };
 
-cbuffer temp : register(b2)
-{
-    int isAnimation;
-};
 
 Texture2D Texture : register(t0);
 SamplerState Sampler : register(s0);

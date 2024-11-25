@@ -98,8 +98,11 @@ LRESULT CALLBACK Win32Application::WindowProc(HWND hWnd, UINT message, WPARAM wP
 
     case WM_MOUSEMOVE:
         if (pSample) {
-            pSample->m_scenes.at(pSample->m_currentScene).get()->
-                GetObj<CameraObject>(L"CameraObject").OnMouseInput(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+            pSample->GetScene(pSample->GetCurrentSceneName()).GetObj<CameraObject>(L"CameraObject").OnMouseInput(
+                wParam, pSample->GetWin32App()->GetWidth(), pSample->GetWin32App()->GetHeight());
+            //pSample->GetWin32App()->GetHeight();
+            //pSample->GetWin32App()->GetWidth();
+            
         }
         return 0;
 

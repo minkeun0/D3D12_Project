@@ -13,10 +13,7 @@ struct Vertex
 struct ObjectCB
 {
     XMFLOAT4X4 world;
-};
-
-struct TempCB 
-{
+	XMFLOAT4X4 finalTransform[90];
 	int isAnimate;
 	int padding[3];
 };
@@ -25,7 +22,6 @@ struct CommonCB
 {
     XMFLOAT4X4 view;
     XMFLOAT4X4 proj;
-	XMFLOAT4X4 finalTransform[90];
 };
 
 struct SubMeshData
