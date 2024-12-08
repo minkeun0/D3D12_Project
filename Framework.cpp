@@ -21,7 +21,7 @@ int Framework::Run(HINSTANCE hInstance, int nCmdShow)
     m_Timer.Reset();
 
     // Main loop.
-    MSG msg = {};
+    MSG msg{};
     while (msg.message != WM_QUIT)
     {
         // Process any messages in the queue.
@@ -38,7 +38,6 @@ int Framework::Run(HINSTANCE hInstance, int nCmdShow)
             OnRender();
         }
     }
-
     OnDestroy();
 
     // Return this part of the WM_QUIT message to Windows.
@@ -482,8 +481,8 @@ const wstring& Framework::GetCurrentSceneName()
     return m_currentSceneName;
 }
 
-Win32Application* Framework::GetWin32App()
+Win32Application& Framework::GetWin32App()
 {
-    return m_win32App.get();
+    return *m_win32App.get();
 }
 

@@ -97,19 +97,24 @@ LRESULT CALLBACK Win32Application::WindowProc(HWND hWnd, UINT message, WPARAM wP
         return 0;
 
     case WM_MOUSEMOVE:
-        if (pSample) {
+        if (pSample)
+        {
             pSample->GetScene(pSample->GetCurrentSceneName()).GetObj<CameraObject>(L"CameraObject").OnMouseInput(
-                wParam, pSample->GetWin32App()->GetWidth(), pSample->GetWin32App()->GetHeight());
-            //pSample->GetWin32App()->GetHeight();
-            //pSample->GetWin32App()->GetWidth();
-            
+                wParam, pSample->GetWin32App().GetHwnd());
+
+        }
+        return 0;
+
+    case WM_MOVE:
+        if (pSample) 
+        {
         }
         return 0;
 
     case WM_SIZE:
         if (pSample)
         {
-            RECT clientRect = {};
+            RECT clientRect{};
             GetClientRect(hWnd, &clientRect);
             pSample->OnResize(clientRect.right - clientRect.left, clientRect.bottom - clientRect.top, wParam == SIZE_MINIMIZED);
         }

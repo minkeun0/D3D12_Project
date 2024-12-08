@@ -29,6 +29,6 @@ struct SubMeshData
 	UINT vertexCountPerInstance;
 	UINT indexCountPerInstance;
 	UINT startVertexLocation;
-	UINT statIndexLocation;
+	UINT startIndexLocation;
 	UINT baseVertexLocation;
 };

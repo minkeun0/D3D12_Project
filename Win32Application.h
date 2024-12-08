@@ -35,5 +35,4 @@ private:
     float m_aspectRatio;
 
     bool m_windowVisible;
-
 };

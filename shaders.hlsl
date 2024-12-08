@@ -3,6 +3,7 @@ cbuffer WoldTranslate : register(b1)
     float4x4 world;
     float4x4 finalTranforms[90];
     int isAnimation;
+    int3 padding;
 };
 
 cbuffer SceneConstantBuffer : register(b0)
@@ -10,7 +11,6 @@ cbuffer SceneConstantBuffer : register(b0)
     float4x4 view;
     float4x4 proj;
 };
-
 
 Texture2D Texture : register(t0);
 SamplerState Sampler : register(s0);
@@ -33,8 +33,6 @@ struct VSOutput
 
 VSOutput VSMain(VSInput input)
 {    
-    VSOutput output;
-    
     if (isAnimation == 1)
     {
         float3 pos = float3(0.f, 0.f, 0.f);
@@ -51,6 +49,7 @@ VSOutput VSMain(VSInput input)
         input.normal = float4(normal, 0);
     }
     
+    VSOutput output;    
     output.position = mul(input.position, mul(world, mul(view, proj)));
     float3 n = mul(input.normal.xyz, (float3x3) world); // fbx 파일에서 읽어올때 회전을 시켜서 읽어 오는게 더 좋을지도...
     n = normalize(n);

@@ -43,9 +43,9 @@ private:
     void BuildRootSignature(ID3D12Device* device);
     void BuildPSO(ID3D12Device* device);
     void BuildVertexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
-    //void BuildIndexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
+    void BuildIndexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
     void BuildVertexBufferView();
-    //void BuildIndexBufferView();
+    void BuildIndexBufferView();
     void BuildConstantBuffer(ID3D12Device* device);
     void BuildConstantBufferView(ID3D12Device* device);
     void BuildTextureBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
@@ -66,11 +66,11 @@ private:
     UINT m_cbvsrvuavDescriptorSize;
     //
     ComPtr<ID3D12Resource> m_vertexBuffer_default;
-    //ComPtr<ID3D12Resource> m_indexBuffer_default;
+    ComPtr<ID3D12Resource> m_indexBuffer_default;
     ComPtr<ID3D12Resource> m_vertexBuffer_upload;
-    //ComPtr<ID3D12Resource> m_indexBuffer_upload;
+    ComPtr<ID3D12Resource> m_indexBuffer_upload;
     D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
-    //D3D12_INDEX_BUFFER_VIEW m_indexBufferView;
+    D3D12_INDEX_BUFFER_VIEW m_indexBufferView;
     //
     unordered_map<wstring, int> m_subTextureData;
     vector<wstring> m_DDSFileName;

@@ -10,7 +10,8 @@ Scene::Scene(UINT width, UINT height, std::wstring name) :
 {
     BuildProjMatrix();
     m_resourceManager = make_unique<ResourceManager>();
-    m_resourceManager->CreatePlane("Plane", 5000);
+    m_resourceManager->CreatePlane("Plane", 500);
+    m_resourceManager->CreateTerrain("HeightMap1.raw", 100);
     m_resourceManager->LoadFbx("202409working_low_tiger.fbx", false, false);
     m_resourceManager->LoadFbx("1P(boy-walk).fbx", false, false);
     m_resourceManager->LoadFbx("god.fbx", false, false);
@@ -55,28 +56,32 @@ void Scene::OnInit(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
     BuildRootSignature(device);
     BuildPSO(device);
     BuildVertexBuffer(device, commandList);
-    //BuildIndexBuffer(device, commandList);
+    BuildIndexBuffer(device, commandList);
     BuildTextureBuffer(device, commandList);
     BuildConstantBuffer(device);
     BuildDescriptorHeap(device);
     BuildVertexBufferView();
-    //BuildIndexBufferView();
+    BuildIndexBufferView();
     BuildConstantBufferView(device);
     BuildTextureBufferView(device);
 }
 
 void Scene::BuildObjects(ID3D12Device* device)
 {
+    ResourceManager& rm = GetResourceManager();
+    auto& subMeshData = rm.GetSubMeshData();
+    auto& animData = rm.GetAnimationData();
+
     AddObj(L"PlayerObject", PlayerObject{ this });
     PlayerObject& player = GetObj<PlayerObject>(L"PlayerObject");
-    player.AddComponent(Position{ 0.f, 20.f, -150.f, 1.f, &player });
+    player.AddComponent(Position{ 0.f, 20.f, 0.f, 1.f, &player });
     player.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &player });
     player.AddComponent(Rotation{ 0.0f, 180.0f, 0.0f, 0.0f, &player });
     player.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &player });
     player.AddComponent(Scale{ 0.1f, &player });
-    player.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("1P(boy-walk).fbx"), &player });
+    player.AddComponent(Mesh{ subMeshData.at("1P(boy-walk).fbx"), &player });
     player.AddComponent(Texture{ m_subTextureData.at(L"boy"), &player});
-    player.AddComponent(Animation{ GetResourceManager().GetAnimationData(), &player });
+    player.AddComponent(Animation{ animData, &player });
     player.AddComponent(Gravity{ 2.f, &player });
 
 
@@ -91,7 +96,7 @@ void Scene::BuildObjects(ID3D12Device* device)
     plane.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &plane });
     plane.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &plane });
     plane.AddComponent(Scale{ 1.f, &plane });
-    plane.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("Plane") , &plane });
+    plane.AddComponent(Mesh{ subMeshData.at("Plane") , &plane });
     plane.AddComponent(Texture{ m_subTextureData.at(L"grass"), &plane });
 
     //AddObj(L"TestObject", TestObject{ this });
@@ -116,15 +121,15 @@ void Scene::BuildObjects(ID3D12Device* device)
     //test1.AddComponent(Texture{ m_subTextureData.at(L"god"), &test1 });
     //test1.AddComponent(Gravity{ 2.f, &test1 });
 
-    AddObj(L"TestObject2", TestObject{ this });
-    TestObject& test2 = GetObj<TestObject>(L"TestObject2");
-    test2.AddComponent(Position{ 0.f, -13.f, 0.f, 1.f, &test2 });
-    test2.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &test2 });
-    test2.AddComponent(Rotation{ -90.0f, 0.0f, 0.0f, 0.0f, &test2 });
-    test2.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &test2 });
-    test2.AddComponent(Scale{ 0.07f, &test2 });
-    test2.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("map_terrain.fbx") , &test2 });
-    test2.AddComponent(Texture{ m_subTextureData.at(L"PP_Color_Palette"), &test2 });
+    AddObj(L"TerrainObject", TerrainObject{ this });
+    TerrainObject& terrain = GetObj<TerrainObject>(L"TerrainObject");
+    terrain.AddComponent(Position{ 0.f, 0.f, 0.f, 1.f, &terrain });
+    terrain.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &terrain });
+    terrain.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &terrain });
+    terrain.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &terrain });
+    terrain.AddComponent(Scale{ 1.f, &terrain });
+    terrain.AddComponent(Mesh{ subMeshData.at("HeightMap1.raw") , &terrain });
+    terrain.AddComponent(Texture{ m_subTextureData.at(L"grass"), &terrain });
 
     //AddObj(L"TestObject3", TestObject{ this });
     //TestObject& test3 = GetObj<TestObject>(L"TestObject3");
@@ -139,14 +144,14 @@ void Scene::BuildObjects(ID3D12Device* device)
 
     AddObj(L"TestObject4", TestObject{ this });
     TestObject& test4 = GetObj<TestObject>(L"TestObject4");
-    test4.AddComponent(Position{ 0.f, 10.f, -100.f, 1.f, &test4 });
+    test4.AddComponent(Position{ 0.f, 10.f, 100.f, 1.f, &test4 });
     test4.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &test4 });
     test4.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &test4 });
     test4.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &test4 });
     test4.AddComponent(Scale{ 0.05f, &test4 });
-    test4.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("humanoid.fbx"), &test4 });
+    test4.AddComponent(Mesh{ subMeshData.at("humanoid.fbx"), &test4 });
     test4.AddComponent(Texture{ m_subTextureData.at(L"PP_Color_Palette"), &test4 });
-    test4.AddComponent(Animation{ GetResourceManager().GetAnimationData(), &test4 });
+    test4.AddComponent(Animation{ animData, &test4 });
     test4.AddComponent(Gravity{ 2.f, &test4 });
 
 }
@@ -250,7 +255,7 @@ void Scene::BuildPSO(ID3D12Device* device)
 
 void Scene::BuildVertexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
-    const UINT vertexBufferSize = m_resourceManager->GetVertexBufferSize() * sizeof(Vertex);
+    const UINT vertexBufferSize = m_resourceManager->GetVertexBuffer().size() * sizeof(Vertex);
     // Create the vertex buffer.
     ThrowIfFailed(device->CreateCommittedResource(
         &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
@@ -269,7 +274,7 @@ void Scene::BuildVertexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* c
         IID_PPV_ARGS(m_vertexBuffer_upload.GetAddressOf())));
 
     D3D12_SUBRESOURCE_DATA subResourceData{};
-    subResourceData.pData = m_resourceManager->GetVertexBuffer();
+    subResourceData.pData = m_resourceManager->GetVertexBuffer().data();
     subResourceData.RowPitch = vertexBufferSize;
     subResourceData.SlicePitch = subResourceData.RowPitch;
 
@@ -280,52 +285,53 @@ void Scene::BuildVertexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* c
         D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ));
 }
 
-//void Scene::BuildIndexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
-//{
-//    // Create the index buffer.
-//    const UINT indexBufferSize = m_meshManager->GetindexBufferByteSize();
-//    ThrowIfFailed(device->CreateCommittedResource(
-//        &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
-//        D3D12_HEAP_FLAG_NONE,
-//        &CD3DX12_RESOURCE_DESC::Buffer(indexBufferSize),
-//        D3D12_RESOURCE_STATE_COMMON,
-//        nullptr,
-//        IID_PPV_ARGS(m_indexBuffer_default.GetAddressOf())));
-//
-//    ThrowIfFailed(device->CreateCommittedResource(
-//        &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-//        D3D12_HEAP_FLAG_NONE,
-//        &CD3DX12_RESOURCE_DESC::Buffer(indexBufferSize),
-//        D3D12_RESOURCE_STATE_GENERIC_READ,
-//        nullptr,
-//        IID_PPV_ARGS(m_indexBuffer_upload.GetAddressOf())));
-//
-//    D3D12_SUBRESOURCE_DATA subResourceData = {};
-//    subResourceData.pData = m_meshManager->GetIndexData();
-//    subResourceData.RowPitch = indexBufferSize;
-//    subResourceData.SlicePitch = subResourceData.RowPitch;
-//
-//    commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_indexBuffer_default.Get(),
-//        D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST));
-//    UpdateSubresources(commandList, m_indexBuffer_default.Get(), m_indexBuffer_upload.Get(), 0, 0, 1, &subResourceData);
-//    commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_indexBuffer_default.Get(),
-//        D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ));
-//}
+void Scene::BuildIndexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
+{
+    // Create the index buffer.
+    const UINT indexBufferSize = m_resourceManager->GetIndexBuffer().size() * sizeof(uint32_t);
+
+    ThrowIfFailed(device->CreateCommittedResource(
+        &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+        D3D12_HEAP_FLAG_NONE,
+        &CD3DX12_RESOURCE_DESC::Buffer(indexBufferSize),
+        D3D12_RESOURCE_STATE_COMMON,
+        nullptr,
+        IID_PPV_ARGS(m_indexBuffer_default.GetAddressOf())));
+
+    ThrowIfFailed(device->CreateCommittedResource(
+        &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+        D3D12_HEAP_FLAG_NONE,
+        &CD3DX12_RESOURCE_DESC::Buffer(indexBufferSize),
+        D3D12_RESOURCE_STATE_GENERIC_READ,
+        nullptr,
+        IID_PPV_ARGS(m_indexBuffer_upload.GetAddressOf())));
+
+    D3D12_SUBRESOURCE_DATA subResourceData = {};
+    subResourceData.pData = m_resourceManager->GetIndexBuffer().data();
+    subResourceData.RowPitch = indexBufferSize;
+    subResourceData.SlicePitch = subResourceData.RowPitch;
+
+    commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_indexBuffer_default.Get(),
+        D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST));
+    UpdateSubresources(commandList, m_indexBuffer_default.Get(), m_indexBuffer_upload.Get(), 0, 0, 1, &subResourceData);
+    commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_indexBuffer_default.Get(),
+        D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ));
+}
 
 void Scene::BuildVertexBufferView()
 {
     // Initialize the vertex buffer view.
     m_vertexBufferView.BufferLocation = m_vertexBuffer_default->GetGPUVirtualAddress();
     m_vertexBufferView.StrideInBytes = sizeof(Vertex);
-    m_vertexBufferView.SizeInBytes = m_resourceManager->GetVertexBufferSize() * sizeof(Vertex);
+    m_vertexBufferView.SizeInBytes = m_resourceManager->GetVertexBuffer().size() * sizeof(Vertex);
 }
 
-//void Scene::BuildIndexBufferView()
-//{
-//    m_indexBufferView.BufferLocation = m_indexBuffer_default->GetGPUVirtualAddress();
-//    m_indexBufferView.Format = DXGI_FORMAT_R16_UINT;
-//    m_indexBufferView.SizeInBytes = m_meshManager->GetindexBufferByteSize();
-//}
+void Scene::BuildIndexBufferView()
+{
+    m_indexBufferView.BufferLocation = m_indexBuffer_default->GetGPUVirtualAddress();
+    m_indexBufferView.Format = DXGI_FORMAT_R32_UINT;
+    m_indexBufferView.SizeInBytes = m_resourceManager->GetIndexBuffer().size() * sizeof(uint32_t);
+}
 
 void Scene::BuildDescriptorHeap(ID3D12Device* device)
 {
@@ -481,8 +487,8 @@ void Scene::OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandLis
 {
     commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-    //commandList->IASetIndexBuffer(&m_indexBufferView);
-    //
+    commandList->IASetIndexBuffer(&m_indexBufferView);
+
     CD3DX12_GPU_DESCRIPTOR_HANDLE hDescriptor(m_descriptorHeap->GetGPUDescriptorHandleForHeapStart());
     commandList->SetGraphicsRootDescriptorTable(0, hDescriptor);
 

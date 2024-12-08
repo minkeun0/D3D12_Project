@@ -24,7 +24,7 @@ public:
 	GameTimer& GetTimer();
 	Scene& GetScene(const wstring& name);
 	const wstring& GetCurrentSceneName();
-	Win32Application* GetWin32App();
+	Win32Application& GetWin32App();
 private:
 	void GetHardwareAdapter(
 		_In_ IDXGIFactory1* pFactory,

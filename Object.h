@@ -46,11 +46,11 @@ class PlayerObject : public Object
 public:
 	PlayerObject() = default;
 	PlayerObject(Scene* root);
-	virtual void OnUpdate(GameTimer& gTimer);
-	virtual void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
+	void OnUpdate(GameTimer& gTimer) override;
+	void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList) override;
 	void OnKeyboardInput(const GameTimer& gTimer);
 private:
-	XMMATRIX mRotation;
+	XMMATRIX mRotation; // 키보드 인풋 함수에서 구했던 카메라 좌표계를 기준으로 하는 회전행렬이다. 이 값을 함수 내부에서 컴포넌트의 rotate에 곱하고 그 결과를 다시 컴포넌트에 저장하면 이 변수는 없어도 될듯. 나중에 고치자.
 };
 
 class CameraObject : public Object
@@ -58,11 +58,11 @@ class CameraObject : public Object
 public:
 	CameraObject() = default;
 	CameraObject(float radius, Scene* root);
-	virtual void OnUpdate(GameTimer& gTimer);
-	virtual void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
-	void OnMouseInput(WPARAM wParam, int x, int y);
-	void SetXMMATRIX(XMMATRIX m);
-	XMMATRIX& GetXMMATRIX();
+	void OnUpdate(GameTimer& gTimer) override;
+	void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList) override;
+	void OnMouseInput(WPARAM wParam, HWND hWnd);
+	void SetXMMATRIX(XMMATRIX& m);
+	XMMATRIX GetXMMATRIX();
 private:
 	int mLastPosX;
 	int mLastPosY;
@@ -72,13 +72,22 @@ private:
 	XMFLOAT4X4 mViewMatrix;
 };
 
+class TerrainObject : public Object
+{
+public:
+	TerrainObject() = default;
+	TerrainObject(Scene* root);
+	void OnUpdate(GameTimer& gTimer) override;
+	void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList) override;
+};
+
 class TestObject : public Object
 {
 public:
 	TestObject() = default;
 	TestObject(Scene* root);
-	virtual void OnUpdate(GameTimer& gTimer);
-	virtual void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
+	void OnUpdate(GameTimer& gTimer) override;
+	void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList) override;
 };
 
-using ObjectVariant = variant<PlayerObject, CameraObject, TestObject>;
+using ObjectVariant = variant<PlayerObject, CameraObject, TestObject, TerrainObject>;

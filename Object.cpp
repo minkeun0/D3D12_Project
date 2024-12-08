@@ -25,25 +25,38 @@ void Object::BuildConstantBuffer(ID3D12Device* device)
     ThrowIfFailed(m_constantBuffer->Map(0, &readRange, reinterpret_cast<void**>(& m_mappedData)));
 }
 
-PlayerObject::PlayerObject(Scene* root) : Object{ root }
+PlayerObject::PlayerObject(Scene* root) : Object{ root } , mRotation{ XMMatrixIdentity()}
 {
-    mRotation = XMMatrixIdentity();
-    
 }
 
 void PlayerObject::OnUpdate(GameTimer& gTimer)
 {
     OnKeyboardInput(gTimer);
 
+    // terrain Y 로 player Y 설정하기.
+    float newY = 0.f;
+    XMFLOAT4 pos = GetComponent<Position>().mFloat4;
+    if (pos.x > 0 && pos.z > 0 && pos.x < 1024 && pos.z < 1024) { // terrain 크기 알 수 있게 코드 작성해야함. 겹선형 보간 추가해야함
+        UINT startVertex = m_root->GetObj<TerrainObject>(L"TerrainObject").GetComponent<Mesh>().mSubMeshData.startVertexLocation;
+        vector<Vertex>& vertexBuffer = m_root->GetResourceManager().GetVertexBuffer();
+        newY = vertexBuffer[(int)pos.z * 1024 + (int)pos.x + startVertex].position.y;
+    }
+
+    XMVECTOR newPos = XMVECTOR{pos.x, newY, pos.z};
+    GetComponent<Position>().SetXMVECTOR(newPos);
+    // terrain Y 로 player Y 설정하기. end
+
     XMMATRIX scale = XMMatrixScalingFromVector(GetComponent<Scale>().GetXMVECTOR());
 
     GetComponent<Rotation>().SetXMVECTOR(GetComponent<Rotation>().GetXMVECTOR() + GetComponent<Rotate>().GetXMVECTOR() * gTimer.DeltaTime());
     XMMATRIX rotate = XMMatrixRotationRollPitchYawFromVector(GetComponent<Rotation>().GetXMVECTOR() * (XM_PI / 180.0f));
 
+
+
     if (FindComponent<Gravity>()) {
         float& t = GetComponent<Gravity>().mGravityTime;
         float y = XMVectorGetY(GetComponent<Position>().GetXMVECTOR());
-        if (y > 0) {
+        if (y > newY) {
             t += gTimer.DeltaTime();
             //currentFileName = "1P(boy-jump).fbx";
             GetComponent<Velocity>().SetXMVECTOR(XMVectorSetY(GetComponent<Velocity>().GetXMVECTOR(), 0.5 * -9.8 * (t * t)));
@@ -100,8 +113,9 @@ void PlayerObject::OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* com
     hDescriptor.Offset(1+GetComponent<Texture>().mDescriptorStartIndex, device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
     commandList->SetGraphicsRootDescriptorTable(1, hDescriptor);
     commandList->SetGraphicsRootConstantBufferView(2, m_constantBuffer.Get()->GetGPUVirtualAddress());
-    //commandList->DrawIndexedInstanced(tmp.indexCountPerInstance, 1, tmp.statIndexLocation, tmp.baseVertexLocation, 0);
-    commandList->DrawInstanced(GetComponent<Mesh>().mSubMeshData.vertexCountPerInstance, 1, GetComponent<Mesh>().mSubMeshData.startVertexLocation, 0);
+    SubMeshData& data = GetComponent<Mesh>().mSubMeshData;
+    //commandList->DrawIndexedInstanced(data.indexCountPerInstance, 1, data.startIndexLocation, data.baseVertexLocation, 0);
+    commandList->DrawInstanced(data.vertexCountPerInstance, 1, data.startVertexLocation, 0);
 }
 
 void PlayerObject::OnKeyboardInput(const GameTimer& gTimer)
@@ -141,14 +155,14 @@ void PlayerObject::OnKeyboardInput(const GameTimer& gTimer)
         velocity += rightInv;
     }
 
-    float& t = GetComponent<Animation>().mSleepTime;
-    if (GetKeyState('V') & 0x8000) {
-        t += gTimer.DeltaTime();
-        if (t > 0.3f) {
-            velocity += up;
-            t = 0.f;
-        };
-    }
+    //float& t = GetComponent<Animation>().mSleepTime; // 쓰레기임
+    //if (GetKeyState('V') & 0x8000) {
+    //    t += gTimer.DeltaTime();
+    //    if (t > 0.3f) {
+    //        velocity += up;
+    //        t = 0.f;
+    //    };
+    //}
 
     if (GetAsyncKeyState('P') & 0x8000) {
         XMFLOAT4 pos = GetComponent<Position>().mFloat4;
@@ -218,8 +232,9 @@ void TestObject::OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* comma
     hDescriptor.Offset(1 + GetComponent<Texture>().mDescriptorStartIndex, device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
     commandList->SetGraphicsRootDescriptorTable(1, hDescriptor);
     commandList->SetGraphicsRootConstantBufferView(2, m_constantBuffer.Get()->GetGPUVirtualAddress());
-    //commandList->DrawIndexedInstanced(tmp.indexCountPerInstance, 1, tmp.statIndexLocation, tmp.baseVertexLocation, 0);
-    commandList->DrawInstanced(GetComponent<Mesh>().mSubMeshData.vertexCountPerInstance, 1, GetComponent<Mesh>().mSubMeshData.startVertexLocation, 0);
+    SubMeshData& data = GetComponent<Mesh>().mSubMeshData;
+    //commandList->DrawIndexedInstanced(data.indexCountPerInstance, 1, data.startIndexLocation, data.baseVertexLocation, 0);
+    commandList->DrawInstanced(data.vertexCountPerInstance, 1, data.startVertexLocation, 0);
 }
 
 CameraObject::CameraObject(float radius, Scene* root) :
@@ -254,32 +269,93 @@ void CameraObject::OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* com
 {
 }
 
-void CameraObject::OnMouseInput(WPARAM wParam, int width, int height)
+void CameraObject::OnMouseInput(WPARAM wParam, HWND hWnd)
 {
+    // 현재 wnd의 센터 좌표를 알아온다
+    RECT clientRect{};
+    GetWindowRect(hWnd, &clientRect);
+    int width = int(clientRect.right - clientRect.left);
+    int height = int(clientRect.bottom - clientRect.top);
+    int centerX = clientRect.left + width / 2;
+    int centerY = clientRect.top + height / 2;
+
     POINT currentMousePos;
     GetCursorPos(&currentMousePos);
-    float dx = static_cast<float>(currentMousePos.x - width/2.f);
-    float dy = static_cast<float>(currentMousePos.y - height/2.f);
-    mTheta -= XMConvertToRadians(dx * 0.01f);
-    mPhi -= XMConvertToRadians(dy * 0.01f);
-
-
-    SetCursorPos(width / 2.f, height / 2.f);
-
+    float dx = static_cast<float>(currentMousePos.x - centerX);
+    float dy = static_cast<float>(currentMousePos.y - centerY);
+    mTheta -= XMConvertToRadians(dx * 0.02f);
+    mPhi -= XMConvertToRadians(dy * 0.02f);
 
     // 각도 clamp
     float min = 0.1f;
     float max = XM_PI - 0.1f;
     mPhi = mPhi < min ? min : (mPhi > max ? max : mPhi);
 
+    SetCursorPos(centerX, centerY);
 }
 
-void CameraObject::SetXMMATRIX(XMMATRIX m)
+void CameraObject::SetXMMATRIX(XMMATRIX& m)
 {
     XMStoreFloat4x4(&mViewMatrix, m);
 }
 
-XMMATRIX& CameraObject::GetXMMATRIX()
+XMMATRIX CameraObject::GetXMMATRIX()
 {
     return XMLoadFloat4x4(&mViewMatrix);
+}
+
+TerrainObject::TerrainObject(Scene* root) : Object{ root }
+{
+}
+
+void TerrainObject::OnUpdate(GameTimer& gTimer)
+{
+    XMMATRIX scale = XMMatrixScalingFromVector(GetComponent<Scale>().GetXMVECTOR());
+
+    GetComponent<Rotation>().SetXMVECTOR(GetComponent<Rotation>().GetXMVECTOR() + GetComponent<Rotate>().GetXMVECTOR() * gTimer.DeltaTime());
+    XMMATRIX rotate = XMMatrixRotationRollPitchYawFromVector(GetComponent<Rotation>().GetXMVECTOR() * (XM_PI / 180.0f));
+
+    if (FindComponent<Gravity>()) {
+        float& t = GetComponent<Gravity>().mGravityTime;
+        t += gTimer.DeltaTime(); // t를 초기화 하는 조건도 생각해야함.
+        float y = XMVectorGetY(GetComponent<Position>().GetXMVECTOR());
+        if (y > 0) {
+            GetComponent<Velocity>().SetXMVECTOR(XMVectorSetY(GetComponent<Velocity>().GetXMVECTOR(), 0.5 * -9.8 * (t * t)));
+        }
+        else {
+            t = 0;
+        }
+    }
+
+    GetComponent<Position>().SetXMVECTOR(GetComponent<Position>().GetXMVECTOR() + GetComponent<Velocity>().GetXMVECTOR() * gTimer.DeltaTime());
+    GetComponent<Velocity>().SetXMVECTOR(XMVECTOR{ 0,0,0,0 });
+    XMMATRIX translate = XMMatrixTranslationFromVector(GetComponent<Position>().GetXMVECTOR());
+
+    // 월드 행렬 = 크기 행렬 * 회전 행렬 * 이동 행렬
+    XMMATRIX world = scale * rotate * translate;
+    memcpy(m_mappedData, &XMMatrixTranspose(world), sizeof(XMMATRIX)); // 처음 매개변수는 시작주소
+
+    //애니메이션 유무
+    int isAnimate = FindComponent<Animation>();
+    if (isAnimate) {
+        vector<XMFLOAT4X4> finalTransforms{ 90 };
+        Animation& animComponent = GetComponent<Animation>();
+        SkinnedData& animData = animComponent.mAnimData->at("humanoid.fbx");
+        animComponent.mAnimationTime += gTimer.DeltaTime();
+        if (animComponent.mAnimationTime > animData.GetClipEndTime("shot")) animComponent.mAnimationTime = 0.f;
+        animData.GetFinalTransforms("shot", animComponent.mAnimationTime, finalTransforms);
+        memcpy(m_mappedData + sizeof(XMFLOAT4X4), finalTransforms.data(), sizeof(XMFLOAT4X4) * 90); // 처음 매개변수는 시작주소
+    }
+    memcpy(m_mappedData + sizeof(XMFLOAT4X4) * 91, &isAnimate, sizeof(int));
+}
+
+void TerrainObject::OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
+{
+    CD3DX12_GPU_DESCRIPTOR_HANDLE hDescriptor(m_root->GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart());
+    hDescriptor.Offset(1 + GetComponent<Texture>().mDescriptorStartIndex, device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+    commandList->SetGraphicsRootDescriptorTable(1, hDescriptor);
+    commandList->SetGraphicsRootConstantBufferView(2, m_constantBuffer.Get()->GetGPUVirtualAddress());
+    SubMeshData& data = GetComponent<Mesh>().mSubMeshData;
+    commandList->DrawIndexedInstanced(data.indexCountPerInstance, 1, data.startIndexLocation, data.baseVertexLocation, 0);
+    //commandList->DrawInstanced(data.vertexCountPerInstance, 1, data.startVertexLocation, 0);
 }
