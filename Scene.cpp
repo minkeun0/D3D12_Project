@@ -8,50 +8,12 @@ Scene::Scene(UINT width, UINT height, std::wstring name) :
     m_name(name),
     m_mappedData(nullptr)
 {
-    BuildProjMatrix();
-    m_resourceManager = make_unique<ResourceManager>();
-    m_resourceManager->CreatePlane("Plane", 500);
-    m_resourceManager->CreateTerrain("HeightMap1.raw", 100);
-    m_resourceManager->LoadFbx("202409working_low_tiger.fbx", false, false);
-    m_resourceManager->LoadFbx("1P(boy-walk).fbx", false, false);
-    m_resourceManager->LoadFbx("god.fbx", false, false);
-    m_resourceManager->LoadFbx("sister.fbx", false, false);
-    m_resourceManager->LoadFbx("map_terrain.fbx", false, true);
-    m_resourceManager->LoadFbx("house_attach.fbx", false, false);
-    m_resourceManager->LoadFbx("humanoid.fbx", false, true);
-    m_resourceManager->LoadFbx("1P(boy-idle).fbx", true, false);
-    m_resourceManager->LoadFbx("1P(boy-jump).fbx", true, false);
-    m_resourceManager->LoadFbx("1P(boy-run).fbx", true, false);
-
-    int i = 0;
-    m_DDSFileName.push_back(L"./Textures/boy.dds");
-    m_subTextureData.insert({ L"boy", i++ });
-    m_DDSFileName.push_back(L"./Textures/bricks3.dds");
-    m_subTextureData.insert({ L"bricks3", i++ });
-    m_DDSFileName.push_back(L"./Textures/checkboard.dds");
-    m_subTextureData.insert({ L"checkboard", i++ });
-    m_DDSFileName.push_back(L"./Textures/grass.dds");
-    m_subTextureData.insert({ L"grass", i++ });
-    m_DDSFileName.push_back(L"./Textures/tile.dds");
-    m_subTextureData.insert({ L"tile", i++ });
-    m_DDSFileName.push_back(L"./Textures/WireFence.dds");
-    m_subTextureData.insert({ L"WireFence", i++ });
-    m_DDSFileName.push_back(L"./Textures/god.dds");
-    m_subTextureData.insert({ L"god", i++ });
-    m_DDSFileName.push_back(L"./Textures/Gunship.dds");
-    m_subTextureData.insert({ L"Gunship", i++ });
-    m_DDSFileName.push_back(L"./Textures/sister.dds");
-    m_subTextureData.insert({ L"sister", i++ });
-    m_DDSFileName.push_back(L"./Textures/water1.dds");
-    m_subTextureData.insert({ L"water1", i++ });
-    m_DDSFileName.push_back(L"./Textures/PP_Color_Palette.dds");
-    m_subTextureData.insert({ L"PP_Color_Palette", i++ });
-    m_DDSFileName.push_back(L"./Textures/tigercolor.dds");
-    m_subTextureData.insert({ L"tigercolor", i++ });
 }
 
 void Scene::OnInit(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
+    LoadMeshAnimationTexture();
+    BuildProjMatrix();
     BuildObjects(device);
     BuildRootSignature(device);
     BuildPSO(device);
@@ -74,7 +36,7 @@ void Scene::BuildObjects(ID3D12Device* device)
 
     AddObj(L"PlayerObject", PlayerObject{ this });
     PlayerObject& player = GetObj<PlayerObject>(L"PlayerObject");
-    player.AddComponent(Position{ 0.f, 20.f, 0.f, 1.f, &player });
+    player.AddComponent(Position{ 50.f, 0.f, 50.f, 1.f, &player });
     player.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &player });
     player.AddComponent(Rotation{ 0.0f, 180.0f, 0.0f, 0.0f, &player });
     player.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &player });
@@ -89,15 +51,15 @@ void Scene::BuildObjects(ID3D12Device* device)
     CameraObject& camera = GetObj<CameraObject>(L"CameraObject");
     camera.AddComponent(Position{ 0.f, 0.f, 0.f, 0.f, &camera });
 
-    AddObj(L"PlaneObject", TestObject{ this });
-    TestObject& plane = GetObj<TestObject>(L"PlaneObject");
-    plane.AddComponent(Position{ 0.f, 0.f, 0.f, 1.f, &plane });
-    plane.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &plane });
-    plane.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &plane });
-    plane.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &plane });
-    plane.AddComponent(Scale{ 1.f, &plane });
-    plane.AddComponent(Mesh{ subMeshData.at("Plane") , &plane });
-    plane.AddComponent(Texture{ m_subTextureData.at(L"grass"), &plane });
+    //AddObj(L"PlaneObject", TestObject{ this });
+    //TestObject& plane = GetObj<TestObject>(L"PlaneObject");
+    //plane.AddComponent(Position{ 0.f, 0.f, 0.f, 1.f, &plane });
+    //plane.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &plane });
+    //plane.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &plane });
+    //plane.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &plane });
+    //plane.AddComponent(Scale{ 1.f, &plane });
+    //plane.AddComponent(Mesh{ subMeshData.at("Plane") , &plane });
+    //plane.AddComponent(Texture{ m_subTextureData.at(L"grass"), &plane });
 
     //AddObj(L"TestObject", TestObject{ this });
     //TestObject& test = GetObj<TestObject>(L"TestObject");
@@ -128,7 +90,7 @@ void Scene::BuildObjects(ID3D12Device* device)
     terrain.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &terrain });
     terrain.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &terrain });
     terrain.AddComponent(Scale{ 1.f, &terrain });
-    terrain.AddComponent(Mesh{ subMeshData.at("HeightMap1.raw") , &terrain });
+    terrain.AddComponent(Mesh{ subMeshData.at("HeightMap.raw") , &terrain });
     terrain.AddComponent(Texture{ m_subTextureData.at(L"grass"), &terrain });
 
     //AddObj(L"TestObject3", TestObject{ this });
@@ -144,7 +106,7 @@ void Scene::BuildObjects(ID3D12Device* device)
 
     AddObj(L"TestObject4", TestObject{ this });
     TestObject& test4 = GetObj<TestObject>(L"TestObject4");
-    test4.AddComponent(Position{ 0.f, 10.f, 100.f, 1.f, &test4 });
+    test4.AddComponent(Position{ 100.f, 10.f, 200.f, 1.f, &test4 });
     test4.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &test4 });
     test4.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &test4 });
     test4.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &test4 });
@@ -453,6 +415,51 @@ void Scene::BuildProjMatrix()
 {
     XMMATRIX proj = XMMatrixPerspectiveFovLH(XM_PI * 0.25f, m_viewport.Width / m_viewport.Height, 1.0f, 1000.0f);
     XMStoreFloat4x4(&m_proj, proj);
+}
+
+void Scene::LoadMeshAnimationTexture()
+{
+    m_resourceManager = make_unique<ResourceManager>();
+    m_resourceManager->CreatePlane("Plane", 500);
+    m_resourceManager->CreateTerrain("HeightMap.raw", 120, 10, 80);
+    m_resourceManager->LoadFbx("202409working_low_tiger.fbx", false, false);
+    m_resourceManager->LoadFbx("1P(boy-walk).fbx", false, false);
+    m_resourceManager->LoadFbx("god.fbx", false, false);
+    m_resourceManager->LoadFbx("sister.fbx", false, false);
+    m_resourceManager->LoadFbx("map_terrain.fbx", false, true);
+    m_resourceManager->LoadFbx("house_attach.fbx", false, false);
+    m_resourceManager->LoadFbx("humanoid.fbx", false, true);
+    m_resourceManager->LoadFbx("1P(boy-idle).fbx", true, false);
+    m_resourceManager->LoadFbx("1P(boy-jump).fbx", true, false);
+    m_resourceManager->LoadFbx("1P(boy-run).fbx", true, false);
+
+    int i = 0;
+    m_DDSFileName.push_back(L"./Textures/boy.dds");
+    m_subTextureData.insert({ L"boy", i++ });
+    m_DDSFileName.push_back(L"./Textures/bricks3.dds");
+    m_subTextureData.insert({ L"bricks3", i++ });
+    m_DDSFileName.push_back(L"./Textures/checkboard.dds");
+    m_subTextureData.insert({ L"checkboard", i++ });
+    m_DDSFileName.push_back(L"./Textures/grass.dds");
+    m_subTextureData.insert({ L"grass", i++ });
+    m_DDSFileName.push_back(L"./Textures/tile.dds");
+    m_subTextureData.insert({ L"tile", i++ });
+    m_DDSFileName.push_back(L"./Textures/WireFence.dds");
+    m_subTextureData.insert({ L"WireFence", i++ });
+    m_DDSFileName.push_back(L"./Textures/god.dds");
+    m_subTextureData.insert({ L"god", i++ });
+    m_DDSFileName.push_back(L"./Textures/Gunship.dds");
+    m_subTextureData.insert({ L"Gunship", i++ });
+    m_DDSFileName.push_back(L"./Textures/sister.dds");
+    m_subTextureData.insert({ L"sister", i++ });
+    m_DDSFileName.push_back(L"./Textures/water1.dds");
+    m_subTextureData.insert({ L"water1", i++ });
+    m_DDSFileName.push_back(L"./Textures/PP_Color_Palette.dds");
+    m_subTextureData.insert({ L"PP_Color_Palette", i++ });
+    m_DDSFileName.push_back(L"./Textures/tigercolor.dds");
+    m_subTextureData.insert({ L"tigercolor", i++ });
+    m_DDSFileName.push_back(L"./Textures/stone.dds");
+    m_subTextureData.insert({ L"stone", i++ });
 }
 
 void Scene::SetState(ID3D12GraphicsCommandList* commandList)

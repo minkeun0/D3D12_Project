@@ -60,7 +60,7 @@ void ResourceManager::CreatePlane(const string& name, float size)
 
 }
 
-void ResourceManager::CreateTerrain(const string& name, int maxHeight)
+void ResourceManager::CreateTerrain(const string& name, int maxHeight , int scale, int maxUV)
 {
 	ifstream in{ name };
 	if (!in) throw;
@@ -76,10 +76,15 @@ void ResourceManager::CreateTerrain(const string& name, int maxHeight)
 	int width = sqrt(fileSize);
 	int height = sqrt(fileSize);
 
+	mTerrainData.terrainWidth = width;
+	mTerrainData.terrainHeight = height;
+	mTerrainData.terrainScale = scale;
+
+	float down{ 0.4f };
 	vector<float> heightData(width * height);
 	for (int z = 0; z < height; ++z) {
 		for (int x = 0; x < width; ++x) {
-			heightData[z * width + x] = heightMap[(height - 1 - z) * width + x] / 255.f * maxHeight; // (height - 1 - z)는 왼쪽 아래를 원점(원래 원점은 왼쪽 위)으로 하기 위함이다.
+			heightData[z * width + x] = (heightMap[(height - 1 - z) * width + x] / 255.f - down) * maxHeight; // (height - 1 - z)는 왼쪽 아래를 원점(원래 원점은 왼쪽 위)으로 하기 위함이다.
 			//heightData[z * width + x] = heightMap[z * width + x] / 255.f * maxHeight; // (height - 1 - z) 의 의미는 왼쪽 아래를 원점으로 하기 위함이다.
 
 		}
@@ -88,49 +93,47 @@ void ResourceManager::CreateTerrain(const string& name, int maxHeight)
 	vector<Vertex> vertices(width * height);
 	for (int z = 0; z < height; ++z) {
 		for (int x = 0; x < width; ++x) {
+
+			int scaledX = x * scale;
+			int scaledZ = z * scale;
 			// position
-			float y = heightData[z * width + x];
-			vertices[z * width + x].position.x = x;
-			vertices[z * width + x].position.y = y;
-			vertices[z * width + x].position.z = z;
+			vertices[z * width + x].position.x = scaledX;
+			vertices[z * width + x].position.y = heightData[z * width + x];
+			vertices[z * width + x].position.z = scaledZ;
 			// position.
 			
 			// normal
 			XMVECTOR left = XMVectorZero();
 			if (x == 0)
-				left = { (float)x, heightData[z * width + x], (float)z };
+				left = { (float)scaledX, heightData[z * width + x], (float)scaledZ };
 			else
-				left = { x - 1.f, heightData[z * width + (x - 1)], (float)z };
+				left = { (float)scaledX - scale, heightData[z * width + x - 1], (float)scaledZ };
 
 			XMVECTOR right = XMVectorZero();
 			if (x == width - 1)
-				right = { (float)x, heightData[z * width + x], (float)z };
+				right = { (float)scaledX, heightData[z * width + x],(float)scaledZ };
 			else
-				right = { x + 1.f, heightData[z * width + (x + 1)], (float)z };
+				right = { (float)scaledX + scale, heightData[z * width + x + 1], (float)scaledZ };
 
 			XMVECTOR up = XMVectorZero();
 			if (z == height - 1)
-				up = { (float)x, heightData[z * width + x], (float)z };
+				up = { (float)scaledX, heightData[z * width + x], (float)scaledZ };
 			else
-				up = { (float)x, heightData[(z + 1) * width + x], z + 1.f };
+				up = { (float)scaledX, heightData[(z + 1) * width + x], (float)scaledZ + scale };
 
 			XMVECTOR down = XMVectorZero();
 			if (z == 0)
-				down = { (float)x, heightData[z * width + x], (float)z };
+				down = { (float)scaledX, heightData[z * width + x], (float)scaledZ };
 			else
-				down = { (float)x, heightData[(z - 1) * width + x], z - 1.f };
+				down = { (float)scaledX, heightData[(z - 1) * width + x], (float)scaledZ - scale };
 
-			XMVECTOR normal = XMVector3Cross(up - down, right - left);
-			normal = XMVector3Normalize(normal);
-		
-			vertices[z * width + x].normal.x = XMVectorGetX(normal);
-			vertices[z * width + x].normal.y = XMVectorGetY(normal);
-			vertices[z * width + x].normal.z = XMVectorGetZ(normal);
+			XMVECTOR normal = XMVector3Normalize(XMVector3Cross(up - down, right - left));			
+			XMStoreFloat3(&vertices[z * width + x].normal, normal);
 			// normal.
 			
 			// uv
-			vertices[z * width + x].uv.x = x;
-			vertices[z * width + x].uv.y = height - 1 - z;
+			vertices[z * width + x].uv.x = ((float)x / (width - 1)) * maxUV;
+			vertices[z * width + x].uv.y = (1 - (float)z / (height - 1)) * maxUV;
 			// uv.
 		}
 	}
@@ -186,4 +189,9 @@ unordered_map<string, SubMeshData>& ResourceManager::GetSubMeshData()
 unordered_map<string, SkinnedData>& ResourceManager::GetAnimationData()
 {
 	return mAnimData;
+}
+
+TerrainData& ResourceManager::GetTerrainData()
+{
+	return mTerrainData;
 }

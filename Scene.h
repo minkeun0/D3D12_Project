@@ -52,6 +52,7 @@ private:
     void BuildTextureBufferView(ID3D12Device* device);
     void BuildDescriptorHeap(ID3D12Device* device);
     void BuildProjMatrix();
+    void LoadMeshAnimationTexture();
 
     wstring m_name;
     unordered_map<wstring, ObjectVariant> m_objects;

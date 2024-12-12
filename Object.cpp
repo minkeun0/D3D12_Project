@@ -33,13 +33,35 @@ void PlayerObject::OnUpdate(GameTimer& gTimer)
 {
     OnKeyboardInput(gTimer);
 
+    ResourceManager& rm = m_root->GetResourceManager();
     // terrain Y 로 player Y 설정하기.
-    float newY = 0.f;
     XMFLOAT4 pos = GetComponent<Position>().mFloat4;
-    if (pos.x > 0 && pos.z > 0 && pos.x < 1024 && pos.z < 1024) { // terrain 크기 알 수 있게 코드 작성해야함. 겹선형 보간 추가해야함
+    float newY = 0.f;
+    int width = rm.GetTerrainData().terrainWidth; 
+    int height = rm.GetTerrainData().terrainHeight;
+    int terrainScale = rm.GetTerrainData().terrainScale;
+
+    if (pos.x > 0 && pos.z > 0 && pos.x < width * terrainScale && pos.z < height * terrainScale) {
+        vector<Vertex>& vertexBuffer = rm.GetVertexBuffer();
         UINT startVertex = m_root->GetObj<TerrainObject>(L"TerrainObject").GetComponent<Mesh>().mSubMeshData.startVertexLocation;
-        vector<Vertex>& vertexBuffer = m_root->GetResourceManager().GetVertexBuffer();
-        newY = vertexBuffer[(int)pos.z * 1024 + (int)pos.x + startVertex].position.y;
+
+        int indexX = (int)(pos.x / terrainScale);
+        int indexZ = (int)(pos.z / terrainScale);
+
+        float leftBottom = vertexBuffer[startVertex + indexZ * width + indexX].position.y;
+        float rightBottom = vertexBuffer[startVertex + indexZ * width + indexX + 1].position.y;
+        float leftTop = vertexBuffer[startVertex + (indexZ + 1) * width + indexX].position.y;
+        float rightTop = vertexBuffer[startVertex + (indexZ + 1) * width + indexX + 1].position.y;
+
+        float offsetX = pos.x / terrainScale - indexX;
+        float offsetZ = pos.z / terrainScale - indexZ;
+
+        float lerpXBottom = (1 - offsetX) * leftBottom + offsetX * rightBottom;
+        float lerpXTop = (1 - offsetX) * leftTop + offsetX * rightTop;
+
+        float lerpZ = (1 - offsetZ) * lerpXBottom + offsetZ * lerpXTop;
+
+        newY = lerpZ;
     }
 
     XMVECTOR newPos = XMVECTOR{pos.x, newY, pos.z};
