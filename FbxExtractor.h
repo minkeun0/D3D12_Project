@@ -18,7 +18,7 @@ class FbxExtractor
 public:
 	FbxExtractor();
 	~FbxExtractor();
-	bool ImportFbxFile(const string&, bool ,bool);
+	void ImportFbxFile(const string&, bool ,bool);
 	void ExtractDataFromFbx();
 	vector<Vertex>& GetVertices();
 	//vector<pair<string, int>>& GetBoneHierarchy();

@@ -21,14 +21,14 @@ FbxExtractor::~FbxExtractor()
 	mFbxManager->Destroy();
 }
 
-bool FbxExtractor::ImportFbxFile(const std::string& fileName, bool onlyAnimation, bool zUp)
+void FbxExtractor::ImportFbxFile(const std::string& fileName, bool onlyAnimation, bool zUp)
 {
 
 	mFbxImporter = FbxImporter::Create(mFbxManager, "");
-	if(!mFbxImporter->Initialize(fileName.c_str())) return false;
+	if(mFbxImporter->Initialize(fileName.c_str()) == false) throw;
 
 	mFbxScene = FbxScene::Create(mFbxManager, "");
-	if(!mFbxImporter->Import(mFbxScene)) return false;
+	if(mFbxImporter->Import(mFbxScene) == false) throw;
 	
 	if (zUp) ConvertSceneAxisSystem(FbxAxisSystem::eZAxis, FbxAxisSystem::eParityOdd, FbxAxisSystem::eLeftHanded);
 	else ConvertSceneAxisSystem(FbxAxisSystem::eYAxis, FbxAxisSystem::eParityOdd, FbxAxisSystem::eLeftHanded);
@@ -36,7 +36,6 @@ bool FbxExtractor::ImportFbxFile(const std::string& fileName, bool onlyAnimation
 	mOnlyAnimation = onlyAnimation;
 
 	mFbxImporter->Destroy();
-	return true;
 }
 
 //If the cleaned-up mesh becomes invalid, it is removed entirely.

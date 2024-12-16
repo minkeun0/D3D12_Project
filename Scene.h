@@ -39,7 +39,6 @@ public:
     UINT CalcConstantBufferByteSize(UINT byteSize);
 
 private:
-    void BuildObjects(ID3D12Device* device);
     void BuildRootSignature(ID3D12Device* device);
     void BuildPSO(ID3D12Device* device);
     void BuildVertexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
@@ -52,6 +51,7 @@ private:
     void BuildTextureBufferView(ID3D12Device* device);
     void BuildDescriptorHeap(ID3D12Device* device);
     void BuildProjMatrix();
+    void BuildObjects(ID3D12Device* device);
     void LoadMeshAnimationTexture();
 
     wstring m_name;

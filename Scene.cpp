@@ -41,11 +41,10 @@ void Scene::BuildObjects(ID3D12Device* device)
     player.AddComponent(Rotation{ 0.0f, 180.0f, 0.0f, 0.0f, &player });
     player.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &player });
     player.AddComponent(Scale{ 0.1f, &player });
-    player.AddComponent(Mesh{ subMeshData.at("1P(boy-walk).fbx"), &player });
+    player.AddComponent(Mesh{ subMeshData.at("boy_walk_fix.fbx"), &player });
     player.AddComponent(Texture{ m_subTextureData.at(L"boy"), &player});
     player.AddComponent(Animation{ animData, &player });
     player.AddComponent(Gravity{ 2.f, &player });
-
 
     AddObj(L"CameraObject", CameraObject{70.f, this });
     CameraObject& camera = GetObj<CameraObject>(L"CameraObject");
@@ -423,7 +422,7 @@ void Scene::LoadMeshAnimationTexture()
     m_resourceManager->CreatePlane("Plane", 500);
     m_resourceManager->CreateTerrain("HeightMap.raw", 120, 10, 80);
     m_resourceManager->LoadFbx("202409working_low_tiger.fbx", false, false);
-    m_resourceManager->LoadFbx("1P(boy-walk).fbx", false, false);
+    m_resourceManager->LoadFbx("boy_walk_fix.fbx", false, false);
     m_resourceManager->LoadFbx("god.fbx", false, false);
     m_resourceManager->LoadFbx("sister.fbx", false, false);
     m_resourceManager->LoadFbx("map_terrain.fbx", false, true);
@@ -431,7 +430,8 @@ void Scene::LoadMeshAnimationTexture()
     m_resourceManager->LoadFbx("humanoid.fbx", false, true);
     m_resourceManager->LoadFbx("1P(boy-idle).fbx", true, false);
     m_resourceManager->LoadFbx("1P(boy-jump).fbx", true, false);
-    m_resourceManager->LoadFbx("1P(boy-run).fbx", true, false);
+    m_resourceManager->LoadFbx("boy_run_fix.fbx", true, false);
+    m_resourceManager->LoadFbx("boy_pickup_fix.fbx", true, false);
 
     int i = 0;
     m_DDSFileName.push_back(L"./Textures/boy.dds");

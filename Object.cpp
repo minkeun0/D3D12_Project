@@ -92,12 +92,14 @@ void PlayerObject::OnUpdate(GameTimer& gTimer)
     string currentFileName{};
     if (XMVector4Equal(velocity, XMVectorZero())) {
         currentFileName = "1P(boy-idle).fbx";
+        //currentFileName = "boy_pickup_fix.fbx";
+
     }
     else if (XMVectorGetY(velocity) != 0.f) {
         currentFileName = "1P(boy-jump).fbx";
     }
     else if (XMVectorGetX(velocity) != 0 || XMVectorGetZ(velocity) != 0) {
-        currentFileName = "1P(boy-walk).fbx";
+        currentFileName = "boy_run_fix.fbx";
     }
 
     GetComponent<Position>().SetXMVECTOR(GetComponent<Position>().GetXMVECTOR() + GetComponent<Velocity>().GetXMVECTOR() * gTimer.DeltaTime());
@@ -115,6 +117,7 @@ void PlayerObject::OnUpdate(GameTimer& gTimer)
     memcpy(m_mappedData , &XMMatrixTranspose(world), sizeof(XMMATRIX)); // 처음 매개변수는 시작주소
 
     int isAnimate = FindComponent<Animation>();
+    //int isAnimate = false;
     if (isAnimate) {
         vector<XMFLOAT4X4> finalTransforms{90};
         Animation& animComponent = GetComponent<Animation>();
@@ -156,9 +159,9 @@ void PlayerObject::OnKeyboardInput(const GameTimer& gTimer)
     XMVECTOR right = XMVECTOR{ 1.f, 0.f, 0.f, 0.f };
     XMVECTOR rightInv = XMVector4Normalize(XMVector4Transform(right, invView));
 
-    forward = XMVector4Normalize(XMVectorSetY(forward, 0.f));
     forwardInv = XMVector4Normalize(XMVectorSetY(forwardInv, 0.f));
     rightInv = XMVector4Normalize(XMVectorSetY(rightInv, 0.f));
+
     XMVECTOR up = XMVECTOR{ 0.f, 1.f, 0.f, 0.f };
     XMVECTOR eyePos = XMVECTOR{ 0.f, 0.f, 0.f, 0.f };
 
