@@ -19,7 +19,6 @@ public:
     bool GetWindowVisible() { return m_windowVisible; }
     void SetWindowVisible(bool visible) { m_windowVisible = visible; }
     void OnResize(UINT width, UINT height);
-    
 protected:
     static LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 

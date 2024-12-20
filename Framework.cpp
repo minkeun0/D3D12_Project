@@ -7,7 +7,7 @@ Framework::Framework(HINSTANCE hInstance, int nCmdShow, UINT width, UINT height,
     m_rtvDescriptorSize(0),
     m_useWarpDevice(false)
 {
-    ThrowIfFailed(DXGIDeclareAdapterRemovalSupport());
+    //ThrowIfFailed(DXGIDeclareAdapterRemovalSupport());
     m_win32App = make_unique<Win32Application>(width, height, name);
 }
 
@@ -35,6 +35,8 @@ int Framework::Run(HINSTANCE hInstance, int nCmdShow)
             m_Timer.Tick();
             CalculateFrame();
             OnUpdate(m_Timer);
+            CheckCollision();
+            LateUpdate(m_Timer);
             OnRender();
         }
     }
@@ -73,6 +75,16 @@ void Framework::OnInit(HINSTANCE hInstance, int nCmdShow)
 void Framework::OnUpdate(GameTimer& gTimer)
 {
     m_scenes[L"BaseScene"].OnUpdate(gTimer);
+}
+
+void Framework::CheckCollision()
+{
+    m_scenes[L"BaseScene"].CheckCollision();
+}
+
+void Framework::LateUpdate(GameTimer& gTimer)
+{
+    m_scenes[L"BaseScene"].LateUpdate(gTimer);
 }
 
 // Render the scene.

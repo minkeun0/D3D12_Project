@@ -29,7 +29,7 @@ public:
 	template <typename T>
 	bool FindComponent() { 
 		auto& it = m_components.find(typeid(T).name());
-		return it == m_components.end() ? false : true;
+		return it != m_components.end();
 	}
 
 protected:
@@ -90,4 +90,13 @@ public:
 	void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList) override;
 };
 
-using ObjectVariant = variant<PlayerObject, CameraObject, TestObject, TerrainObject>;
+class TreeObject : public Object
+{
+public:
+	TreeObject() = default;
+	TreeObject(Scene* root);
+	void OnUpdate(GameTimer& gTimer) override;
+	void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList) override;
+};
+
+using ObjectVariant = variant<PlayerObject, CameraObject, TestObject, TerrainObject, TreeObject>;

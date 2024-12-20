@@ -14,6 +14,8 @@ public:
 
     virtual void OnInit(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
     virtual void OnUpdate(GameTimer& gTimer);
+    virtual void CheckCollision();
+    virtual void LateUpdate(GameTimer& gTimer);
     virtual void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
     virtual void OnResize(UINT width, UINT height);
     virtual void OnDestroy();

@@ -10,17 +10,18 @@ public:
 	Framework() = default;
 	Framework(HINSTANCE hInstance, int nCmdShow, UINT width, UINT height, std::wstring name);
 
-	//시발점 시발점 시발점 시발점
-	virtual int Run(HINSTANCE hInstance, int nCmdShow);
-	//시발점 시발점 시발점 시발점
-	virtual void OnInit(HINSTANCE hInstance, int nCmdShow);
-	virtual void OnUpdate(GameTimer& gTimer);
-	virtual void OnRender();
-	virtual void OnResize(UINT width, UINT height, bool minimized);
-	virtual void OnDestroy();
+	int Run(HINSTANCE hInstance, int nCmdShow);
+	void OnInit(HINSTANCE hInstance, int nCmdShow);
+	void OnUpdate(GameTimer& gTimer);
+	void CheckCollision();
+	void LateUpdate(GameTimer& gTimer);
+	void OnRender();
+	void OnResize(UINT width, UINT height, bool minimized);
+	void OnDestroy();
 
-	virtual void OnKeyDown(UINT8 key);
-	virtual void OnKeyUp(UINT8 key);
+	void OnKeyDown(UINT8 key);
+	void OnKeyUp(UINT8 key);
+
 	GameTimer& GetTimer();
 	Scene& GetScene(const wstring& name);
 	const wstring& GetCurrentSceneName();

@@ -3,7 +3,10 @@ cbuffer WoldTranslate : register(b1)
     float4x4 world;
     float4x4 finalTranforms[90];
     int isAnimation;
-    int3 padding;
+    int3 padding0;
+    float powValue;
+    float ambiantValue;
+    float2 padding1;
 };
 
 cbuffer SceneConstantBuffer : register(b0)
@@ -64,8 +67,7 @@ float4 PSMain(VSOutput input) : SV_TARGET
     //float4 result = Texture.Sample(Sampler, input.uv);
 
     float4 lightVector = float4(0, 1, 0, 0);
-    float powValue = 7.f; // pow 가 짝수이면 안된다.
-    float4 result = Texture.Sample(Sampler, input.uv) * (max(pow(dot(input.normal, lightVector), powValue), 0.05f) + 0.4);
+    float4 result = Texture.Sample(Sampler, input.uv) * (pow(max(dot(input.normal, lightVector), 0.f), powValue) + ambiantValue);
     //float4 result = Texture.Sample(Sampler, input.uv) * max(dot(input.normal, lightVector), 0.2f);
     return result;
 }

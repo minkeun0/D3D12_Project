@@ -34,87 +34,63 @@ void Scene::BuildObjects(ID3D12Device* device)
     auto& subMeshData = rm.GetSubMeshData();
     auto& animData = rm.GetAnimationData();
 
+    Object* objectPtr = nullptr;
+
     AddObj(L"PlayerObject", PlayerObject{ this });
-    PlayerObject& player = GetObj<PlayerObject>(L"PlayerObject");
-    player.AddComponent(Position{ 50.f, 0.f, 50.f, 1.f, &player });
-    player.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &player });
-    player.AddComponent(Rotation{ 0.0f, 180.0f, 0.0f, 0.0f, &player });
-    player.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &player });
-    player.AddComponent(Scale{ 0.1f, &player });
-    player.AddComponent(Mesh{ subMeshData.at("boy_walk_fix.fbx"), &player });
-    player.AddComponent(Texture{ m_subTextureData.at(L"boy"), &player});
-    player.AddComponent(Animation{ animData, &player });
-    player.AddComponent(Gravity{ 2.f, &player });
+    objectPtr = &GetObj<PlayerObject>(L"PlayerObject");
+    objectPtr->AddComponent(Position{ 200.f, 0.f, 200.f, 1.f, objectPtr });
+    objectPtr->AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, objectPtr });
+    objectPtr->AddComponent(Rotation{ 0.0f, 180.0f, 0.0f, 0.0f, objectPtr });
+    objectPtr->AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, objectPtr });
+    objectPtr->AddComponent(Scale{ 0.1f, objectPtr });
+    objectPtr->AddComponent(Mesh{ subMeshData.at("1P(boy-idle).fbx"), objectPtr });
+    objectPtr->AddComponent(Texture{ m_subTextureData.at(L"boy"), objectPtr });
+    objectPtr->AddComponent(Animation{ animData, objectPtr });
+    objectPtr->AddComponent(Gravity{ 2.f, objectPtr });
+    objectPtr->AddComponent(Collider{0.f, 0.f, 0.f, 3.f, 50.f, 3.f, objectPtr});
 
     AddObj(L"CameraObject", CameraObject{70.f, this });
-    CameraObject& camera = GetObj<CameraObject>(L"CameraObject");
-    camera.AddComponent(Position{ 0.f, 0.f, 0.f, 0.f, &camera });
+    objectPtr = &GetObj<CameraObject>(L"CameraObject");
+    objectPtr->AddComponent(Position{ 0.f, 0.f, 0.f, 0.f, objectPtr });
 
-    //AddObj(L"PlaneObject", TestObject{ this });
-    //TestObject& plane = GetObj<TestObject>(L"PlaneObject");
-    //plane.AddComponent(Position{ 0.f, 0.f, 0.f, 1.f, &plane });
-    //plane.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &plane });
-    //plane.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &plane });
-    //plane.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &plane });
-    //plane.AddComponent(Scale{ 1.f, &plane });
-    //plane.AddComponent(Mesh{ subMeshData.at("Plane") , &plane });
-    //plane.AddComponent(Texture{ m_subTextureData.at(L"grass"), &plane });
+    AddObj(L"TerrainObject", TerrainObject{ this });
+    objectPtr = &GetObj<TerrainObject>(L"TerrainObject");
+    objectPtr->AddComponent(Position{ 0.f, 0.f, 0.f, 1.f, objectPtr });
+    objectPtr->AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, objectPtr });
+    objectPtr->AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, objectPtr });
+    objectPtr->AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, objectPtr });
+    objectPtr->AddComponent(Scale{ 1.f, objectPtr });
+    objectPtr->AddComponent(Mesh{ subMeshData.at("HeightMap.raw") , objectPtr });
+    objectPtr->AddComponent(Texture{ m_subTextureData.at(L"grass"), objectPtr });
+
+    int repeat{ 17 };
+    for (int i = 0; i < repeat; ++i) {
+        for (int j = 0; j < repeat; ++j) {
+            wstring objectName = L"TreeObject" + to_wstring(j + (repeat * i));
+            AddObj(objectName, TreeObject{ this });
+            objectPtr = &GetObj<TreeObject>(objectName);
+            objectPtr->AddComponent(Position{ 100.f + 150.f * j, 0.f, 100.f + 150.f * i, 1.f, objectPtr });
+            objectPtr->AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, objectPtr });
+            objectPtr->AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, objectPtr });
+            objectPtr->AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, objectPtr });
+            objectPtr->AddComponent(Scale{ 20.f, objectPtr });
+            objectPtr->AddComponent(Mesh{ subMeshData.at("long_tree.fbx") , objectPtr });
+            objectPtr->AddComponent(Texture{ m_subTextureData.at(L"longTree"), objectPtr });
+            objectPtr->AddComponent(Collider{ 0.f, 0.f, 0.f, 3.f, 50.f, 3.f, objectPtr });
+        }
+    }
 
     //AddObj(L"TestObject", TestObject{ this });
     //TestObject& test = GetObj<TestObject>(L"TestObject");
-    //test.AddComponent(Position{ 50.f, 25.f, -50.f, 1.f, &test });
+    //test.AddComponent(Position{ 100.f, 10.f, 200.f, 1.f, &test });
     //test.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &test });
     //test.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &test });
     //test.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &test });
-    //test.AddComponent(Scale{ 0.25f, &test });
-    //test.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("sister.fbx") , &test });
-    //test.AddComponent(Texture{ m_subTextureData.at(L"sister"), &test });
+    //test.AddComponent(Scale{ 0.05f, &test });
+    //test.AddComponent(Mesh{ subMeshData.at("humanoid.fbx"), &test });
+    //test.AddComponent(Texture{ m_subTextureData.at(L"PP_Color_Palette"), &test });
+    //test.AddComponent(Animation{ animData, &test });
     //test.AddComponent(Gravity{ 2.f, &test });
-
-    //AddObj(L"TestObject1", TestObject{ this });
-    //TestObject& test1 = GetObj<TestObject>(L"TestObject1");
-    //test1.AddComponent(Position{ 0.f, 35.f, 0.f, 1.f, &test1 });
-    //test1.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &test1 });
-    //test1.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &test1});
-    //test1.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &test1 });
-    //test1.AddComponent(Scale{ 0.25f, &test1 });
-    //test1.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("god.fbx"), &test1 });
-    //test1.AddComponent(Texture{ m_subTextureData.at(L"god"), &test1 });
-    //test1.AddComponent(Gravity{ 2.f, &test1 });
-
-    AddObj(L"TerrainObject", TerrainObject{ this });
-    TerrainObject& terrain = GetObj<TerrainObject>(L"TerrainObject");
-    terrain.AddComponent(Position{ 0.f, 0.f, 0.f, 1.f, &terrain });
-    terrain.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &terrain });
-    terrain.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &terrain });
-    terrain.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &terrain });
-    terrain.AddComponent(Scale{ 1.f, &terrain });
-    terrain.AddComponent(Mesh{ subMeshData.at("HeightMap.raw") , &terrain });
-    terrain.AddComponent(Texture{ m_subTextureData.at(L"grass"), &terrain });
-
-    //AddObj(L"TestObject3", TestObject{ this });
-    //TestObject& test3 = GetObj<TestObject>(L"TestObject3");
-    //test3.AddComponent(Position{ -50.f, 18.f, -100.f, 1.f, &test3 });
-    //test3.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &test3 });
-    //test3.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &test3 });
-    //test3.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &test3 });
-    //test3.AddComponent(Scale{ 2.f, &test3 });
-    //test3.AddComponent(Mesh{ GetResourceManager().GetSubMeshData("202409working_low_tiger.fbx") , &test3 });
-    //test3.AddComponent(Texture{ m_subTextureData.at(L"tigercolor"), &test3 });
-    //test3.AddComponent(Gravity{ 2.f, &test3 });
-
-    AddObj(L"TestObject4", TestObject{ this });
-    TestObject& test4 = GetObj<TestObject>(L"TestObject4");
-    test4.AddComponent(Position{ 100.f, 10.f, 200.f, 1.f, &test4 });
-    test4.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &test4 });
-    test4.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &test4 });
-    test4.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &test4 });
-    test4.AddComponent(Scale{ 0.05f, &test4 });
-    test4.AddComponent(Mesh{ subMeshData.at("humanoid.fbx"), &test4 });
-    test4.AddComponent(Texture{ m_subTextureData.at(L"PP_Color_Palette"), &test4 });
-    test4.AddComponent(Animation{ animData, &test4 });
-    test4.AddComponent(Gravity{ 2.f, &test4 });
-
 }
 
 void Scene::BuildRootSignature(ID3D12Device* device)
@@ -420,18 +396,20 @@ void Scene::LoadMeshAnimationTexture()
 {
     m_resourceManager = make_unique<ResourceManager>();
     m_resourceManager->CreatePlane("Plane", 500);
-    m_resourceManager->CreateTerrain("HeightMap.raw", 120, 10, 80);
-    m_resourceManager->LoadFbx("202409working_low_tiger.fbx", false, false);
-    m_resourceManager->LoadFbx("boy_walk_fix.fbx", false, false);
-    m_resourceManager->LoadFbx("god.fbx", false, false);
-    m_resourceManager->LoadFbx("sister.fbx", false, false);
-    m_resourceManager->LoadFbx("map_terrain.fbx", false, true);
-    m_resourceManager->LoadFbx("house_attach.fbx", false, false);
+    m_resourceManager->CreateTerrain("HeightMap.raw", 200, 10, 80);
     m_resourceManager->LoadFbx("humanoid.fbx", false, true);
-    m_resourceManager->LoadFbx("1P(boy-idle).fbx", true, false);
+    m_resourceManager->LoadFbx("1P(boy-idle).fbx", false, false);
     m_resourceManager->LoadFbx("1P(boy-jump).fbx", true, false);
     m_resourceManager->LoadFbx("boy_run_fix.fbx", true, false);
+    m_resourceManager->LoadFbx("boy_walk_fix.fbx", true, false);
     m_resourceManager->LoadFbx("boy_pickup_fix.fbx", true, false);
+    m_resourceManager->LoadFbx("cloud1.fbx", false, true);
+    m_resourceManager->LoadFbx("cloud2.fbx", false, true);
+    m_resourceManager->LoadFbx("cloud3.fbx", false, true);
+    m_resourceManager->LoadFbx("cloud4.fbx", false, true);
+    m_resourceManager->LoadFbx("long_tree.fbx", false, true);
+    m_resourceManager->LoadFbx("normal_tree.fbx", false, true);
+    m_resourceManager->LoadFbx("long_tree.fbx", false, true);
 
     int i = 0;
     m_DDSFileName.push_back(L"./Textures/boy.dds");
@@ -460,6 +438,10 @@ void Scene::LoadMeshAnimationTexture()
     m_subTextureData.insert({ L"tigercolor", i++ });
     m_DDSFileName.push_back(L"./Textures/stone.dds");
     m_subTextureData.insert({ L"stone", i++ });
+    m_DDSFileName.push_back(L"./Textures/normaltree_texture.dds");
+    m_subTextureData.insert({ L"normalTree", i++ });
+    m_DDSFileName.push_back(L"./Textures/longtree_texture.dds");
+    m_subTextureData.insert({ L"longTree", i++ });
 }
 
 void Scene::SetState(ID3D12GraphicsCommandList* commandList)
@@ -524,6 +506,25 @@ void Scene::OnKeyDown(UINT8 key)
 }
 
 void Scene::OnKeyUp(UINT8 key)
+{
+}
+
+void Scene::CheckCollision()
+{
+    for (auto it1 = m_objects.begin(); it1 != m_objects.end(); ++it1) {
+        Object* object1 = visit([](auto& arg)->Object* { return &arg; }, it1->second);
+        if (object1->FindComponent<Collider>() == false) continue;
+        for (auto it2 = std::next(it1); it2 != m_objects.end(); ++it2) {
+            Object* object2 = visit([](auto& arg)->Object* { return &arg; }, it2->second);
+            if (object2->FindComponent<Collider>() == false) continue;
+            if (object1->GetComponent<Collider>().mAABB.Intersects(object2->GetComponent<Collider>().mAABB)) {
+                OutputDebugStringA("Ãæµ¹!!!\n");
+            }
+        }
+    }
+}
+
+void Scene::LateUpdate(GameTimer& gTimer)
 {
 }
 

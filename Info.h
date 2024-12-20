@@ -15,7 +15,10 @@ struct ObjectCB
     XMFLOAT4X4 world;
 	XMFLOAT4X4 finalTransform[90];
 	int isAnimate;
-	int padding[3];
+	int padding0[3];
+	float powValue;
+	float ambiantValue;
+	float padding1[2];
 };
 
 struct CommonCB
