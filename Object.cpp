@@ -240,9 +240,9 @@ void TestObject::OnUpdate(GameTimer& gTimer)
     // 월드 행렬 = 크기 행렬 * 회전 행렬 * 이동 행렬
     XMMATRIX world = scale * rotate * translate;
     
-    //애니메이션 유무
     memcpy(m_mappedData, &XMMatrixTranspose(world), sizeof(XMMATRIX)); // 처음 매개변수는 시작주소
 
+    //애니메이션 유무
     int isAnimate = FindComponent<Animation>();
     if (isAnimate) {
         vector<XMFLOAT4X4> finalTransforms{ 90 };

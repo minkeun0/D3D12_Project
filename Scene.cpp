@@ -1,6 +1,8 @@
 #include "Scene.h"
 #include "DXSampleHelper.h"
 #include "GameTimer.h"
+#include "string"
+#include "info.h"
 
 Scene::Scene(UINT width, UINT height, std::wstring name) :
     m_viewport(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height)),
@@ -80,17 +82,16 @@ void Scene::BuildObjects(ID3D12Device* device)
         }
     }
 
-    //AddObj(L"TestObject", TestObject{ this });
-    //TestObject& test = GetObj<TestObject>(L"TestObject");
-    //test.AddComponent(Position{ 100.f, 10.f, 200.f, 1.f, &test });
-    //test.AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, &test });
-    //test.AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, &test });
-    //test.AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, &test });
-    //test.AddComponent(Scale{ 0.05f, &test });
-    //test.AddComponent(Mesh{ subMeshData.at("humanoid.fbx"), &test });
-    //test.AddComponent(Texture{ m_subTextureData.at(L"PP_Color_Palette"), &test });
-    //test.AddComponent(Animation{ animData, &test });
-    //test.AddComponent(Gravity{ 2.f, &test });
+    AddObj(L"TestObject", TestObject{ this });
+    objectPtr = &GetObj<TestObject>(L"TestObject");
+    objectPtr->AddComponent(Position{ 0.f, 10.f, 0.f, 1.f, objectPtr });
+    objectPtr->AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, objectPtr });
+    objectPtr->AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, objectPtr });
+    objectPtr->AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, objectPtr });
+    objectPtr->AddComponent(Scale{ 10.f, objectPtr });
+    objectPtr->AddComponent(Mesh{ subMeshData.at("cloud1.fbx"), objectPtr });
+    objectPtr->AddComponent(Texture{ m_subTextureData.at(L"stone"), objectPtr });
+    objectPtr->AddComponent(Collider{ 0.f, 10.f, 0.f, 30.f, 30.f, 30.f, objectPtr });
 }
 
 void Scene::BuildRootSignature(ID3D12Device* device)
@@ -514,11 +515,75 @@ void Scene::CheckCollision()
     for (auto it1 = m_objects.begin(); it1 != m_objects.end(); ++it1) {
         Object* object1 = visit([](auto& arg)->Object* { return &arg; }, it1->second);
         if (object1->FindComponent<Collider>() == false) continue;
+        Collider& collider1 = object1->GetComponent<Collider>();
         for (auto it2 = std::next(it1); it2 != m_objects.end(); ++it2) {
             Object* object2 = visit([](auto& arg)->Object* { return &arg; }, it2->second);
             if (object2->FindComponent<Collider>() == false) continue;
-            if (object1->GetComponent<Collider>().mAABB.Intersects(object2->GetComponent<Collider>().mAABB)) {
-                OutputDebugStringA("충돌!!!\n");
+            Collider& collider2 = object2->GetComponent<Collider>();
+            if (collider1.mAABB.Intersects(collider2.mAABB)) { // obj1 과 obj2 가 충돌했다면?
+                //OutputDebugStringW((it1->first + L" 와 " + it2->first + L" 충돌!!!\n").c_str());
+                if (collider1.FindCollisionState(it2->first)) { // 이전에 같은 오브젝트와 충돌한 적이 있다면?
+                    CollisionState state = collider1.mCollisionStates.at(it2->first);
+                    if (state == CollisionState::ENTER || state == CollisionState::STAY) { // 충돌상태가 *** 라면?
+                        collider1.mCollisionStates[it2->first] = CollisionState::STAY;
+                        OutputDebugStringW((it1->first + L" 와 " + it2->first + L" 충돌중").c_str());
+                        OutputDebugStringW((to_wstring(collider1.mCollisionStates.size()) + L"\n").c_str());
+                    }
+                    else { // EXIT 인 상태에서 충돌했을경우. 즉, 확률이 매우 희박함. 참고: EXIT는 딱 한 프레임만 유지된다.
+                        collider1.mCollisionStates[it2->first] = CollisionState::ENTER;
+                    }
+                }
+                else {
+                    collider1.mCollisionStates[it2->first] = CollisionState::ENTER;
+                    OutputDebugStringW((it1->first + L" 와 " + it2->first + L" 충돌시작").c_str());
+                    OutputDebugStringW((to_wstring(collider1.mCollisionStates.size()) + L"\n").c_str());
+                }
+
+                if (collider2.FindCollisionState(it1->first)) {
+                    CollisionState state = collider2.mCollisionStates.at(it1->first);
+                    if (state == CollisionState::ENTER || state == CollisionState::STAY) {
+                        collider2.mCollisionStates[it1->first] = CollisionState::STAY;
+                        OutputDebugStringW((it2->first + L" 와 " + it1->first + L" 충돌중").c_str());
+                        OutputDebugStringW((to_wstring(collider2.mCollisionStates.size()) + L"\n").c_str());
+                    }
+                    else { // EXIT 인 상태에서 충돌했을경우. 즉, 확률이 매우 희박함. 참고: EXIT는 딱 한 프레임만 유지된다.
+                        collider2.mCollisionStates[it1->first] = CollisionState::ENTER;
+                    }
+                }
+                else {
+                    collider2.mCollisionStates[it1->first] = CollisionState::ENTER;
+                    OutputDebugStringW((it2->first + L" 와 " + it1->first + L" 충돌시작").c_str());
+                    OutputDebugStringW((to_wstring(collider2.mCollisionStates.size()) + L"\n").c_str());
+                }
+            }
+            else { // obj1 과 obj2가 충돌하지 않았다면
+                if (collider1.FindCollisionState(it2->first)) {
+                    CollisionState state = collider1.mCollisionStates.at(it2->first);
+                    if (state == CollisionState::EXIT) {
+                        collider1.mCollisionStates.erase(it2->first);
+                        OutputDebugStringW((it1->first + L" 와 " + it2->first + L" 충돌삭제").c_str());
+                        OutputDebugStringW((to_wstring(collider1.mCollisionStates.size()) + L"\n").c_str());
+                    }
+                    else {
+                        collider1.mCollisionStates[it2->first] = CollisionState::EXIT;
+                        OutputDebugStringW((it1->first + L" 와 " + it2->first + L" 충돌끝").c_str());
+                        OutputDebugStringW((to_wstring(collider1.mCollisionStates.size()) + L"\n").c_str());
+                    }
+                }
+
+                if (collider2.FindCollisionState(it1->first)) {
+                    CollisionState state = collider2.mCollisionStates.at(it1->first);
+                    if (state == CollisionState::EXIT) {
+                        collider2.mCollisionStates.erase(it1->first);
+                        OutputDebugStringW((it2->first + L" 와 " + it1->first + L" 충돌삭제").c_str());
+                        OutputDebugStringW((to_wstring(collider2.mCollisionStates.size()) + L"\n").c_str());
+                    }
+                    else {
+                        collider2.mCollisionStates[it1->first] = CollisionState::EXIT;
+                        OutputDebugStringW((it2->first + L" 와 " + it1->first + L" 충돌끝").c_str());
+                        OutputDebugStringW((to_wstring(collider2.mCollisionStates.size()) + L"\n").c_str());
+                    }
+                }
             }
         }
     }

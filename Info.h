@@ -35,3 +35,10 @@ struct SubMeshData
 	UINT startIndexLocation;
 	UINT baseVertexLocation;
 };
+
+enum CollisionState {
+	//NONE,          // 충돌 없음
+	ENTER,         // 충돌 시작
+	STAY,          // 충돌 중
+	EXIT           // 충돌 종료
+};
