@@ -40,7 +40,7 @@ void Scene::BuildObjects(ID3D12Device* device)
 
     AddObj(L"PlayerObject", PlayerObject{ this });
     objectPtr = &GetObj<PlayerObject>(L"PlayerObject");
-    objectPtr->AddComponent(Position{ 200.f, 0.f, 200.f, 1.f, objectPtr });
+    objectPtr->AddComponent(Position{ 600.f, 0.f, 600.f, 1.f, objectPtr });
     objectPtr->AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, objectPtr });
     objectPtr->AddComponent(Rotation{ 0.0f, 180.0f, 0.0f, 0.0f, objectPtr });
     objectPtr->AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, objectPtr });
@@ -49,7 +49,7 @@ void Scene::BuildObjects(ID3D12Device* device)
     objectPtr->AddComponent(Texture{ m_subTextureData.at(L"boy"), objectPtr });
     objectPtr->AddComponent(Animation{ animData, objectPtr });
     objectPtr->AddComponent(Gravity{ 2.f, objectPtr });
-    objectPtr->AddComponent(Collider{0.f, 0.f, 0.f, 3.f, 50.f, 3.f, objectPtr});
+    objectPtr->AddComponent(Collider{0.f, 0.f, 0.f, 4.f, 50.f, 4.f, objectPtr});
 
     AddObj(L"CameraObject", CameraObject{70.f, this });
     objectPtr = &GetObj<CameraObject>(L"CameraObject");
@@ -64,6 +64,16 @@ void Scene::BuildObjects(ID3D12Device* device)
     objectPtr->AddComponent(Scale{ 1.f, objectPtr });
     objectPtr->AddComponent(Mesh{ subMeshData.at("HeightMap.raw") , objectPtr });
     objectPtr->AddComponent(Texture{ m_subTextureData.at(L"grass"), objectPtr });
+
+    //AddObj(L"TestObject", TestObject{ this });
+    //objectPtr = &GetObj<TestObject>(L"TestObject");
+    //objectPtr->AddComponent(Position{ 0.f, 0.f, 0.f, 1.f, objectPtr });
+    //objectPtr->AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, objectPtr });
+    //objectPtr->AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, objectPtr });
+    //objectPtr->AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, objectPtr });
+    //objectPtr->AddComponent(Scale{ 0.01f, objectPtr });
+    //objectPtr->AddComponent(Mesh{ subMeshData.at("house_1218_attach_fix.fbx") , objectPtr });
+    //objectPtr->AddComponent(Texture{ m_subTextureData.at(L"PP_Color_Palette"), objectPtr });
 
     int repeat{ 17 };
     for (int i = 0; i < repeat; ++i) {
@@ -82,16 +92,24 @@ void Scene::BuildObjects(ID3D12Device* device)
         }
     }
 
-    AddObj(L"TestObject", TestObject{ this });
-    objectPtr = &GetObj<TestObject>(L"TestObject");
-    objectPtr->AddComponent(Position{ 0.f, 10.f, 0.f, 1.f, objectPtr });
-    objectPtr->AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, objectPtr });
-    objectPtr->AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, objectPtr });
-    objectPtr->AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, objectPtr });
-    objectPtr->AddComponent(Scale{ 10.f, objectPtr });
-    objectPtr->AddComponent(Mesh{ subMeshData.at("cloud1.fbx"), objectPtr });
-    objectPtr->AddComponent(Texture{ m_subTextureData.at(L"stone"), objectPtr });
-    objectPtr->AddComponent(Collider{ 0.f, 10.f, 0.f, 30.f, 30.f, 30.f, objectPtr });
+    repeat = 3;
+    for (int i = 0; i < repeat; ++i) {
+        for (int j = 0; j < repeat; ++j) {
+            wstring objectName = L"TigerObject" + to_wstring(j + (repeat * i));
+            AddObj(objectName, TigerObject{ this });
+            objectPtr = &GetObj<TigerObject>(objectName);
+            objectPtr->AddComponent(Position{ 70.f + 700.f * j, 0.f, 70.f + 700.f * i, 1.f, objectPtr });
+            objectPtr->AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, objectPtr });
+            objectPtr->AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, objectPtr });
+            objectPtr->AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, objectPtr });
+            objectPtr->AddComponent(Scale{ 0.2f, objectPtr });
+            objectPtr->AddComponent(Mesh{ subMeshData.at("202411_walk_tiger_center.fbx"), objectPtr });
+            objectPtr->AddComponent(Texture{ m_subTextureData.at(L"tigercolor"), objectPtr });
+            objectPtr->AddComponent(Animation{ animData, objectPtr });
+            objectPtr->AddComponent(Gravity{ 1.f, objectPtr });
+            objectPtr->AddComponent(Collider{ 0.f, 0.f, 0.f, 2.f, 50.f, 10.f, objectPtr });
+        }
+    }
 }
 
 void Scene::BuildRootSignature(ID3D12Device* device)
@@ -398,19 +416,13 @@ void Scene::LoadMeshAnimationTexture()
     m_resourceManager = make_unique<ResourceManager>();
     m_resourceManager->CreatePlane("Plane", 500);
     m_resourceManager->CreateTerrain("HeightMap.raw", 200, 10, 80);
-    m_resourceManager->LoadFbx("humanoid.fbx", false, true);
     m_resourceManager->LoadFbx("1P(boy-idle).fbx", false, false);
     m_resourceManager->LoadFbx("1P(boy-jump).fbx", true, false);
     m_resourceManager->LoadFbx("boy_run_fix.fbx", true, false);
     m_resourceManager->LoadFbx("boy_walk_fix.fbx", true, false);
     m_resourceManager->LoadFbx("boy_pickup_fix.fbx", true, false);
-    m_resourceManager->LoadFbx("cloud1.fbx", false, true);
-    m_resourceManager->LoadFbx("cloud2.fbx", false, true);
-    m_resourceManager->LoadFbx("cloud3.fbx", false, true);
-    m_resourceManager->LoadFbx("cloud4.fbx", false, true);
     m_resourceManager->LoadFbx("long_tree.fbx", false, true);
-    m_resourceManager->LoadFbx("normal_tree.fbx", false, true);
-    m_resourceManager->LoadFbx("long_tree.fbx", false, true);
+    m_resourceManager->LoadFbx("202411_walk_tiger_center.fbx", false, false);
 
     int i = 0;
     m_DDSFileName.push_back(L"./Textures/boy.dds");
@@ -427,8 +439,6 @@ void Scene::LoadMeshAnimationTexture()
     m_subTextureData.insert({ L"WireFence", i++ });
     m_DDSFileName.push_back(L"./Textures/god.dds");
     m_subTextureData.insert({ L"god", i++ });
-    m_DDSFileName.push_back(L"./Textures/Gunship.dds");
-    m_subTextureData.insert({ L"Gunship", i++ });
     m_DDSFileName.push_back(L"./Textures/sister.dds");
     m_subTextureData.insert({ L"sister", i++ });
     m_DDSFileName.push_back(L"./Textures/water1.dds");
@@ -443,6 +453,8 @@ void Scene::LoadMeshAnimationTexture()
     m_subTextureData.insert({ L"normalTree", i++ });
     m_DDSFileName.push_back(L"./Textures/longtree_texture.dds");
     m_subTextureData.insert({ L"longTree", i++ });
+    m_DDSFileName.push_back(L"./Textures/rock(smooth).dds");
+    m_subTextureData.insert({ L"rock", i++ });
 }
 
 void Scene::SetState(ID3D12GraphicsCommandList* commandList)
@@ -521,65 +533,64 @@ void Scene::CheckCollision()
             if (object2->FindComponent<Collider>() == false) continue;
             Collider& collider2 = object2->GetComponent<Collider>();
             if (collider1.mAABB.Intersects(collider2.mAABB)) { // obj1 과 obj2 가 충돌했다면?
-                //OutputDebugStringW((it1->first + L" 와 " + it2->first + L" 충돌!!!\n").c_str());
-                if (collider1.FindCollisionState(it2->first)) { // 이전에 같은 오브젝트와 충돌한 적이 있다면?
-                    CollisionState state = collider1.mCollisionStates.at(it2->first);
+                if (collider1.FindCollisionObj(object2)) { // 이전에 같은 오브젝트와 충돌한 적이 있다면?
+                    CollisionState state = collider1.mCollisionStates.at(object2);
                     if (state == CollisionState::ENTER || state == CollisionState::STAY) { // 충돌상태가 *** 라면?
-                        collider1.mCollisionStates[it2->first] = CollisionState::STAY;
+                        collider1.mCollisionStates[object2] = CollisionState::STAY;
                         OutputDebugStringW((it1->first + L" 와 " + it2->first + L" 충돌중").c_str());
                         OutputDebugStringW((to_wstring(collider1.mCollisionStates.size()) + L"\n").c_str());
                     }
                     else { // EXIT 인 상태에서 충돌했을경우. 즉, 확률이 매우 희박함. 참고: EXIT는 딱 한 프레임만 유지된다.
-                        collider1.mCollisionStates[it2->first] = CollisionState::ENTER;
+                        collider1.mCollisionStates[object2] = CollisionState::ENTER;
                     }
                 }
                 else {
-                    collider1.mCollisionStates[it2->first] = CollisionState::ENTER;
+                    collider1.mCollisionStates[object2] = CollisionState::ENTER;
                     OutputDebugStringW((it1->first + L" 와 " + it2->first + L" 충돌시작").c_str());
                     OutputDebugStringW((to_wstring(collider1.mCollisionStates.size()) + L"\n").c_str());
                 }
 
-                if (collider2.FindCollisionState(it1->first)) {
-                    CollisionState state = collider2.mCollisionStates.at(it1->first);
+                if (collider2.FindCollisionObj(object1)) {
+                    CollisionState state = collider2.mCollisionStates.at(object1);
                     if (state == CollisionState::ENTER || state == CollisionState::STAY) {
-                        collider2.mCollisionStates[it1->first] = CollisionState::STAY;
+                        collider2.mCollisionStates[object1] = CollisionState::STAY;
                         OutputDebugStringW((it2->first + L" 와 " + it1->first + L" 충돌중").c_str());
                         OutputDebugStringW((to_wstring(collider2.mCollisionStates.size()) + L"\n").c_str());
                     }
                     else { // EXIT 인 상태에서 충돌했을경우. 즉, 확률이 매우 희박함. 참고: EXIT는 딱 한 프레임만 유지된다.
-                        collider2.mCollisionStates[it1->first] = CollisionState::ENTER;
+                        collider2.mCollisionStates[object1] = CollisionState::ENTER;
                     }
                 }
                 else {
-                    collider2.mCollisionStates[it1->first] = CollisionState::ENTER;
+                    collider2.mCollisionStates[object1] = CollisionState::ENTER;
                     OutputDebugStringW((it2->first + L" 와 " + it1->first + L" 충돌시작").c_str());
                     OutputDebugStringW((to_wstring(collider2.mCollisionStates.size()) + L"\n").c_str());
                 }
             }
             else { // obj1 과 obj2가 충돌하지 않았다면
-                if (collider1.FindCollisionState(it2->first)) {
-                    CollisionState state = collider1.mCollisionStates.at(it2->first);
+                if (collider1.FindCollisionObj(object2)) {
+                    CollisionState state = collider1.mCollisionStates.at(object2);
                     if (state == CollisionState::EXIT) {
-                        collider1.mCollisionStates.erase(it2->first);
+                        collider1.mCollisionStates.erase(object2);
                         OutputDebugStringW((it1->first + L" 와 " + it2->first + L" 충돌삭제").c_str());
                         OutputDebugStringW((to_wstring(collider1.mCollisionStates.size()) + L"\n").c_str());
                     }
                     else {
-                        collider1.mCollisionStates[it2->first] = CollisionState::EXIT;
+                        collider1.mCollisionStates[object2] = CollisionState::EXIT;
                         OutputDebugStringW((it1->first + L" 와 " + it2->first + L" 충돌끝").c_str());
                         OutputDebugStringW((to_wstring(collider1.mCollisionStates.size()) + L"\n").c_str());
                     }
                 }
 
-                if (collider2.FindCollisionState(it1->first)) {
-                    CollisionState state = collider2.mCollisionStates.at(it1->first);
+                if (collider2.FindCollisionObj(object1)) {
+                    CollisionState state = collider2.mCollisionStates.at(object1);
                     if (state == CollisionState::EXIT) {
-                        collider2.mCollisionStates.erase(it1->first);
+                        collider2.mCollisionStates.erase(object1);
                         OutputDebugStringW((it2->first + L" 와 " + it1->first + L" 충돌삭제").c_str());
                         OutputDebugStringW((to_wstring(collider2.mCollisionStates.size()) + L"\n").c_str());
                     }
                     else {
-                        collider2.mCollisionStates[it1->first] = CollisionState::EXIT;
+                        collider2.mCollisionStates[object1] = CollisionState::EXIT;
                         OutputDebugStringW((it2->first + L" 와 " + it1->first + L" 충돌끝").c_str());
                         OutputDebugStringW((to_wstring(collider2.mCollisionStates.size()) + L"\n").c_str());
                     }
@@ -591,6 +602,10 @@ void Scene::CheckCollision()
 
 void Scene::LateUpdate(GameTimer& gTimer)
 {
+    for (auto& [key, value] : m_objects)
+    {
+        visit([&gTimer](auto& arg) {arg.LateUpdate(gTimer); }, value);
+    }
 }
 
 std::wstring Scene::GetSceneName() const

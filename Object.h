@@ -15,6 +15,7 @@ public:
 
 	//virtual void OnInit(ID3D12Device* device);
 	virtual void OnUpdate(GameTimer& gTimer) = 0;
+	virtual void LateUpdate(GameTimer& gTimer) = 0;
 	virtual void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList * commandList) = 0;
 	//virtual void OnDestroy();
 
@@ -47,6 +48,7 @@ public:
 	PlayerObject() = default;
 	PlayerObject(Scene* root);
 	void OnUpdate(GameTimer& gTimer) override;
+	void LateUpdate(GameTimer& gTimer) override;
 	void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList) override;
 	void OnKeyboardInput(const GameTimer& gTimer);
 private:
@@ -59,6 +61,7 @@ public:
 	CameraObject() = default;
 	CameraObject(float radius, Scene* root);
 	void OnUpdate(GameTimer& gTimer) override;
+	void LateUpdate(GameTimer& gTimer) override;
 	void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList) override;
 	void OnMouseInput(WPARAM wParam, HWND hWnd);
 	void SetXMMATRIX(XMMATRIX& m);
@@ -78,6 +81,7 @@ public:
 	TerrainObject() = default;
 	TerrainObject(Scene* root);
 	void OnUpdate(GameTimer& gTimer) override;
+	void LateUpdate(GameTimer& gTimer) override;
 	void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList) override;
 };
 
@@ -87,6 +91,7 @@ public:
 	TestObject() = default;
 	TestObject(Scene* root);
 	void OnUpdate(GameTimer& gTimer) override;
+	void LateUpdate(GameTimer& gTimer) override;
 	void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList) override;
 };
 
@@ -96,7 +101,34 @@ public:
 	TreeObject() = default;
 	TreeObject(Scene* root);
 	void OnUpdate(GameTimer& gTimer) override;
+	void LateUpdate(GameTimer& gTimer) override;
 	void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList) override;
 };
 
-using ObjectVariant = variant<PlayerObject, CameraObject, TestObject, TerrainObject, TreeObject>;
+class TigerObject : public Object
+{
+public:
+	TigerObject() = default;
+	TigerObject(Scene* root);
+	void OnUpdate(GameTimer& gTimer) override;
+	void LateUpdate(GameTimer& gTimer) override;
+	void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList) override;
+	void TigerBehavior(GameTimer& gTimer);
+	void RandomVelocity(GameTimer& gTimer);
+private:
+	XMMATRIX mRotation;
+	float mTimer;
+	XMFLOAT3 mTempVelocity;
+};
+
+class StoneObject : public Object
+{
+public:
+	StoneObject() = default;
+	StoneObject(Scene* root);
+	void OnUpdate(GameTimer& gTimer) override;
+	void LateUpdate(GameTimer& gTimer) override;
+	void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList) override;
+};
+
+using ObjectVariant = variant<PlayerObject, CameraObject, TestObject, TerrainObject, TreeObject, TigerObject, StoneObject>;

@@ -58,7 +58,11 @@ void FbxExtractor::ExtractDataFromFbx()
 
 	int childCount = rootNode->GetChildCount();
 	for (int i = 0; i < childCount; ++i) {
-		TraverseNode(rootNode->GetChild(i));
+		TraverseNodeForSkeleton(rootNode->GetChild(i));
+	}
+
+	for (int i = 0; i < childCount; ++i) {
+		TraverseNodeForMesh(rootNode->GetChild(i));
 	}
 
 	if(mBone) ExtractAnimationData(rootNode);
@@ -82,7 +86,36 @@ void FbxExtractor::ConvertSceneAxisSystem(FbxAxisSystem::EUpVector u, FbxAxisSys
 	OutputDebugStringA((" 상하축의 방향 = " + to_string(upSign) + " 전방축의 방향 = " + to_string(frontSign) + "\n").c_str());
 }
 
-void FbxExtractor::TraverseNode(ptr<FbxNode> node)
+//void FbxExtractor::TraverseNode(ptr<FbxNode> node)
+//{
+//	if (node == nullptr) return;
+//	ptr<FbxNodeAttribute> nodeAttribute = node->GetNodeAttribute();
+//	if (nodeAttribute != nullptr) {
+//		FbxNodeAttribute::EType type = nodeAttribute->GetAttributeType();
+//		switch (type)
+//		{
+//		case FbxNodeAttribute::eSkeleton:
+//			mBone = true;
+//			ExtractBoneHierarchy(node);
+//
+//			break;
+//		case FbxNodeAttribute::eMesh:
+//			if (mIsFirst != true) break;
+//			mIsFirst = false;
+//			ExtractMeshData(node);
+//			break;
+//		default:
+//			break;
+//		}
+//	}
+//
+//	int childCount = node->GetChildCount();
+//	for (int i = 0; i < childCount; ++i) {
+//		TraverseNode(node->GetChild(i));
+//	}
+//}
+
+inline void FbxExtractor::TraverseNodeForSkeleton(ptr<FbxNode> node)
 {
 	if (node == nullptr) return;
 	ptr<FbxNodeAttribute> nodeAttribute = node->GetNodeAttribute();
@@ -93,8 +126,27 @@ void FbxExtractor::TraverseNode(ptr<FbxNode> node)
 		case FbxNodeAttribute::eSkeleton:
 			mBone = true;
 			ExtractBoneHierarchy(node);
-
 			break;
+		default:
+			break;
+		}
+	}
+
+	int childCount = node->GetChildCount();
+	for (int i = 0; i < childCount; ++i) {
+		TraverseNodeForSkeleton(node->GetChild(i));
+	}
+
+}
+
+inline void FbxExtractor::TraverseNodeForMesh(ptr<FbxNode> node)
+{
+	if (node == nullptr) return;
+	ptr<FbxNodeAttribute> nodeAttribute = node->GetNodeAttribute();
+	if (nodeAttribute != nullptr) {
+		FbxNodeAttribute::EType type = nodeAttribute->GetAttributeType();
+		switch (type)
+		{
 		case FbxNodeAttribute::eMesh:
 			if (mIsFirst != true) break;
 			mIsFirst = false;
@@ -107,7 +159,7 @@ void FbxExtractor::TraverseNode(ptr<FbxNode> node)
 
 	int childCount = node->GetChildCount();
 	for (int i = 0; i < childCount; ++i) {
-		TraverseNode(node->GetChild(i));
+		TraverseNodeForMesh(node->GetChild(i));
 	}
 }
 

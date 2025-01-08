@@ -102,14 +102,17 @@ struct Gravity : public Component, public NeedVector
 struct Collider : public Component
 {
 	Collider() = default;
-	Collider(float centerX, float centerY, float centerZ, float extentsX, float extentsY, float extentsZ, Object* root) : 
-		Component{ root }, mAABB{ XMFLOAT3{centerX, centerY, centerZ}, XMFLOAT3{extentsX, extentsY, extentsZ} } {}
-	bool FindCollisionState(const wstring& objName){
-		auto it = mCollisionStates.find(objName);
+	Collider(float centerX, float centerY, float centerZ, float extentsX, float extentsY, float extentsZ, Object* root) :
+		Component{ root },
+		mAABB{ XMFLOAT3{centerX, centerY, centerZ}, XMFLOAT3{extentsX, extentsY, extentsZ} },
+		mLocalAABB{ XMFLOAT3{centerX, centerY, centerZ}, XMFLOAT3{extentsX, extentsY, extentsZ} } {}
+	bool FindCollisionObj(Object* objAddress){
+		auto it = mCollisionStates.find(objAddress);
 		return it != mCollisionStates.end();
 	}
 	BoundingBox mAABB;
-	unordered_map<wstring, CollisionState> mCollisionStates;
+	BoundingBox mLocalAABB;
+	unordered_map<Object*, CollisionState> mCollisionStates;
 };
 
 //struct CameraPosition : NeedVector

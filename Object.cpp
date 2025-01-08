@@ -2,6 +2,14 @@
 #include "GameTimer.h"
 #include "Scene.h"
 #include "DXSampleHelper.h"
+#include <random>
+
+std::random_device rdX;  // 첫 번째 rd 객체
+std::random_device rdZ;  // 두 번째 rd 객체
+default_random_engine dreX(rdX());
+default_random_engine dreZ(rdZ());
+uniform_int_distribution uidX(-1,1);
+uniform_int_distribution uidZ(-1,1);
 
 Object::Object(Scene* root) : m_root{ root }, m_mappedData{nullptr}
 {
@@ -64,17 +72,15 @@ void PlayerObject::OnUpdate(GameTimer& gTimer)
         newY = lerpZ;
     }
 
+    // 충돌체 위치 조정
+    GetComponent<Collider>().mAABB.Center = { pos.x, newY + 10.f, pos.z };
+
     XMVECTOR newPos = XMVECTOR{pos.x, newY, pos.z};
     GetComponent<Position>().SetXMVECTOR(newPos);
     // terrain Y 로 player Y 설정하기. end
 
-    // 충돌체 위치 조정
-    GetComponent<Collider>().mAABB.Center = { pos.x, newY + 10.f, pos.z };
-
-    XMMATRIX scale = XMMatrixScalingFromVector(GetComponent<Scale>().GetXMVECTOR());
-
     GetComponent<Rotation>().SetXMVECTOR(GetComponent<Rotation>().GetXMVECTOR() + GetComponent<Rotate>().GetXMVECTOR() * gTimer.DeltaTime());
-    XMMATRIX rotate = XMMatrixRotationRollPitchYawFromVector(GetComponent<Rotation>().GetXMVECTOR() * (XM_PI / 180.0f));
+    GetComponent<Position>().SetXMVECTOR(GetComponent<Position>().GetXMVECTOR() + GetComponent<Velocity>().GetXMVECTOR() * gTimer.DeltaTime());
 
     if (FindComponent<Gravity>()) {
         float& t = GetComponent<Gravity>().mGravityTime;
@@ -90,32 +96,22 @@ void PlayerObject::OnUpdate(GameTimer& gTimer)
     }
 
     XMVECTOR velocity = GetComponent<Velocity>().GetXMVECTOR();
+
     string currentFileName{};
     if (XMVector4Equal(velocity, XMVectorZero())) {
         currentFileName = "1P(boy-idle).fbx";
         //currentFileName = "boy_pickup_fix.fbx";
-
     }
     else if (XMVectorGetY(velocity) != 0.f) {
         currentFileName = "1P(boy-jump).fbx";
     }
     else if (XMVectorGetX(velocity) != 0 || XMVectorGetZ(velocity) != 0) {
-        currentFileName = "boy_run_fix.fbx";
+        currentFileName = "boy_walk_fix.fbx";
+        if (abs(XMVectorGetX(velocity)) > 15 || abs(XMVectorGetZ(velocity)) > 15) {
+            currentFileName = "boy_run_fix.fbx";
+        }
     }
 
-    GetComponent<Position>().SetXMVECTOR(GetComponent<Position>().GetXMVECTOR() + GetComponent<Velocity>().GetXMVECTOR() * gTimer.DeltaTime());
-    GetComponent<Velocity>().SetXMVECTOR(XMVectorZero());
-    XMMATRIX translate = XMMatrixTranslationFromVector(GetComponent<Position>().GetXMVECTOR());
-
-    XMMATRIX world = XMMatrixIdentity();
-
-    // 월드 행렬 = 크기 행렬 * 회전 행렬 * 이동 행렬
-    if (currentFileName == "1P(boy-jump).fbx")
-        world = scale * mRotation * translate;
-    else
-        world = scale * mRotation * rotate * translate;
-
-    memcpy(m_mappedData , &XMMatrixTranspose(world), sizeof(XMMATRIX)); // 처음 매개변수는 시작주소
 
     int isAnimate = FindComponent<Animation>();
     //int isAnimate = false;
@@ -125,7 +121,6 @@ void PlayerObject::OnUpdate(GameTimer& gTimer)
         SkinnedData& animData = animComponent.mAnimData->at(currentFileName);
         animComponent.mAnimationTime += gTimer.DeltaTime();
         string clipName = "Take 001";
-        if (currentFileName == "1P(boy-jump).fbx") clipName = "mixamo.com";
         if (animComponent.mAnimationTime >= animData.GetClipEndTime(clipName)) animComponent.mAnimationTime = 0.f;
         animData.GetFinalTransforms(clipName, animComponent.mAnimationTime, finalTransforms);
         memcpy(m_mappedData + sizeof(XMMATRIX), finalTransforms.data(), sizeof(XMMATRIX) * 90); // 처음 매개변수는 시작주소
@@ -135,7 +130,52 @@ void PlayerObject::OnUpdate(GameTimer& gTimer)
     memcpy(m_mappedData + sizeof(XMFLOAT4X4) * 91 + sizeof(int) * 4, &powValue, sizeof(float));
     float ambiantValue = 0.4f;
     memcpy(m_mappedData + sizeof(XMFLOAT4X4) * 91 + sizeof(int) * 4 + sizeof(float), &ambiantValue, sizeof(float));
-};
+}
+
+void PlayerObject::LateUpdate(GameTimer& gTimer)
+{
+    if (FindComponent<Collider>()) {
+        Collider& collider = GetComponent<Collider>();
+        for (auto& [key, value] : collider.mCollisionStates) {
+            Collider& otherCollider = key->GetComponent<Collider>();
+            switch (value)
+            {
+            case CollisionState::ENTER:
+                break;
+            case CollisionState::STAY:
+            {
+                Velocity& velocity = GetComponent<Velocity>();
+                float contactX = otherCollider.mAABB.Center.x - collider.mAABB.Center.x;
+                float contactZ = otherCollider.mAABB.Center.z - collider.mAABB.Center.z;
+                XMVECTOR contactVector{ contactX, 0.f, contactZ, 0.f };
+                contactVector = XMVector3Normalize(contactVector);
+                XMVECTOR velocityVector = velocity.GetXMVECTOR();
+                float result = XMVectorGetX(XMVector3Length(velocityVector));
+                //float result = XMVectorGetX(XMVector3Dot(contactVector, velocityVector));
+                //contactVector *= result;
+                //velocityVector -= contactVector * 10;
+                //velocity.SetXMVECTOR(velocityVector);
+                velocity.SetXMVECTOR(contactVector * -result);
+            }
+                break;
+            case CollisionState::EXIT:
+                break;
+            default:
+                break;
+            }
+        }
+    }
+
+    XMMATRIX scale = XMMatrixScalingFromVector(GetComponent<Scale>().GetXMVECTOR());
+    XMMATRIX rotate = XMMatrixRotationRollPitchYawFromVector(GetComponent<Rotation>().GetXMVECTOR() * (XM_PI / 180.0f));
+    GetComponent<Position>().SetXMVECTOR(GetComponent<Position>().GetXMVECTOR() + GetComponent<Velocity>().GetXMVECTOR() * gTimer.DeltaTime());
+    XMMATRIX translate = XMMatrixTranslationFromVector(GetComponent<Position>().GetXMVECTOR());
+    XMMATRIX world = XMMatrixIdentity();
+    world = scale * mRotation * rotate * translate;
+    memcpy(m_mappedData, &XMMatrixTranspose(world), sizeof(XMMATRIX)); // 처음 매개변수는 시작주소
+
+    GetComponent<Velocity>().SetXMVECTOR(XMVectorZero());
+}
 
 void PlayerObject::OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
@@ -150,8 +190,12 @@ void PlayerObject::OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* com
 
 void PlayerObject::OnKeyboardInput(const GameTimer& gTimer)
 {
-    float speed = 30;
+    float speed = 15;
     if (GetAsyncKeyState(VK_SHIFT) & 0x8000) {
+        speed = 30;
+    }
+
+    if (GetAsyncKeyState(VK_CONTROL) & 0x8000) {
         speed = 100;
     }
 
@@ -260,6 +304,10 @@ void TestObject::OnUpdate(GameTimer& gTimer)
     memcpy(m_mappedData + sizeof(XMFLOAT4X4) * 91 + sizeof(int) * 4 + sizeof(float), &ambiantValue, sizeof(float));
 }
 
+void TestObject::LateUpdate(GameTimer& gTimer)
+{
+}
+
 void TestObject::OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
     CD3DX12_GPU_DESCRIPTOR_HANDLE hDescriptor(m_root->GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart());
@@ -297,6 +345,10 @@ void CameraObject::OnUpdate(GameTimer& gTimer)
     SetXMMATRIX(XMMatrixLookAtLH(eye, target, up));
     // 카메라 변환 행렬 쉐이더에 전달
     memcpy(m_root->GetConstantBufferMappedData(), &XMMatrixTranspose(GetXMMATRIX()), sizeof(XMMATRIX)); // 처음 매개변수는 시작주소
+}
+
+void CameraObject::LateUpdate(GameTimer& gTimer)
+{
 }
 
 void CameraObject::OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
@@ -381,10 +433,14 @@ void TerrainObject::OnUpdate(GameTimer& gTimer)
         memcpy(m_mappedData + sizeof(XMFLOAT4X4), finalTransforms.data(), sizeof(XMFLOAT4X4) * 90); // 처음 매개변수는 시작주소
     }
     memcpy(m_mappedData + sizeof(XMFLOAT4X4) * 91, &isAnimate, sizeof(int));
-    float powValue = 7.f; // 짝수이면 안됨
+    float powValue = 5.f; // 짝수이면 안됨
     memcpy(m_mappedData + sizeof(XMFLOAT4X4) * 91 + sizeof(int) * 4, &powValue, sizeof(float));
     float ambiantValue = 0.4f;
     memcpy(m_mappedData + sizeof(XMFLOAT4X4) * 91 + sizeof(int) * 4 + sizeof(float), &ambiantValue, sizeof(float));
+}
+
+void TerrainObject::LateUpdate(GameTimer& gTimer)
+{
 }
 
 void TerrainObject::OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
@@ -405,48 +461,41 @@ TreeObject::TreeObject(Scene* root) : Object{ root }
 void TreeObject::OnUpdate(GameTimer& gTimer)
 {
     // terrain Y 로 object Y 설정하기.
-    if (GetComponent<Position>().mModify) {
-        XMFLOAT4 pos = GetComponent<Position>().mFloat4;
-        ResourceManager& rm = m_root->GetResourceManager();
-        float newY = 0.f;
-        int width = rm.GetTerrainData().terrainWidth;
-        int height = rm.GetTerrainData().terrainHeight;
-        int terrainScale = rm.GetTerrainData().terrainScale;
+    XMFLOAT4 pos = GetComponent<Position>().mFloat4;
+    ResourceManager& rm = m_root->GetResourceManager();
+    float newY = 0.f;
+    int width = rm.GetTerrainData().terrainWidth;
+    int height = rm.GetTerrainData().terrainHeight;
+    int terrainScale = rm.GetTerrainData().terrainScale;
 
-        if (pos.x >= 0 && pos.z >= 0 && pos.x <= width * terrainScale && pos.z <= height * terrainScale) {
-            vector<Vertex>& vertexBuffer = rm.GetVertexBuffer();
-            UINT startVertex = m_root->GetObj<TerrainObject>(L"TerrainObject").GetComponent<Mesh>().mSubMeshData.startVertexLocation;
+    if (pos.x >= 0 && pos.z >= 0 && pos.x <= width * terrainScale && pos.z <= height * terrainScale) {
+        vector<Vertex>& vertexBuffer = rm.GetVertexBuffer();
+        UINT startVertex = m_root->GetObj<TerrainObject>(L"TerrainObject").GetComponent<Mesh>().mSubMeshData.startVertexLocation;
 
-            int indexX = (int)(pos.x / terrainScale);
-            int indexZ = (int)(pos.z / terrainScale);
+        int indexX = (int)(pos.x / terrainScale);
+        int indexZ = (int)(pos.z / terrainScale);
 
-            float leftBottom = vertexBuffer[startVertex + indexZ * width + indexX].position.y;
-            float rightBottom = vertexBuffer[startVertex + indexZ * width + indexX + 1].position.y;
-            float leftTop = vertexBuffer[startVertex + (indexZ + 1) * width + indexX].position.y;
-            float rightTop = vertexBuffer[startVertex + (indexZ + 1) * width + indexX + 1].position.y;
+        float leftBottom = vertexBuffer[startVertex + indexZ * width + indexX].position.y;
+        float rightBottom = vertexBuffer[startVertex + indexZ * width + indexX + 1].position.y;
+        float leftTop = vertexBuffer[startVertex + (indexZ + 1) * width + indexX].position.y;
+        float rightTop = vertexBuffer[startVertex + (indexZ + 1) * width + indexX + 1].position.y;
 
-            float offsetX = pos.x / terrainScale - indexX;
-            float offsetZ = pos.z / terrainScale - indexZ;
+        float offsetX = pos.x / terrainScale - indexX;
+        float offsetZ = pos.z / terrainScale - indexZ;
 
-            float lerpXBottom = (1 - offsetX) * leftBottom + offsetX * rightBottom;
-            float lerpXTop = (1 - offsetX) * leftTop + offsetX * rightTop;
+        float lerpXBottom = (1 - offsetX) * leftBottom + offsetX * rightBottom;
+        float lerpXTop = (1 - offsetX) * leftTop + offsetX * rightTop;
 
-            float lerpZ = (1 - offsetZ) * lerpXBottom + offsetZ * lerpXTop;
+        float lerpZ = (1 - offsetZ) * lerpXBottom + offsetZ * lerpXTop;
 
-            newY = lerpZ;
-        }
-        // 충돌체 위치 조정
-        GetComponent<Collider>().mAABB.Center = { pos.x, newY + 5.f, pos.z };
-
-        pos.x -= 17.f; // 피벗 조정
-        newY += 4.5f; // 피벗 조정
-        pos.z -= 48.f; // 피벗 조정
-        XMVECTOR newPos = XMVECTOR{ pos.x, newY, pos.z };
-        GetComponent<Position>().SetXMVECTOR(newPos);
-        // terrain Y 로 object Y 설정하기. end
-
-        GetComponent<Position>().mModify = false;
+        newY = lerpZ;
     }
+    // 충돌체 위치 조정
+    GetComponent<Collider>().mAABB.Center = { pos.x, newY + 5.f, pos.z };
+
+    XMVECTOR newPos{ pos.x, newY, pos.z };
+    GetComponent<Position>().SetXMVECTOR(newPos);
+    // terrain Y 로 object Y 설정하기. end
 
     XMMATRIX scale = XMMatrixScalingFromVector(GetComponent<Scale>().GetXMVECTOR());
 
@@ -455,7 +504,8 @@ void TreeObject::OnUpdate(GameTimer& gTimer)
 
     GetComponent<Position>().SetXMVECTOR(GetComponent<Position>().GetXMVECTOR() + GetComponent<Velocity>().GetXMVECTOR() * gTimer.DeltaTime());
     GetComponent<Velocity>().SetXMVECTOR(XMVECTOR{ 0,0,0,0 });
-    XMMATRIX translate = XMMatrixTranslationFromVector(GetComponent<Position>().GetXMVECTOR());
+    XMVECTOR pivot{ -16.5f, 4.5f, -50.f }; // pivot 조정
+    XMMATRIX translate = XMMatrixTranslationFromVector(GetComponent<Position>().GetXMVECTOR() + pivot);
 
     // 월드 행렬 = 크기 행렬 * 회전 행렬 * 이동 행렬
     XMMATRIX world = scale * rotate * translate;
@@ -475,8 +525,12 @@ void TreeObject::OnUpdate(GameTimer& gTimer)
     memcpy(m_mappedData + sizeof(XMFLOAT4X4) * 91, &isAnimate, sizeof(int));
     float powValue = 1.f; // 짝수이면 안됨
     memcpy(m_mappedData + sizeof(XMFLOAT4X4) * 91 + sizeof(int) * 4, &powValue, sizeof(float));
-    float ambiantValue = 0.3f;
+    float ambiantValue = 0.4f;
     memcpy(m_mappedData + sizeof(XMFLOAT4X4) * 91 + sizeof(int) * 4 + sizeof(float), &ambiantValue, sizeof(float));
+}
+
+void TreeObject::LateUpdate(GameTimer& gTimer)
+{
 }
 
 void TreeObject::OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
@@ -489,4 +543,239 @@ void TreeObject::OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* comma
     //commandList->DrawIndexedInstanced(data.indexCountPerInstance, 1, data.startIndexLocation, data.baseVertexLocation, 0);
     commandList->DrawInstanced(data.vertexCountPerInstance, 1, data.startVertexLocation, 0);
 
+}
+
+TigerObject::TigerObject(Scene* root) : Object{ root }, mRotation{ XMMatrixIdentity() }, mTimer{10.f}
+{
+}
+
+void TigerObject::OnUpdate(GameTimer& gTimer)
+{
+    RandomVelocity(gTimer);
+    TigerBehavior(gTimer);
+    ResourceManager& rm = m_root->GetResourceManager();
+    // terrain Y 로 player Y 설정하기.
+    XMFLOAT4 pos = GetComponent<Position>().mFloat4;
+    float newY = 0.f;
+    int width = rm.GetTerrainData().terrainWidth;
+    int height = rm.GetTerrainData().terrainHeight;
+    int terrainScale = rm.GetTerrainData().terrainScale;
+
+    if (pos.x >= 0 && pos.z >= 0 && pos.x <= width * terrainScale && pos.z <= height * terrainScale) {
+        vector<Vertex>& vertexBuffer = rm.GetVertexBuffer();
+        UINT startVertex = m_root->GetObj<TerrainObject>(L"TerrainObject").GetComponent<Mesh>().mSubMeshData.startVertexLocation;
+
+        int indexX = (int)(pos.x / terrainScale);
+        int indexZ = (int)(pos.z / terrainScale);
+
+        float leftBottom = vertexBuffer[startVertex + indexZ * width + indexX].position.y;
+        float rightBottom = vertexBuffer[startVertex + indexZ * width + indexX + 1].position.y;
+        float leftTop = vertexBuffer[startVertex + (indexZ + 1) * width + indexX].position.y;
+        float rightTop = vertexBuffer[startVertex + (indexZ + 1) * width + indexX + 1].position.y;
+
+        float offsetX = pos.x / terrainScale - indexX;
+        float offsetZ = pos.z / terrainScale - indexZ;
+
+        float lerpXBottom = (1 - offsetX) * leftBottom + offsetX * rightBottom;
+        float lerpXTop = (1 - offsetX) * leftTop + offsetX * rightTop;
+
+        float lerpZ = (1 - offsetZ) * lerpXBottom + offsetZ * lerpXTop;
+
+        newY = lerpZ;
+    }
+
+    XMVECTOR newPos = XMVECTOR{ pos.x, newY, pos.z };
+    GetComponent<Position>().SetXMVECTOR(newPos);
+    // terrain Y 로 tiger Y 설정하기. end
+
+    GetComponent<Rotation>().SetXMVECTOR(GetComponent<Rotation>().GetXMVECTOR() + GetComponent<Rotate>().GetXMVECTOR() * gTimer.DeltaTime());
+    GetComponent<Position>().SetXMVECTOR(GetComponent<Position>().GetXMVECTOR() + GetComponent<Velocity>().GetXMVECTOR() * gTimer.DeltaTime());
+
+    // 충돌체 조정
+    XMMATRIX scale = XMMatrixIdentity();
+    XMMATRIX rotate = XMMatrixRotationRollPitchYawFromVector(GetComponent<Rotation>().GetXMVECTOR() * (XM_PI / 180.0f));
+    XMMATRIX translate = XMMatrixTranslationFromVector(GetComponent<Position>().GetXMVECTOR());
+    XMMATRIX world = XMMatrixIdentity();
+    world = scale * mRotation * rotate * translate;
+    GetComponent<Collider>().mLocalAABB.Transform(GetComponent<Collider>().mAABB, world);
+    //GetComponent<Collider>().mAABB.Center = { pos.x, newY, pos.z };
+
+
+    if (FindComponent<Gravity>()) {
+        float& t = GetComponent<Gravity>().mGravityTime;
+        float y = XMVectorGetY(GetComponent<Position>().GetXMVECTOR());
+        if (y > newY) {
+            t += gTimer.DeltaTime();
+            //currentFileName = "1P(boy-jump).fbx";
+            GetComponent<Velocity>().SetXMVECTOR(XMVectorSetY(GetComponent<Velocity>().GetXMVECTOR(), 0.5 * -9.8 * (t * t)));
+        }
+        else {
+            t = 0;
+        }
+    }
+
+    XMVECTOR velocity = GetComponent<Velocity>().GetXMVECTOR();
+
+    string currentFileName{};
+    if (XMVector4Equal(velocity, XMVectorZero())) {
+        currentFileName = "202411_walk_tiger_center.fbx";
+    }
+    else if (XMVectorGetY(velocity) != 0.f) {
+        currentFileName = "202411_walk_tiger_center.fbx";
+    }
+    else if (XMVectorGetX(velocity) != 0 || XMVectorGetZ(velocity) != 0) {
+        currentFileName = "202411_walk_tiger_center.fbx";
+        if (abs(XMVectorGetX(velocity)) > 15 || abs(XMVectorGetZ(velocity)) > 15) {
+            currentFileName = "202411_walk_tiger_center.fbx";
+        }
+    }
+
+    int isAnimate = FindComponent<Animation>();
+    //int isAnimate = false;
+    if (isAnimate) {
+        vector<XMFLOAT4X4> finalTransforms{ 90 };
+        Animation& animComponent = GetComponent<Animation>();
+        SkinnedData& animData = animComponent.mAnimData->at(currentFileName);
+        animComponent.mAnimationTime += gTimer.DeltaTime();
+        string clipName = "Take 001";
+        if (animComponent.mAnimationTime >= animData.GetClipEndTime(clipName)) animComponent.mAnimationTime = 0.f;
+        animData.GetFinalTransforms(clipName, animComponent.mAnimationTime, finalTransforms);
+        memcpy(m_mappedData + sizeof(XMMATRIX), finalTransforms.data(), sizeof(XMMATRIX) * 90); // 처음 매개변수는 시작주소
+    }
+    memcpy(m_mappedData + sizeof(XMMATRIX) * 91, &isAnimate, sizeof(int));
+    float powValue = 1.f; // 짝수이면 안됨
+    memcpy(m_mappedData + sizeof(XMFLOAT4X4) * 91 + sizeof(int) * 4, &powValue, sizeof(float));
+    float ambiantValue = 0.4f;
+    memcpy(m_mappedData + sizeof(XMFLOAT4X4) * 91 + sizeof(int) * 4 + sizeof(float), &ambiantValue, sizeof(float));
+}
+
+void TigerObject::LateUpdate(GameTimer& gTimer)
+{
+    if (FindComponent<Collider>()) {
+        Collider& collider = GetComponent<Collider>();
+        for (auto& [key, value] : collider.mCollisionStates) {
+            Collider& otherCollider = key->GetComponent<Collider>();
+            switch (value)
+            {
+            case CollisionState::ENTER:
+                break;
+            case CollisionState::STAY:
+            {
+                Velocity& velocity = GetComponent<Velocity>();
+                float contactX = otherCollider.mAABB.Center.x - collider.mAABB.Center.x;
+                float contactZ = otherCollider.mAABB.Center.z - collider.mAABB.Center.z;
+                XMVECTOR contactVector{ contactX, 0.f, contactZ, 0.f };
+                contactVector = XMVector3Normalize(contactVector);
+                XMVECTOR velocityVector = velocity.GetXMVECTOR();
+                float result = XMVectorGetX(XMVector3Length(velocityVector));
+                //float result = XMVectorGetX(XMVector3Dot(contactVector, velocityVector));
+                //contactVector *= result;
+                //velocityVector -= contactVector * 10;
+                //velocity.SetXMVECTOR(velocityVector);
+                velocity.SetXMVECTOR(contactVector * -result);
+            }
+            break;
+            case CollisionState::EXIT:
+                break;
+            default:
+                break;
+            }
+        }
+    }
+
+    XMMATRIX scale = XMMatrixScalingFromVector(GetComponent<Scale>().GetXMVECTOR());
+    XMMATRIX rotate = XMMatrixRotationRollPitchYawFromVector(GetComponent<Rotation>().GetXMVECTOR() * (XM_PI / 180.0f));
+    GetComponent<Position>().SetXMVECTOR(GetComponent<Position>().GetXMVECTOR() + GetComponent<Velocity>().GetXMVECTOR() * gTimer.DeltaTime());
+    XMVECTOR pivot{ 0.f , 0.f, -8.f }; // pivot 조정
+    pivot = XMVector3Transform(pivot, mRotation);
+    XMMATRIX translate = XMMatrixTranslationFromVector(GetComponent<Position>().GetXMVECTOR() + pivot);
+    XMMATRIX world = XMMatrixIdentity();
+    world = scale * mRotation * rotate * translate;
+    memcpy(m_mappedData, &XMMatrixTranspose(world), sizeof(XMMATRIX)); // 처음 매개변수는 시작주소
+
+    GetComponent<Velocity>().SetXMVECTOR(XMVectorZero());
+
+}
+
+void TigerObject::OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
+{
+    CD3DX12_GPU_DESCRIPTOR_HANDLE hDescriptor(m_root->GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart());
+    hDescriptor.Offset(1 + GetComponent<Texture>().mDescriptorStartIndex, device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+    commandList->SetGraphicsRootDescriptorTable(1, hDescriptor);
+    commandList->SetGraphicsRootConstantBufferView(2, m_constantBuffer.Get()->GetGPUVirtualAddress());
+    SubMeshData& data = GetComponent<Mesh>().mSubMeshData;
+    //commandList->DrawIndexedInstanced(data.indexCountPerInstance, 1, data.startIndexLocation, data.baseVertexLocation, 0);
+    commandList->DrawInstanced(data.vertexCountPerInstance, 1, data.startVertexLocation, 0);
+}
+
+void TigerObject::TigerBehavior(GameTimer& gTimer)
+{
+    XMVECTOR pos = GetComponent<Position>().GetXMVECTOR();
+    PlayerObject& player = m_root->GetObj<PlayerObject>(L"PlayerObject");
+    XMVECTOR playerPos = player.GetComponent<Position>().GetXMVECTOR();
+    XMVECTOR velocity{ playerPos - pos };
+    XMVECTOR up{ 0.f, 1.f, 0.f, 0.f };
+    float speed = 15.f;
+    float result = XMVectorGetX(XMVector3Length(velocity));
+    if (result < 200.f) {
+        velocity = XMVectorSetY(velocity, 0.f);
+        velocity = XMVector3Normalize(velocity);
+        GetComponent<Velocity>().SetXMVECTOR(velocity * speed);
+        XMMATRIX rotate{ XMVector3Cross(up, velocity), up, velocity, XMVECTOR{ 0.f, 0.f, 0.f, 1.f } };
+        mRotation = rotate;
+    }
+    else {
+        velocity = { mTempVelocity.x, mTempVelocity.y, mTempVelocity.z, 0.f };
+        velocity = XMVectorSetY(velocity, 0.f);
+        velocity = XMVector3Normalize(velocity);
+        GetComponent<Velocity>().SetXMVECTOR(velocity * speed);
+        XMMATRIX rotate{ XMVector3Cross(up, velocity), up, velocity, XMVECTOR{ 0.f, 0.f, 0.f, 1.f } };
+        mRotation = rotate;
+    }
+}
+
+void TigerObject::RandomVelocity(GameTimer& gTimer)
+{
+
+    mTimer += gTimer.DeltaTime();
+    XMVECTOR pos = GetComponent<Position>().GetXMVECTOR();
+    if (XMVectorGetX(pos) <= 0.f) {
+        mTimer = 0.f;
+        //float value = static_cast<float>(uid(dre)) ? 1.f : -1.f;
+        mTempVelocity = {1.f, 0.f, (float)uidZ(dreZ)};
+    }
+
+    if (XMVectorGetZ(pos) <= 0.f) {
+        mTimer = 0.f;
+        //float value = static_cast<float>(uid(dre)) ? 1.f : -1.f;
+        mTempVelocity = { (float)uidX(dreX), 0.f, 1.f };
+
+    }
+
+    if (mTimer >= 5.f) {
+        mTimer = 0.f;
+        //float value = static_cast<float>(uid(dre)) ? 0.5f : -1.f;
+        float x = (float)uidX(dreX);
+        float z = (float)uidZ(dreZ);
+        if (x == 0 && z == 0) {
+            mTempVelocity = { x, 0.f, 1.f };
+        }
+        mTempVelocity = { x, 0.f, z };
+    }
+}
+
+StoneObject::StoneObject(Scene* root) : Object{root}
+{
+}
+
+void StoneObject::OnUpdate(GameTimer& gTimer)
+{
+}
+
+void StoneObject::LateUpdate(GameTimer& gTimer)
+{
+}
+
+void StoneObject::OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
+{
 }

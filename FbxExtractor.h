@@ -30,7 +30,9 @@ public:
 
 private:
 	void ConvertSceneAxisSystem(FbxAxisSystem::EUpVector, FbxAxisSystem::EFrontVector, FbxAxisSystem::ECoordSystem);
-	inline void TraverseNode(ptr<FbxNode>);
+	//inline void TraverseNode(ptr<FbxNode>);
+	inline void TraverseNodeForSkeleton(ptr<FbxNode>);
+	inline void TraverseNodeForMesh(ptr<FbxNode>);
 	inline void TraverseNodeForAnimation(ptr<FbxNode>, ptr<FbxTakeInfo>, FbxTime::EMode);
 	void ExtractMeshData(ptr<FbxNode>);
 	void ExtractBoneHierarchy(ptr<FbxNode>);
