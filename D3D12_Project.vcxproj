@@ -145,6 +145,7 @@
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="Scene.cpp" />
+    <ClCompile Include="Shadow.cpp" />
     <ClCompile Include="SkinnedData.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="Win32Application.cpp" />
@@ -161,6 +162,7 @@
     <ClInclude Include="Object.h" />
     <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="Scene.h" />
+    <ClInclude Include="Shadow.h" />
     <ClInclude Include="SkinnedData.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Info.h" />
