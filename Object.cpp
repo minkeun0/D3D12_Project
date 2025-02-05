@@ -100,10 +100,6 @@ void PlayerObject::OnUpdate(GameTimer& gTimer)
     string currentFileName{};
     if (XMVector4Equal(velocity, XMVectorZero())) {
         currentFileName = "1P(boy-idle).fbx";
-        //currentFileName = "boy_pickup_fix.fbx";
-    }
-    else if (XMVectorGetY(velocity) != 0.f) {
-        currentFileName = "1P(boy-jump).fbx";
     }
     else if (XMVectorGetX(velocity) != 0 || XMVectorGetZ(velocity) != 0) {
         currentFileName = "boy_walk_fix.fbx";
@@ -111,7 +107,6 @@ void PlayerObject::OnUpdate(GameTimer& gTimer)
             currentFileName = "boy_run_fix.fbx";
         }
     }
-
 
     int isAnimate = FindComponent<Animation>();
     //int isAnimate = false;

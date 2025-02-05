@@ -66,7 +66,8 @@ float4 PSMain(VSOutput input) : SV_TARGET
 {
     //float4 result = Texture.Sample(Sampler, input.uv);
 
-    float4 lightVector = float4(0, 1, 0, 0);
+    float4 lightVector = float4(0.3, 1, 0, 0);
+    lightVector = normalize(lightVector);
     float4 result = Texture.Sample(Sampler, input.uv) * (pow(max(dot(input.normal, lightVector), 0.f), powValue) + ambiantValue);
     //float4 result = Texture.Sample(Sampler, input.uv) * max(dot(input.normal, lightVector), 0.2f);
     return result;

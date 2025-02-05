@@ -13,7 +13,11 @@ FbxExtractor::FbxExtractor() :
 {
 	mFbxManager = FbxManager::Create();
 	mFbxIOS = FbxIOSettings::Create(mFbxManager, IOSROOT);
+	mFbxIOS->SetBoolProp(IMP_FBX_EXTRACT_EMBEDDED_DATA, false);
+
 	mFbxManager->SetIOSettings(mFbxIOS);
+
+
 }
 
 FbxExtractor::~FbxExtractor()
@@ -25,7 +29,7 @@ void FbxExtractor::ImportFbxFile(const std::string& fileName, bool onlyAnimation
 {
 
 	mFbxImporter = FbxImporter::Create(mFbxManager, "");
-	if(mFbxImporter->Initialize(fileName.c_str()) == false) throw;
+	if(mFbxImporter->Initialize(fileName.c_str(), -1, mFbxManager->GetIOSettings()) == false) throw;
 
 	mFbxScene = FbxScene::Create(mFbxManager, "");
 	if(mFbxImporter->Import(mFbxScene) == false) throw;

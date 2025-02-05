@@ -10,7 +10,6 @@ public:
 private:
 	Scene* mParent;
 	BoundingSphere mSceneBound;
-	XMFLOAT3 mLightDirection = {0.3f , 1.f, 0.f};
-
+	XMFLOAT3 mLightDirection;
 };
 

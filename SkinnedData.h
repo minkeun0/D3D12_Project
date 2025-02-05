@@ -73,7 +73,7 @@ public:
 	 // In a real project, you'd want to cache the result if there was a chance
 	 // that you were calling this several times with the same clipName at 
 	 // the same timePos.
-    void GetFinalTransforms(const std::string& clipName, float timePos, 
+    void GetFinalTransforms(const std::string& clipName, float timePos,
 		 std::vector<DirectX::XMFLOAT4X4>& finalTransforms)const;
 
 private:
