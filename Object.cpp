@@ -167,7 +167,8 @@ void PlayerObject::LateUpdate(GameTimer& gTimer)
     XMMATRIX translate = XMMatrixTranslationFromVector(GetComponent<Position>().GetXMVECTOR());
     XMMATRIX world = XMMatrixIdentity();
     world = scale * mRotation * rotate * translate;
-    memcpy(m_mappedData, &XMMatrixTranspose(world), sizeof(XMMATRIX)); // 처음 매개변수는 시작주소
+    memcpy(m_mappedData, &XMMatrixTranspose(world), sizeof(XMMATRIX)); // 처음 매개변수는 시작주소 , 열우선으로 변경해서 shader에 전달할경우
+    //memcpy(m_mappedData, &world, sizeof(XMMATRIX)); // shader에서 행우선으로 변경하여 사용할경우
 
     GetComponent<Velocity>().SetXMVECTOR(XMVectorZero());
 }
@@ -368,7 +369,7 @@ void CameraObject::OnMouseInput(WPARAM wParam, HWND hWnd)
     mPhi -= XMConvertToRadians(dy * 0.02f);
 
     // 각도 clamp
-    float min = 0.1f;
+    float min = 0.0f;
     float max = XM_PI - 0.1f;
     mPhi = mPhi < min ? min : (mPhi > max ? max : mPhi);
 

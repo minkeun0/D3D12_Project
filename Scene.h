@@ -3,44 +3,38 @@
 #include "Object.h"
 #include "ResourceManager.h"
 #include <utility>
+#include "Shadow.h"
 
 class GameTimer;
+class Framework;
 
 class Scene
 {
 public:
     Scene() = default;
-    Scene(UINT width, UINT height, wstring name);
-
+    Scene(Framework* parent, UINT width, UINT height, wstring name);
     virtual void OnInit(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
     virtual void OnUpdate(GameTimer& gTimer);
     virtual void CheckCollision();
     virtual void LateUpdate(GameTimer& gTimer);
-    virtual void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
+    virtual void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, ePass pass);
     virtual void OnResize(UINT width, UINT height);
     virtual void OnDestroy();
-
     virtual void OnKeyDown(UINT8 key);
     virtual void OnKeyUp(UINT8 key);
-
-    void SetState(ID3D12GraphicsCommandList* commandList);
-    void SetDescriptorHeaps(ID3D12GraphicsCommandList* commandList);
-
     wstring GetSceneName() const;
     ResourceManager& GetResourceManager();
-
-    template<typename T>
-    void AddObj(const wstring& name, T&& object) { m_objects.emplace(name, move(object)); }
-
-    template<typename T>
-    T& GetObj(const wstring& name) { return get<T>(m_objects.at(name)); }
-
     void* GetConstantBufferMappedData();
     ID3D12DescriptorHeap* GetDescriptorHeap();
-
     UINT CalcConstantBufferByteSize(UINT byteSize);
-
+    Framework* GetFramework();
+    UINT GetNumOfTexture();
+    template<typename T> void AddObj(const wstring& name, T&& object) { m_objects.emplace(name, move(object)); }
+    template<typename T> T& GetObj(const wstring& name) { return get<T>(m_objects.at(name)); }
+    std::unordered_map<std::string, ComPtr<ID3D12PipelineState>>& GetPSOs();
+    void RenderObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
 private:
+    void LoadMeshAnimationTexture();
     void BuildRootSignature(ID3D12Device* device);
     void BuildPSO(ID3D12Device* device);
     void BuildVertexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
@@ -54,8 +48,13 @@ private:
     void BuildDescriptorHeap(ID3D12Device* device);
     void BuildProjMatrix();
     void BuildObjects(ID3D12Device* device);
-    void LoadMeshAnimationTexture();
-
+    void BuildShadow();
+    void BuildShaders();
+    void BuildInputElement();
+    ComPtr<ID3DBlob> CompileShader(
+        const std::wstring& fileName, const D3D_SHADER_MACRO* defines, const std::string& entryPoint, const std::string& target);
+private:
+    Framework* m_parent = nullptr;
     wstring m_name;
     unordered_map<wstring, ObjectVariant> m_objects;
     unique_ptr<ResourceManager> m_resourceManager;
@@ -63,8 +62,10 @@ private:
     CD3DX12_VIEWPORT m_viewport;
     CD3DX12_RECT m_scissorRect;
     ComPtr<ID3D12RootSignature> m_rootSignature;
-    ComPtr<ID3D12PipelineState> m_pipelineState;
-    // App resources.
+    //std::unordered_map<std::string, ComPtr<ID3D12RootSignature>> m_rootSignatures;
+    std::unordered_map<std::string, ComPtr<ID3D12PipelineState>> m_PSOs;
+    std::unordered_map<std::string, ComPtr<ID3DBlob>> m_shaders;
+    //
     ComPtr<ID3D12DescriptorHeap> m_descriptorHeap;
     UINT m_cbvsrvuavDescriptorSize;
     //
@@ -81,7 +82,11 @@ private:
     vector<ComPtr<ID3D12Resource>> m_textureBuffer_uploads;
     //
     ComPtr<ID3D12Resource> m_constantBuffer;
-    void* m_mappedData;
+    void* m_mappedData = nullptr;
     //
     XMFLOAT4X4 m_proj;
+    //
+    unique_ptr<Shadow> m_shadow = nullptr;
+
+    std::vector<D3D12_INPUT_ELEMENT_DESC> m_inputElement;
 };

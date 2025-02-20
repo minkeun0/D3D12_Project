@@ -98,7 +98,7 @@ void Framework::OnRender()
     m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 
     // Present the frame.
-    ThrowIfFailed(m_swapChain->Present(1, 0));
+    ThrowIfFailed(m_swapChain->Present(0, 0));
 
     WaitForPreviousFrame();
 }
@@ -172,7 +172,7 @@ void Framework::GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1** ppAd
             UINT adapterIndex = 0;
             SUCCEEDED(factory6->EnumAdapterByGpuPreference(
                 adapterIndex,
-                requestHighPerformanceAdapter == true ? DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE : DXGI_GPU_PREFERENCE_UNSPECIFIED,
+                requestHighPerformanceAdapter ? DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE : DXGI_GPU_PREFERENCE_UNSPECIFIED,
                 IID_PPV_ARGS(&adapter)));
                 ++adapterIndex)
         {
@@ -195,28 +195,28 @@ void Framework::GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1** ppAd
         }
     }
 
-    if (adapter.Get() == nullptr)
-    {
-        for (UINT adapterIndex = 0; SUCCEEDED(pFactory->EnumAdapters1(adapterIndex, &adapter)); ++adapterIndex)
-        {
-            DXGI_ADAPTER_DESC1 desc;
-            adapter->GetDesc1(&desc);
+    //if (adapter.Get() == nullptr)
+    //{
+    //    for (UINT adapterIndex = 0; SUCCEEDED(pFactory->EnumAdapters1(adapterIndex, &adapter)); ++adapterIndex)
+    //    {
+    //        DXGI_ADAPTER_DESC1 desc;
+    //        adapter->GetDesc1(&desc);
 
-            if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
-            {
-                // Don't select the Basic Render Driver adapter.
-                // If you want a software adapter, pass in "/warp" on the command line.
-                continue;
-            }
+    //        if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
+    //        {
+    //            // Don't select the Basic Render Driver adapter.
+    //            // If you want a software adapter, pass in "/warp" on the command line.
+    //            continue;
+    //        }
 
-            // Check to see whether the adapter supports Direct3D 12, but don't create the
-            // actual device yet.
-            if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0, _uuidof(ID3D12Device), nullptr)))
-            {
-                break;
-            }
-        }
-    }
+    //        // Check to see whether the adapter supports Direct3D 12, but don't create the
+    //        // actual device yet.
+    //        if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0, _uuidof(ID3D12Device), nullptr)))
+    //        {
+    //            break;
+    //        }
+    //    }
+    //}
 
     *ppAdapter = adapter.Detach();
 }
@@ -261,7 +261,9 @@ void Framework::BuildFactoryAndDevice()
     else
     {
         ComPtr<IDXGIAdapter1> hardwareAdapter;
-        GetHardwareAdapter(m_factory.Get(), &hardwareAdapter);
+        GetHardwareAdapter(m_factory.Get(), hardwareAdapter.GetAddressOf());
+
+        if (hardwareAdapter.Get() == nullptr) throw;
 
         ThrowIfFailed(D3D12CreateDevice(
             hardwareAdapter.Get(),
@@ -339,7 +341,7 @@ void Framework::BuildRtv()
 void Framework::BuildDsvDescriptorHeap()
 {
     D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc;
-    dsvHeapDesc.NumDescriptors = 1;
+    dsvHeapDesc.NumDescriptors = 1 + 1; // 1 Àº shdowmap¿ë
     dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
     dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
     dsvHeapDesc.NodeMask = 0;
@@ -367,11 +369,11 @@ void Framework::BuildDepthStencilBuffer(UINT width, UINT height)
         &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
         D3D12_HEAP_FLAG_NONE,
         &depthStencilDesc,
-        D3D12_RESOURCE_STATE_COMMON,
+        D3D12_RESOURCE_STATE_DEPTH_WRITE,
         &depthOptimizedClearValue,
         IID_PPV_ARGS(&m_depthStencilBuffer)
     );
-    m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_depthStencilBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_DEPTH_WRITE));
+    //m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_depthStencilBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_DEPTH_WRITE));
 }
 
 void Framework::BuildDsv()
@@ -394,49 +396,44 @@ void Framework::BuildFence()
 
 void Framework::PopulateCommandList()
 {
-    // Command list allocators can only be reset when the associated 
-    // command lists have finished execution on the GPU; apps should use 
-    // fences to determine GPU execution progress.
     ThrowIfFailed(m_commandAllocator->Reset());
-
-    // However, when ExecuteCommandList() is called on a particular command 
-    // list, that command list can then be reset at any time and must be before 
-    // re-recording.
     ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), nullptr));
 
-    // Set
-    m_scenes[L"BaseScene"].SetState(m_commandList.Get());
-    m_scenes[L"BaseScene"].SetDescriptorHeaps(m_commandList.Get());
-    // Set
-    
-    // Indicate that the back buffer will be used as a render target.
-    m_commandList->ResourceBarrier(1,
-        &CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+    m_scenes[L"BaseScene"].OnRender(m_device.Get(), m_commandList.Get(), ePass::Shadow);
 
+    // Indicate that the back buffer will be used as a render target.
+    D3D12_RESOURCE_BARRIER barrier{};
+    barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+    barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+    barrier.Transition.pResource = m_renderTargets[m_frameIndex].Get();
+    barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
+    barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+    barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+    m_commandList->ResourceBarrier(1, &barrier);
+
+        // Record commands.
     CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), m_frameIndex, m_rtvDescriptorSize);
     CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_dsvHeap->GetCPUDescriptorHandleForHeapStart(), 0, m_dsvDescriptorSize);
-    m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
-
-    // Record commands.
     
     m_commandList->ClearRenderTargetView(rtvHandle, Colors::LightSteelBlue, 0, nullptr);
     m_commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1, 0, 0, nullptr);
 
+    m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+    
     // Rendering
-    m_scenes[L"BaseScene"].OnRender(m_device.Get(), m_commandList.Get());
-    // Rendering
+    m_scenes[L"BaseScene"].OnRender(m_device.Get(), m_commandList.Get(), ePass::Default);
     
     // Indicate that the back buffer will now be used to present.
-    m_commandList->ResourceBarrier(1,
-        &CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
-
+    barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
+    barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
+    m_commandList->ResourceBarrier(1, &barrier);
     ThrowIfFailed(m_commandList->Close());
 }
 
 void Framework::BuildScenes(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
     wstring name = L"BaseScene";
-    m_scenes[name] = Scene{ m_win32App->GetWidth(), m_win32App->GetHeight(), name };
+    m_scenes[name] = Scene{ this, m_win32App->GetWidth(), m_win32App->GetHeight(), name };
     m_scenes[name].OnInit(device, commandList);
     m_currentSceneName = name;
 }
@@ -496,5 +493,20 @@ const wstring& Framework::GetCurrentSceneName()
 Win32Application& Framework::GetWin32App()
 {
     return *m_win32App.get();
+}
+
+ID3D12Device* Framework::GetDevice()
+{
+    return m_device.Get();
+}
+
+ID3D12GraphicsCommandList* Framework::GetCommandList()
+{
+    return m_commandList.Get();
+}
+
+ID3D12DescriptorHeap* Framework::GetDsvDescHeap()
+{
+    return m_dsvHeap.Get();
 }
 

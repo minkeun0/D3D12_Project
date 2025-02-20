@@ -25,6 +25,8 @@ struct CommonCB
 {
     XMFLOAT4X4 view;
     XMFLOAT4X4 proj;
+	XMFLOAT4X4 lightViewProj;
+	XMFLOAT4X4 lightTexCoord;
 };
 
 struct SubMeshData
@@ -37,8 +39,14 @@ struct SubMeshData
 };
 
 enum CollisionState {
-	//NONE,          // 충돌 없음
+	//NONE,         // 충돌 없음
 	ENTER,         // 충돌 시작
 	STAY,          // 충돌 중
 	EXIT           // 충돌 종료
+};
+
+enum class ePass
+{
+	Shadow,
+	Default
 };
