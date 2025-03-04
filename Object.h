@@ -33,6 +33,8 @@ public:
 		return it != m_components.end();
 	}
 
+	Scene* GetParent() { return m_root; }
+
 protected:
 	Scene* m_root;
 	unordered_map<string, ComponentVariant> m_components;
@@ -51,8 +53,9 @@ public:
 	void LateUpdate(GameTimer& gTimer) override;
 	void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList) override;
 	void OnKeyboardInput(const GameTimer& gTimer);
+	void CurrentStateUpdate();
 private:
-	XMMATRIX mRotation; // 키보드 인풋 함수에서 구했던 카메라 좌표계를 기준으로 하는 회전행렬이다. 이 값을 함수 내부에서 컴포넌트의 rotate에 곱하고 그 결과를 다시 컴포넌트에 저장하면 이 변수는 없어도 될듯. 나중에 고치자.
+	XMMATRIX mRotation;
 };
 
 class CameraObject : public Object

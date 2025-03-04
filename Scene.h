@@ -33,6 +33,7 @@ public:
     template<typename T> T& GetObj(const wstring& name) { return get<T>(m_objects.at(name)); }
     std::unordered_map<std::string, ComPtr<ID3D12PipelineState>>& GetPSOs();
     void RenderObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
+    std::array<eKeyState, static_cast<size_t>(eKeyTable::SIZE)>& GetKeyBuffer();
 private:
     void LoadMeshAnimationTexture();
     void BuildRootSignature(ID3D12Device* device);
@@ -53,6 +54,7 @@ private:
     void BuildInputElement();
     ComPtr<ID3DBlob> CompileShader(
         const std::wstring& fileName, const D3D_SHADER_MACRO* defines, const std::string& entryPoint, const std::string& target);
+    void UpdateKeyBuffer();
 private:
     Framework* m_parent = nullptr;
     wstring m_name;
@@ -89,4 +91,12 @@ private:
     unique_ptr<Shadow> m_shadow = nullptr;
 
     std::vector<D3D12_INPUT_ELEMENT_DESC> m_inputElement;
+
+    std::array<eKeyState, static_cast<size_t>(eKeyTable::SIZE)> mKeyBuffer = {};
+
+    std::unordered_map <eBehavior, std::unordered_map<eEvent, eBehavior>> mPlayerTransitions = {
+        {eBehavior::Idle, {{eEvent::MoveKeyPressed, eBehavior::Walk}}},
+        {eBehavior::Walk, {{eEvent::ShiftKeyPressed, eBehavior::Run}, {eEvent::MoveKeyReleased, eBehavior::Idle}}},
+        {eBehavior::Run, {{eEvent::ShiftKeyReleased, eBehavior::Walk}, {eEvent::MoveKeyReleased, eBehavior::Idle}}},
+    };
 };

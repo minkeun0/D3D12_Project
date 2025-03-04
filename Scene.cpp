@@ -45,7 +45,7 @@ void Scene::BuildObjects(ID3D12Device* device)
     AddObj(L"PlayerObject", PlayerObject{ this });
     objectPtr = &GetObj<PlayerObject>(L"PlayerObject");
     objectPtr->AddComponent(Position{ 60.f, 0.f, 60.f, 1.f, objectPtr });
-    objectPtr->AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, objectPtr });
+    objectPtr->AddComponent(Velocity{ 0.0f, 0.0f, 0.0f, 0.0f, objectPtr });
     objectPtr->AddComponent(Rotation{ 0.0f, 180.0f, 0.0f, 0.0f, objectPtr });
     objectPtr->AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, objectPtr });
     objectPtr->AddComponent(Scale{ 0.1f, objectPtr });
@@ -54,6 +54,7 @@ void Scene::BuildObjects(ID3D12Device* device)
     objectPtr->AddComponent(Animation{ animData, objectPtr });
     objectPtr->AddComponent(Gravity{ 2.f, objectPtr });
     objectPtr->AddComponent(Collider{0.f, 0.f, 0.f, 4.f, 50.f, 4.f, objectPtr});
+    objectPtr->AddComponent(StateMachine(mPlayerTransitions, objectPtr));
 
     AddObj(L"CameraObject", CameraObject{70.f, this });
     objectPtr = &GetObj<CameraObject>(L"CameraObject");
@@ -167,12 +168,55 @@ ComPtr<ID3DBlob> Scene::CompileShader(
     return byteCode;
 }
 
+void Scene::UpdateKeyBuffer()
+{
+    if (GetAsyncKeyState(0x57) & 0x8000) {
+        mKeyBuffer[static_cast<int>(eKeyTable::Up)] = eKeyState::Pressed;
+    }
+    else {
+        mKeyBuffer[static_cast<int>(eKeyTable::Up)] = eKeyState::Released;
+    }
+
+    if (GetAsyncKeyState(0x53) & 0x8000) {
+        mKeyBuffer[static_cast<int>(eKeyTable::Down)] = eKeyState::Pressed;
+    }
+    else {
+        mKeyBuffer[static_cast<int>(eKeyTable::Down)] = eKeyState::Released;
+    }
+
+    if (GetAsyncKeyState(0x44) & 0x8000) {
+        mKeyBuffer[static_cast<int>(eKeyTable::Right)] = eKeyState::Pressed;
+    }
+    else {
+        mKeyBuffer[static_cast<int>(eKeyTable::Right)] = eKeyState::Released;
+    }
+
+    if (GetAsyncKeyState(0x41) & 0x8000) {
+        mKeyBuffer[static_cast<int>(eKeyTable::Left)] = eKeyState::Pressed;
+    }
+    else {
+        mKeyBuffer[static_cast<int>(eKeyTable::Left)] = eKeyState::Released;
+    }
+
+    if (GetAsyncKeyState(VK_SHIFT) & 0x8000) {
+        mKeyBuffer[static_cast<int>(eKeyTable::Shift)] = eKeyState::Pressed;
+    }
+    else {
+        mKeyBuffer[static_cast<int>(eKeyTable::Shift)] = eKeyState::Released;
+    }
+}
+
 void Scene::RenderObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
     for (auto& [key, value] : m_objects)
     {
         visit([&device, &commandList](auto& arg) {arg.OnRender(device, commandList); }, value);
     }
+}
+
+std::array<eKeyState, static_cast<size_t>(eKeyTable::SIZE)>& Scene::GetKeyBuffer()
+{
+    return mKeyBuffer;
 }
 
 void Scene::BuildRootSignature(ID3D12Device* device)
@@ -502,6 +546,7 @@ void Scene::LoadMeshAnimationTexture()
     m_resourceManager->LoadFbx("boy_pickup_fix.fbx", true, false);
     m_resourceManager->LoadFbx("long_tree.fbx", false, true);
     m_resourceManager->LoadFbx("202411_walk_tiger_center.fbx", false, false);
+    m_resourceManager->LoadFbx("boy_attack(45).fbx", true, false);
 
     int i = 0;
     m_DDSFileName.push_back(L"./Textures/boy.dds");
@@ -539,6 +584,8 @@ void Scene::LoadMeshAnimationTexture()
 // Update frame-based values.
 void Scene::OnUpdate(GameTimer& gTimer)
 {
+    UpdateKeyBuffer();
+
     for (auto& [key, value] : m_objects)
     {
         visit([&gTimer](auto& arg) {arg.OnUpdate(gTimer); }, value);

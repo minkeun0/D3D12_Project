@@ -3,7 +3,6 @@
 #include "stdafx.h"
 
 class Scene;
-
 class Shadow
 {
 public:

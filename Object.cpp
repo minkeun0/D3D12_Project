@@ -39,7 +39,13 @@ PlayerObject::PlayerObject(Scene* root) : Object{ root } , mRotation{ XMMatrixId
 
 void PlayerObject::OnUpdate(GameTimer& gTimer)
 {
-    OnKeyboardInput(gTimer);
+    StateMachine& stateMachine = GetComponent<StateMachine>();
+    stateMachine.HandleKeyBuffer();
+    stateMachine.HandleEventQueue();
+
+    CurrentStateUpdate();
+
+    //OnKeyboardInput(gTimer);
 
     ResourceManager& rm = m_root->GetResourceManager();
     // terrain Y 로 player Y 설정하기.
@@ -82,30 +88,23 @@ void PlayerObject::OnUpdate(GameTimer& gTimer)
     GetComponent<Rotation>().SetXMVECTOR(GetComponent<Rotation>().GetXMVECTOR() + GetComponent<Rotate>().GetXMVECTOR() * gTimer.DeltaTime());
     GetComponent<Position>().SetXMVECTOR(GetComponent<Position>().GetXMVECTOR() + GetComponent<Velocity>().GetXMVECTOR() * gTimer.DeltaTime());
 
-    if (FindComponent<Gravity>()) {
-        float& t = GetComponent<Gravity>().mGravityTime;
-        float y = XMVectorGetY(GetComponent<Position>().GetXMVECTOR());
-        if (y > newY) {
-            t += gTimer.DeltaTime();
-            //currentFileName = "1P(boy-jump).fbx";
-            GetComponent<Velocity>().SetXMVECTOR(XMVectorSetY(GetComponent<Velocity>().GetXMVECTOR(), 0.5 * -9.8 * (t * t)));
-        }
-        else {
-            t = 0;
-        }
-    }
-
     XMVECTOR velocity = GetComponent<Velocity>().GetXMVECTOR();
 
     string currentFileName{};
-    if (XMVector4Equal(velocity, XMVectorZero())) {
+    switch (GetComponent<StateMachine>().mCurrentState)
+    {
+    case eBehavior::Idle:
         currentFileName = "1P(boy-idle).fbx";
-    }
-    else if (XMVectorGetX(velocity) != 0 || XMVectorGetZ(velocity) != 0) {
+        //currentFileName = "boy_attack(45).fbx";
+        break;
+    case eBehavior::Walk:
         currentFileName = "boy_walk_fix.fbx";
-        if (abs(XMVectorGetX(velocity)) > 15 || abs(XMVectorGetZ(velocity)) > 15) {
-            currentFileName = "boy_run_fix.fbx";
-        }
+        break;
+    case eBehavior::Run:
+        currentFileName = "boy_run_fix.fbx";
+        break;
+    default:
+        break;
     }
 
     int isAnimate = FindComponent<Animation>();
@@ -169,8 +168,6 @@ void PlayerObject::LateUpdate(GameTimer& gTimer)
     world = scale * mRotation * rotate * translate;
     memcpy(m_mappedData, &XMMatrixTranspose(world), sizeof(XMMATRIX)); // 처음 매개변수는 시작주소 , 열우선으로 변경해서 shader에 전달할경우
     //memcpy(m_mappedData, &world, sizeof(XMMATRIX)); // shader에서 행우선으로 변경하여 사용할경우
-
-    GetComponent<Velocity>().SetXMVECTOR(XMVectorZero());
 }
 
 void PlayerObject::OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
@@ -197,7 +194,6 @@ void PlayerObject::OnKeyboardInput(const GameTimer& gTimer)
 
     XMMATRIX view = m_root->GetObj<CameraObject>(L"CameraObject").GetXMMATRIX();
     XMMATRIX invView = XMMatrixInverse(NULL, view);
-    XMMATRIX transposeView = XMMatrixTranspose(view);
 
     XMVECTOR forward = XMVECTOR{ 0.f, 0.f, 1.f, 0.f };
     XMVECTOR forwardInv = XMVector4Normalize(XMVector4Transform(forward, invView));
@@ -208,7 +204,6 @@ void PlayerObject::OnKeyboardInput(const GameTimer& gTimer)
     rightInv = XMVector4Normalize(XMVectorSetY(rightInv, 0.f));
 
     XMVECTOR up = XMVECTOR{ 0.f, 1.f, 0.f, 0.f };
-    XMVECTOR eyePos = XMVECTOR{ 0.f, 0.f, 0.f, 0.f };
 
     XMVECTOR velocity = XMVectorZero();
 
@@ -225,15 +220,6 @@ void PlayerObject::OnKeyboardInput(const GameTimer& gTimer)
         velocity += rightInv;
     }
 
-    //float& t = GetComponent<Animation>().mSleepTime; // 쓰레기임
-    //if (GetKeyState('V') & 0x8000) {
-    //    t += gTimer.DeltaTime();
-    //    if (t > 0.3f) {
-    //        velocity += up;
-    //        t = 0.f;
-    //    };
-    //}
-
     if (GetAsyncKeyState('P') & 0x8000) {
         XMFLOAT4 pos = GetComponent<Position>().mFloat4;
         OutputDebugStringA(string{ to_string(pos.x) + "," + to_string(pos.y) + "," + to_string(pos.z) + "\n" }.c_str());
@@ -247,6 +233,48 @@ void PlayerObject::OnKeyboardInput(const GameTimer& gTimer)
     velocity = XMVectorSetY(velocity, 0.f);
     velocity = XMVector4Normalize(velocity);
     mRotation = XMMATRIX(XMVector3Cross(up, velocity), up, velocity, XMVECTOR{ 0.f, 0.f, 0.f, 1.f });
+}
+
+void PlayerObject::CurrentStateUpdate()
+{
+    auto& keyBuffer = m_root->GetKeyBuffer();
+    XMVECTOR velocity = XMVectorZero();
+    XMVECTOR forward = XMVECTOR{ 0.f, 0.f, 1.f, 0.f };
+    XMVECTOR right = XMVECTOR{ 1.f, 0.f, 0.f, 0.f };
+    XMMATRIX view = m_root->GetObj<CameraObject>(L"CameraObject").GetXMMATRIX();
+    XMMATRIX invView = XMMatrixInverse(NULL, view);
+    int speed = 15;
+
+    if (keyBuffer[static_cast<int>(eKeyTable::Up)] == eKeyState::Pressed) {
+        velocity += forward;
+    }
+    if (keyBuffer[static_cast<int>(eKeyTable::Down)] == eKeyState::Pressed) {
+        velocity -= forward;
+    }
+    if (keyBuffer[static_cast<int>(eKeyTable::Right)] == eKeyState::Pressed) {
+        velocity += right;
+    }
+    if (keyBuffer[static_cast<int>(eKeyTable::Left)] == eKeyState::Pressed) {
+        velocity -= right;
+    }
+    velocity = XMVector4Transform(velocity, invView);
+    velocity = XMVector4Normalize(XMVectorSetY(velocity, 0.f));
+
+    switch (GetComponent<StateMachine>().mCurrentState)
+    {
+    case eBehavior::Idle:
+        GetComponent<Velocity>().SetXMVECTOR(XMVectorZero());
+        break;
+    case eBehavior::Walk:
+        GetComponent<Velocity>().SetXMVECTOR(velocity * speed);
+        break;
+    case eBehavior::Run:
+        speed = 40;
+        GetComponent<Velocity>().SetXMVECTOR(velocity * speed);
+        break;
+    default:
+        break;
+    }
 }
 
 TestObject::TestObject(Scene* root) : Object{root}

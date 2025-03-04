@@ -50,3 +50,38 @@ enum class ePass
 	Shadow,
 	Default
 };
+
+enum class eKeyTable
+{
+	Up,
+	Down,
+	Right,
+	Left,
+	Shift,
+	SIZE
+};
+
+enum class eKeyState
+{
+	None,
+	Pressed,
+	Released,
+	SIZE
+};
+
+enum class eEvent
+{
+	None,
+	MoveKeyPressed,
+	MoveKeyReleased,
+	ShiftKeyPressed,
+	ShiftKeyReleased,
+};
+
+enum class eBehavior
+{
+	Idle,
+	Walk,
+	Run,
+	Die
+};

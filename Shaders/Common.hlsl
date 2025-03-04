@@ -17,11 +17,9 @@ cbuffer SceneConstantBuffer : register(b0)
     float4x4 lightTexCoord;
 };
 
-// shadow map 용 srv 하나 더
 Texture2D Texture : register(t0);
 Texture2D ShadowMap : register(t1);
 
-// shdow map 추출용 sampler 하나 더
 SamplerState Sampler : register(s0);
 SamplerComparisonState SamplerShadowMap : register(s1);
 

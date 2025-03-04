@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "Info.h"
 #include "FbxExtractor.h"
+#include <queue>
 
 class Object;
 
@@ -25,15 +26,6 @@ struct NeedVector // 객체로 만들지 않는 클래스
 	}
 	XMFLOAT4 mFloat4;
 };
-
-//struct World : public Component
-//{
-//	World() = default;
-//	World(Object* root) : Component{ root }, mWorld{} {}
-//	XMMATRIX GetXMMATRIX() { return XMLoadFloat4x4(&mWorld); }
-//	void SetXMMATRIX(XMMATRIX& m) { XMStoreFloat4x4(&mWorld, m); }
-//	XMFLOAT4X4 mWorld;
-//};
 
 struct Mesh : public Component, public NeedVector
 { 
@@ -105,8 +97,9 @@ struct Collider : public Component
 	Collider(float centerX, float centerY, float centerZ, float extentsX, float extentsY, float extentsZ, Object* root) :
 		Component{ root },
 		mAABB{ XMFLOAT3{centerX, centerY, centerZ}, XMFLOAT3{extentsX, extentsY, extentsZ} },
-		mLocalAABB{ XMFLOAT3{centerX, centerY, centerZ}, XMFLOAT3{extentsX, extentsY, extentsZ} } {}
-	bool FindCollisionObj(Object* objAddress){
+		mLocalAABB{ XMFLOAT3{centerX, centerY, centerZ}, XMFLOAT3{extentsX, extentsY, extentsZ} } 
+	{}
+	bool FindCollisionObj(Object* objAddress) {
 		auto it = mCollisionStates.find(objAddress);
 		return it != mCollisionStates.end();
 	}
@@ -115,15 +108,18 @@ struct Collider : public Component
 	unordered_map<Object*, CollisionState> mCollisionStates;
 };
 
-//struct CameraPosition : NeedVector
-//{
-//	CameraPosition() = default;
-//	CameraPosition(float x, float y, float z, float w, Object* root) :
-//		NeedVector{ x,y,z,w,root }, mLastPosX{}, mLastPosY{}, mTheta{}, mPhi{} {}
-//	int mLastPosX;
-//	int mLastPosY;
-//	float mTheta;
-//	float mPhi;
-//};
+struct StateMachine : public Component
+{
+	StateMachine() = default;
+	StateMachine(std::unordered_map <eBehavior, std::unordered_map<eEvent, eBehavior>>& transitions, Object* root) :
+		mTransitions{transitions},
+		Component{ root }
+	{}
+	void HandleKeyBuffer();
+	void HandleEventQueue();
+	std::unordered_map <eBehavior, std::unordered_map<eEvent, eBehavior>> mTransitions;
+	std::queue<eEvent> mEventQueue;
+	eBehavior mCurrentState = eBehavior::Idle;
+};
 
-using ComponentVariant = variant<Mesh, Position, Velocity, Rotation, Rotate, Scale, Texture, Animation, Gravity, Collider>;
+using ComponentVariant = variant<Mesh, Position, Velocity, Rotation, Rotate, Scale, Texture, Animation, Gravity, Collider, StateMachine>;
