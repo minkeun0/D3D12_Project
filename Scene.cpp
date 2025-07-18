@@ -42,17 +42,14 @@ void Scene::OnInit(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 
 void Scene::BuildObjects(ID3D12Device* device)
 {
-    ResourceManager& rm = GetResourceManager();
-    auto& subMeshData = rm.GetSubMeshData();
-    auto& animData = rm.GetAnimationData();
-
     Object* objectPtr = nullptr;
-
     objectPtr = new PlayerObject(this);
     objectPtr->AddComponent(new Transform{ {60.f, 0.0f, 60.f} });
-    objectPtr->AddComponent(new Mesh{ subMeshData.at("1P(boy-idle).fbx")});
-    objectPtr->AddComponent(new Texture{ m_subTextureData.at(L"boy")});
-    objectPtr->AddComponent(new Animation{ animData });
+    objectPtr->AddComponent(new AdjustTransform{ {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.1f, 0.1f, 0.1f} });
+    objectPtr->AddComponent(new Mesh{ "1P(boy-idle).fbx"});
+    objectPtr->AddComponent(new Texture{ L"boy" , 1.0f, 0.4f});
+    objectPtr->AddComponent(new Animation);
+    objectPtr->AddComponent(new Gravity);
     AddObj(objectPtr);
 
     objectPtr = new CameraObject(this, 70.0f);
@@ -61,48 +58,42 @@ void Scene::BuildObjects(ID3D12Device* device)
 
     objectPtr = new TerrainObject(this);
     objectPtr->AddComponent(new Transform{ {0.f, 0.0f, 0.f} });
-    objectPtr->AddComponent(new Mesh{ subMeshData.at("HeightMap.raw")});
-    objectPtr->AddComponent(new Texture{ m_subTextureData.at(L"grass")});
+    objectPtr->AddComponent(new Mesh{ "HeightMap.raw"});
+    objectPtr->AddComponent(new Texture{ L"grass" , 5.0f, 0.4f});
     AddObj(objectPtr);
 
-    //AddObj(L"TestObject", TestObject{ this });
-    //objectPtr->AddComponent(Position{ 0.f, 0.0f, 0.f, 1.f, objectPtr });
-    //objectPtr->AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, objectPtr });
-    //objectPtr->AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, objectPtr });
-    //objectPtr->AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, objectPtr });
-    //objectPtr->AddComponent(Scale{ 0.1f, objectPtr });
-    //objectPtr->AddComponent(Mesh{ subMeshData.at("broken_house.fbx") , objectPtr });
-    //objectPtr->AddComponent(Texture{ m_subTextureData.at(L"broken_house"), objectPtr });
+    objectPtr = new TestObject(this);
+    objectPtr->AddComponent(new Transform{ {60.0f, 0.0f, 60.0f} });
+    objectPtr->AddComponent(new AdjustTransform{ {0.0f, 0.0f, -5.0f}, {0.0f, 0.0f, 0.0f}, {0.1f, 0.1f, 0.1f} });
+    objectPtr->AddComponent(new Mesh{ "broken_house.fbx"});
+    objectPtr->AddComponent(new Texture{ L"broken_house", 1.0f, 0.4f});
+    AddObj(objectPtr);
 
     int repeat = 17;
     for (int i = 0; i < repeat; ++i) {
         for (int j = 0; j < repeat; ++j) {
             objectPtr = new TreeObject(this);
             objectPtr->AddComponent(new Transform{ {100.f + 150.f * j, -100.f, 100.f + 150.f * i}});
-            objectPtr->AddComponent(new Mesh{ subMeshData.at("long_tree.fbx") });
-            objectPtr->AddComponent(new Texture{ m_subTextureData.at(L"longTree")});
+            objectPtr->AddComponent(new AdjustTransform{ {-16.5f, 4.5f, -50.f}, {0.0f, 0.0f, 0.0f}, {20.0f, 20.0f, 20.0f} });
+            objectPtr->AddComponent(new Mesh{ "long_tree.fbx" });
+            objectPtr->AddComponent(new Texture{ L"longTree", 1.0f, 0.4f });
             AddObj(objectPtr);
         }
     }
 
-    //repeat = 3;
-    //for (int i = 0; i < repeat; ++i) {
-    //    for (int j = 0; j < repeat; ++j) {
-    //        wstring objectName = L"TigerObject" + to_wstring(j + (repeat * i));
-    //        AddObj(objectName, TigerObject{ this });
-    //        objectPtr = &GetObj<TigerObject>(objectName);
-    //        objectPtr->AddComponent(Position{ 70.f + 700.f * j, 0.f, 70.f + 700.f * i, 1.f, objectPtr });
-    //        objectPtr->AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, objectPtr });
-    //        objectPtr->AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, objectPtr });
-    //        objectPtr->AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, objectPtr });
-    //        objectPtr->AddComponent(Scale{ 1.0f, objectPtr });
-    //        objectPtr->AddComponent(Mesh{ subMeshData.at("202411_deafult_tiger.fbx"), objectPtr });
-    //        objectPtr->AddComponent(Texture{ m_subTextureData.at(L"tigercolor"), objectPtr });
-    //        objectPtr->AddComponent(Animation{ animData, objectPtr });
-    //        objectPtr->AddComponent(Gravity{ 1.f, objectPtr });
-    //        objectPtr->AddComponent(Collider{ 0.f, 0.f, 0.f, 2.f, 50.f, 10.f, objectPtr });
-    //    }
-    //}
+    repeat = 3;
+    for (int i = 0; i < repeat; ++i) {
+        for (int j = 0; j < repeat; ++j) {
+            objectPtr = new TigerObject(this);
+            objectPtr->AddComponent(new Transform{ {70.f + 700.f * j, 0.f, 70.f + 700.f * i} });
+            objectPtr->AddComponent(new AdjustTransform{ {0.0f, 0.0f, -8.0f}, {0.0f, 180.0f, 0.0f}, {0.2f, 0.2f, 0.2f} });
+            objectPtr->AddComponent(new Mesh{ "202411_deafult_tiger.fbx" });
+            objectPtr->AddComponent(new Texture{ L"tigercolor", 1.0f, 0.4f});
+            objectPtr->AddComponent(new Animation);
+            objectPtr->AddComponent(new Gravity);
+            AddObj(objectPtr);
+        }
+    }
 }
 
 void Scene::BuildShadow()
@@ -227,7 +218,7 @@ std::tuple<float, float, float, float, float> Scene::GetBounds(float x, float z)
         int terrainScale = rm.GetTerrainData().terrainScale;
 
         vector<Vertex>& vertexBuffer = rm.GetVertexBuffer();
-        UINT startVertex = rm.GetSubMeshData().at("HeightMap.raw").baseVertexLocation;
+        UINT startVertex = rm.GetSubMeshData("HeightMap.raw").baseVertexLocation;
 
         int indexX = (int)(x / terrainScale);
         int indexZ = (int)(z / terrainScale);
@@ -253,6 +244,11 @@ std::tuple<float, float, float, float, float> Scene::GetBounds(float x, float z)
     }
 
     return { minX, minY, minZ, maxX, maxZ };
+}
+
+int Scene::GetTextureIndex(wstring name)
+{
+    return m_texture_name_to_index.at(name);
 }
 
 void Scene::BuildRootSignature(ID3D12Device* device)
@@ -597,39 +593,39 @@ void Scene::LoadMeshAnimationTexture()
 
     int i = 0;
     m_DDSFileName.push_back(L"./Textures/boy.dds");
-    m_subTextureData.insert({ L"boy", i++ });
+    m_texture_name_to_index.insert({ L"boy", i++ });
     m_DDSFileName.push_back(L"./Textures/bricks3.dds");
-    m_subTextureData.insert({ L"bricks3", i++ });
+    m_texture_name_to_index.insert({ L"bricks3", i++ });
     m_DDSFileName.push_back(L"./Textures/checkboard.dds");
-    m_subTextureData.insert({ L"checkboard", i++ });
+    m_texture_name_to_index.insert({ L"checkboard", i++ });
     m_DDSFileName.push_back(L"./Textures/grass.dds");
-    m_subTextureData.insert({ L"grass", i++ });
+    m_texture_name_to_index.insert({ L"grass", i++ });
     m_DDSFileName.push_back(L"./Textures/tile.dds");
-    m_subTextureData.insert({ L"tile", i++ });
+    m_texture_name_to_index.insert({ L"tile", i++ });
     m_DDSFileName.push_back(L"./Textures/WireFence.dds");
-    m_subTextureData.insert({ L"WireFence", i++ });
+    m_texture_name_to_index.insert({ L"WireFence", i++ });
     m_DDSFileName.push_back(L"./Textures/god.dds");
-    m_subTextureData.insert({ L"god", i++ });
+    m_texture_name_to_index.insert({ L"god", i++ });
     m_DDSFileName.push_back(L"./Textures/sister.dds");
-    m_subTextureData.insert({ L"sister", i++ });
+    m_texture_name_to_index.insert({ L"sister", i++ });
     m_DDSFileName.push_back(L"./Textures/water1.dds");
-    m_subTextureData.insert({ L"water1", i++ });
+    m_texture_name_to_index.insert({ L"water1", i++ });
     m_DDSFileName.push_back(L"./Textures/PP_Color_Palette.dds");
-    m_subTextureData.insert({ L"PP_Color_Palette", i++ });
+    m_texture_name_to_index.insert({ L"PP_Color_Palette", i++ });
     m_DDSFileName.push_back(L"./Textures/tigercolor.dds");
-    m_subTextureData.insert({ L"tigercolor", i++ });
+    m_texture_name_to_index.insert({ L"tigercolor", i++ });
     m_DDSFileName.push_back(L"./Textures/stone.dds");
-    m_subTextureData.insert({ L"stone", i++ });
+    m_texture_name_to_index.insert({ L"stone", i++ });
     m_DDSFileName.push_back(L"./Textures/normaltree_texture.dds");
-    m_subTextureData.insert({ L"normalTree", i++ });
+    m_texture_name_to_index.insert({ L"normalTree", i++ });
     m_DDSFileName.push_back(L"./Textures/longtree_texture.dds");
-    m_subTextureData.insert({ L"longTree", i++ });
+    m_texture_name_to_index.insert({ L"longTree", i++ });
     m_DDSFileName.push_back(L"./Textures/rock(smooth).dds");
-    m_subTextureData.insert({ L"rock", i++ });
+    m_texture_name_to_index.insert({ L"rock", i++ });
     m_DDSFileName.push_back(L"./Textures/broken_house.dds");
-    m_subTextureData.insert({ L"broken_house", i++ });
+    m_texture_name_to_index.insert({ L"broken_house", i++ });
     m_DDSFileName.push_back(L"./Textures/broken_house2.dds");
-    m_subTextureData.insert({ L"broken_house2", i++ });
+    m_texture_name_to_index.insert({ L"broken_house2", i++ });
 }
 
 // Update frame-based values.

@@ -62,35 +62,98 @@ XMMATRIX Transform::GetFinalM()
 	return XMLoadFloat4x4(&mFinalM);
 }
 
-XMVECTOR Transform::GetQuaternionFromRotation()
+	XMVECTOR Transform::GetQuaternionFromRotation()
+	{
+		XMVECTOR q1 = XMQuaternionRotationAxis(XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f), XMConvertToRadians(mRotation.x));
+		XMVECTOR q2 = XMQuaternionRotationAxis(XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f), XMConvertToRadians(mRotation.y));
+		XMVECTOR q3 = XMQuaternionRotationAxis(XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f), XMConvertToRadians(mRotation.z));
+		return XMQuaternionMultiply(XMQuaternionMultiply(q3, q1), q2);
+		//return XMQuaternionRotationRollPitchYaw(
+		//	XMConvertToRadians(mRotation.x),
+		//	XMConvertToRadians(mRotation.y),
+		//	XMConvertToRadians(mRotation.z));
+	}
+	
+	void Transform::SetPosition(XMVECTOR pos)
+	{
+		XMStoreFloat3(&mPosition, pos);
+	}
+	
+	void Transform::SetRotation(XMVECTOR rot)
+	{
+		XMStoreFloat3(&mRotation, rot);
+		XMStoreFloat4(&mQuaternion, GetQuaternionFromRotation());
+	}
+	
+	void Transform::SetQuaternion(XMVECTOR qua)
+	{
+		XMStoreFloat4(&mQuaternion, qua);
+	}
+	
+	void Transform::SetFinalM(XMMATRIX finalM)
+	{
+		XMStoreFloat4x4(&mFinalM, finalM);
+	}
+
+XMMATRIX AdjustTransform::GetTranslateM()
 {
-	XMVECTOR q1 = XMQuaternionRotationAxis(XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f), XMConvertToRadians(mRotation.x));
-	XMVECTOR q2 = XMQuaternionRotationAxis(XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f), XMConvertToRadians(mRotation.y));
-	XMVECTOR q3 = XMQuaternionRotationAxis(XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f), XMConvertToRadians(mRotation.z));
-	return XMQuaternionMultiply(XMQuaternionMultiply(q3, q1), q2);
-	//return XMQuaternionRotationRollPitchYaw(
-	//	XMConvertToRadians(mRotation.x),
-	//	XMConvertToRadians(mRotation.y),
-	//	XMConvertToRadians(mRotation.z));
+	return XMMatrixTranslationFromVector(XMLoadFloat3(&mPosition));
 }
 
-void Transform::SetPosition(XMVECTOR pos)
+AdjustTransform::AdjustTransform(XMVECTOR pos, XMVECTOR rot, XMVECTOR scale)
 {
+	XMStoreFloat3(&mScale, scale);
+	XMStoreFloat3(&mRotation, rot);
 	XMStoreFloat3(&mPosition, pos);
 }
 
-void Transform::SetRotation(XMVECTOR rot)
+XMMATRIX AdjustTransform::GetScaleM()
 {
-	XMStoreFloat3(&mRotation, rot);
-	XMStoreFloat4(&mQuaternion, GetQuaternionFromRotation());
+	return XMMatrixScalingFromVector(XMLoadFloat3(&mScale));
 }
 
-void Transform::SetQuaternion(XMVECTOR qua)
+XMMATRIX AdjustTransform::GetRotationM()
 {
-	XMStoreFloat4(&mQuaternion, qua);
+	XMVECTOR rot = XMLoadFloat3(&mRotation);
+	return XMMatrixRotationRollPitchYawFromVector(rot * XM_PI / 180);
 }
 
-void Transform::SetFinalM(XMMATRIX finalM)
+XMMATRIX AdjustTransform::GetTransformM()
 {
-	XMStoreFloat4x4(&mFinalM, finalM);
+	return GetScaleM() * GetRotationM() * GetTranslateM();
+}
+
+XMVECTOR Gravity::ProcessGravity(XMVECTOR pos, float deltaTime)
+{
+	mElapseTime += deltaTime;
+	float gForce = mG * mElapseTime * mElapseTime;
+	mVerticalSpeed -= gForce * deltaTime;
+
+	XMFLOAT3 newPos{};
+	XMStoreFloat3(&newPos, pos);
+	newPos.y += mVerticalSpeed * deltaTime;
+	return XMLoadFloat3(&newPos);
+}
+
+void Gravity::ResetElapseTime()
+{
+	// 수직 속도가 양수이면 pos의 y 요소가 증가함을 의미한다.
+	// 이때 바닥면과 충돌하더라도 반응하지 않는다. 
+	// 수직 속도가 음수일 경우. 즉, pos 의 y요소가 감소하는 경우에만 바닥면 충돌에 반응한다. 
+
+	if (mVerticalSpeed <= 0.0f) {
+		mElapseTime = 0.0f;
+		mVerticalSpeed = 0.0f;
+	}
+
+}
+
+float Gravity::GetElapseTime()
+{
+	return mElapseTime;
+}
+
+void Gravity::SetVerticalSpeed(float speed)
+{
+	mVerticalSpeed = speed;
 }

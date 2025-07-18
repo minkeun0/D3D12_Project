@@ -19,8 +19,8 @@ public:
 	void CreateTerrain(const string& name, int maxheight, int scale, int maxUV);
 	vector<Vertex>& GetVertexBuffer();
 	vector<uint32_t>& GetIndexBuffer();
-	unordered_map<string, SubMeshData>& GetSubMeshData();
-	unordered_map<string, SkinnedData>& GetAnimationData();
+	SubMeshData& GetSubMeshData(string name);
+	SkinnedData& GetAnimationData(string name);
 	TerrainData& GetTerrainData();
 private:
 	unique_ptr<FbxExtractor> mFbxExtractor;

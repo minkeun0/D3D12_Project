@@ -34,6 +34,8 @@ public:
     void RenderObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
     char ClampToBounds(XMVECTOR& pos, XMVECTOR offset);
     std::tuple<float, float, float, float, float> GetBounds(float x, float z);
+    int GetTextureIndex(wstring name);
+
     template<typename T> 
     T* GetObj() 
     {
@@ -86,7 +88,7 @@ private:
     D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
     D3D12_INDEX_BUFFER_VIEW m_indexBufferView;
     //
-    unordered_map<wstring, int> m_subTextureData;
+    unordered_map<wstring, int> m_texture_name_to_index;
     vector<wstring> m_DDSFileName;
     vector<ComPtr<ID3D12Resource>> m_textureBuffer_defaults;
     vector<ComPtr<ID3D12Resource>> m_textureBuffer_uploads;

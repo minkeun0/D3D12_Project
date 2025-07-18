@@ -178,14 +178,14 @@ vector<uint32_t>& ResourceManager::GetIndexBuffer()
 	return mIndexBuffer;
 }
 
-unordered_map<string, SubMeshData>& ResourceManager::GetSubMeshData()
+SubMeshData& ResourceManager::GetSubMeshData(string name)
 {
-	return mSubMeshData;
+	return mSubMeshData.at(name);
 }
 
-unordered_map<string, SkinnedData>& ResourceManager::GetAnimationData()
+SkinnedData& ResourceManager::GetAnimationData(string name)
 {
-	return mAnimData;
+	return mAnimData.at(name);
 }
 
 TerrainData& ResourceManager::GetTerrainData()

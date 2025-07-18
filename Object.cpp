@@ -25,23 +25,65 @@ Object::Object(Scene* root) : m_parent{ root }, m_mappedData{nullptr}
 
 void Object::OnUpdate(GameTimer& gTimer)
 {
-
+    Transform* transform = GetComponent<Transform>();
+    Gravity* gravity = GetComponent<Gravity>();
+    if (gravity)
+    {
+        XMVECTOR newPos = gravity->ProcessGravity(transform->GetPosition(), gTimer.DeltaTime());
+        transform->SetPosition(newPos);
+    }
 }
 void Object::LateUpdate(GameTimer& gTimer)
 {
+    Transform* transform = GetComponent<Transform>();
+    TerrainObject* terrainObj = dynamic_cast<TerrainObject*>(this);
+    if (!terrainObj) {
+        XMVECTOR pos = transform->GetPosition();
+        char outstatus = m_parent->ClampToBounds(pos, { 0.0f, 0.0f, 0.0f });
+        transform->SetPosition(pos);
 
+        Gravity* gravity = GetComponent<Gravity>();
+        if (outstatus == 0x04 && gravity)
+        {
+            gravity->ResetElapseTime();
+        }
+    }
+
+    XMMATRIX world = transform->GetTransformM();
+    XMMATRIX adjustM = XMMatrixIdentity();
+    AdjustTransform* adjustTrnasform = GetComponent<AdjustTransform>();
+    if (adjustTrnasform) {
+        adjustM = adjustTrnasform->GetTransformM();
+    }
+    memcpy(m_mappedData, &XMMatrixTranspose(adjustM * world), sizeof(XMMATRIX));
+
+    ProcessAnimation(gTimer);
+
+    Texture* texture = GetComponent<Texture>();
+    float powValue = 1.0f;
+    float ambiantValue = 0.4f;
+    if (texture) {
+        ambiantValue = texture->mAmbiantValue;
+        powValue = texture->mPowValue;
+    }
+    memcpy(m_mappedData + sizeof(XMFLOAT4X4) * 91 + sizeof(int) * 4, &powValue, sizeof(float));
+    memcpy(m_mappedData + sizeof(XMFLOAT4X4) * 91 + sizeof(int) * 4 + sizeof(float), &ambiantValue, sizeof(float));
 }
 
 void Object::OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
     Mesh* mesh = GetComponent<Mesh>();
     if (!mesh) return;
+    
+    Texture* texture = GetComponent<Texture>();
+    int textureIndex = m_parent->GetTextureIndex(texture->mName);
 
     CD3DX12_GPU_DESCRIPTOR_HANDLE hDescriptor(m_parent->GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart());
-    hDescriptor.Offset(1 + GetComponent<Texture>()->mDescriptorStartIndex, device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+    hDescriptor.Offset(1 + textureIndex, device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
     commandList->SetGraphicsRootDescriptorTable(1, hDescriptor);
     commandList->SetGraphicsRootConstantBufferView(2, m_constantBuffer.Get()->GetGPUVirtualAddress());
-    SubMeshData& data = GetComponent<Mesh>()->mSubMeshData;
+
+    SubMeshData& data = m_parent->GetResourceManager().GetSubMeshData(mesh->mName);
     if (data.startIndexLocation == -1) {
         commandList->DrawInstanced(data.vertexCountPerInstance, 1, data.startVertexLocation, 0);
     }
@@ -75,15 +117,31 @@ void Object::AddComponent(Component* component)
     m_components.push_back(component);
 }
 
-PlayerObject::PlayerObject(Scene* root) : Object{ root } , mRotation{ XMMatrixIdentity()}
+void Object::ProcessAnimation(GameTimer& gTimer)
+{
+    Animation* animation = GetComponent<Animation>();
+    int isAnimate = false;
+    if (animation) {
+        isAnimate = true;
+        vector<XMFLOAT4X4> finalTransforms{ 90 };
+        SkinnedData& animData = m_parent->GetResourceManager().GetAnimationData(animation->mCurrentFileName);
+        animation->mAnimationTime += gTimer.DeltaTime();
+        string clipName = "Take 001";
+        if (animation->mAnimationTime >= animData.GetClipEndTime(clipName)) animation->mAnimationTime = 0.0f;
+        animData.GetFinalTransforms(clipName, animation->mAnimationTime, finalTransforms);
+        memcpy(m_mappedData + sizeof(XMMATRIX), finalTransforms.data(), sizeof(XMMATRIX) * 90); // 처음 매개변수는 시작주소
+    }
+    memcpy(m_mappedData + sizeof(XMMATRIX) * 91, &isAnimate, sizeof(int));
+}
+
+PlayerObject::PlayerObject(Scene* root) : Object{ root }
 {
 }
 
 void PlayerObject::OnUpdate(GameTimer& gTimer)
 {
     OnKeyboardInput(gTimer);
-   
-    string currentFileName = "boy_walk_fix.fbx";
+    //string currentFileName = "boy_walk_fix.fbx";
     //switch (GetComponent<StateMachine>().mCurrentState)
     //{
     //case eBehavior::Idle:
@@ -98,40 +156,7 @@ void PlayerObject::OnUpdate(GameTimer& gTimer)
     //default:
     //    break;
     //}
-
-    Animation* animation = GetComponent<Animation>();
-    int isAnimate = false;
-    if (animation) {
-        isAnimate = true;
-        vector<XMFLOAT4X4> finalTransforms{90};
-        SkinnedData& animData = animation->mAnimData->at(currentFileName);
-        animation->mAnimationTime += gTimer.DeltaTime();
-        string clipName = "Take 001";
-        if (animation->mAnimationTime >= animData.GetClipEndTime(clipName)) animation->mAnimationTime = 0.0f;
-        animData.GetFinalTransforms(clipName, animation->mAnimationTime, finalTransforms);
-        memcpy(m_mappedData + sizeof(XMMATRIX), finalTransforms.data(), sizeof(XMMATRIX) * 90); // 처음 매개변수는 시작주소
-    }
-    memcpy(m_mappedData + sizeof(XMMATRIX) * 91, &isAnimate, sizeof(int));
-    float powValue = 1.f; // 짝수이면 안됨
-    memcpy(m_mappedData + sizeof(XMFLOAT4X4) * 91 + sizeof(int) * 4, &powValue, sizeof(float));
-    float ambiantValue = 0.4f;
-    memcpy(m_mappedData + sizeof(XMFLOAT4X4) * 91 + sizeof(int) * 4 + sizeof(float), &ambiantValue, sizeof(float));
-}
-
-void PlayerObject::LateUpdate(GameTimer& gTimer)
-{
-    Transform* transform = GetComponent<Transform>();
-    XMVECTOR pos = transform->GetPosition();
-    char outstatus = m_parent->ClampToBounds(pos, {0.0f, 0.0f, 0.0f});
-    transform->SetPosition(pos);
-
-    XMMATRIX world = transform->GetTransformM();
-    XMMATRIX adjustScaleM = XMMatrixScaling(0.1f, 0.1f, 0.1f);
-    XMMATRIX adjustTranslateM = XMMatrixIdentity();
-    XMMATRIX adjustRotationM = XMMatrixIdentity();
-    XMMATRIX adjustM = adjustScaleM * adjustRotationM * adjustTranslateM;
-
-    memcpy(m_mappedData, &XMMatrixTranspose(adjustM * world), sizeof(XMMATRIX));  
+    Object::OnUpdate(gTimer);
 }
 
 void PlayerObject::OnKeyboardInput(const GameTimer& gTimer)
@@ -145,7 +170,15 @@ void PlayerObject::OnKeyboardInput(const GameTimer& gTimer)
     if ((keyState[0x41] & 0x88) == 0x88) { dir -= XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f); } // a
     if ((keyState[0x44] & 0x88) == 0x88) { dir += XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f); } // d
 
+    Animation* anim = GetComponent<Animation>();
     float speed = 15;
+    anim->mCurrentFileName = "1P(boy-idle).fbx";
+    
+    Gravity* gravity = GetComponent<Gravity>();
+    if ((keyState[VK_SPACE] & 0x88) == 0x80 && gravity) {
+        gravity->SetVerticalSpeed(20.0f);
+    }
+    
     if ((keyState[VK_SHIFT] & 0x88) == 0x88) {
         speed = 30;
     }
@@ -172,24 +205,6 @@ void PlayerObject::OnKeyboardInput(const GameTimer& gTimer)
 
 TestObject::TestObject(Scene* root) : Object{root}
 {
-}
-
-void TestObject::OnUpdate(GameTimer& gTimer)
-{
-
-    int isAnimate = false;
-    memcpy(m_mappedData + sizeof(XMFLOAT4X4) * 91, &isAnimate, sizeof(int));
-    float powValue = 1.f; // 짝수이면 안됨
-    memcpy(m_mappedData + sizeof(XMFLOAT4X4) * 91 + sizeof(int) * 4, &powValue, sizeof(float));
-    float ambiantValue = 0.2f;
-    memcpy(m_mappedData + sizeof(XMFLOAT4X4) * 91 + sizeof(int) * 4 + sizeof(float), &ambiantValue, sizeof(float));
-}
-
-void TestObject::LateUpdate(GameTimer& gTimer)
-{
-    Transform* transform = GetComponent<Transform>();
-    XMMATRIX world = transform->GetTransformM();
-    memcpy(m_mappedData, &XMMatrixTranspose(world), sizeof(XMMATRIX));
 }
 
 CameraObject::CameraObject(Scene* root, float radius) :
@@ -236,7 +251,6 @@ void CameraObject::LateUpdate(GameTimer& gTimer)
     XMMATRIX transformM = transform->GetTransformM();
     XMMATRIX invtransformM = XMMatrixInverse(nullptr, transformM);
     memcpy(m_parent->GetConstantBufferMappedData(), &XMMatrixTranspose(invtransformM), sizeof(XMMATRIX)); // 처음 매개변수는 시작주소
-
 }
 
 void CameraObject::OnMouseInput(WPARAM wParam, HWND hWnd)
@@ -268,52 +282,8 @@ TerrainObject::TerrainObject(Scene* root) : Object{ root }
 {
 }
 
-void TerrainObject::OnUpdate(GameTimer& gTimer)
-{
-    int isAnimate = false;
-    memcpy(m_mappedData + sizeof(XMFLOAT4X4) * 91, &isAnimate, sizeof(int));
-    float powValue = 5.f; // 짝수이면 안됨
-    memcpy(m_mappedData + sizeof(XMFLOAT4X4) * 91 + sizeof(int) * 4, &powValue, sizeof(float));
-    float ambiantValue = 0.4f;
-    memcpy(m_mappedData + sizeof(XMFLOAT4X4) * 91 + sizeof(int) * 4 + sizeof(float), &ambiantValue, sizeof(float));
-}
-
-void TerrainObject::LateUpdate(GameTimer& gTimer)
-{
-    Transform* transform = GetComponent<Transform>();
-    XMMATRIX world = transform->GetTransformM();
-    memcpy(m_mappedData, &XMMatrixTranspose(world), sizeof(XMMATRIX));
-}
-
 TreeObject::TreeObject(Scene* root) : Object{ root }
 {
-}
-
-void TreeObject::OnUpdate(GameTimer& gTimer)
-{
-    int isAnimate = false;
-    memcpy(m_mappedData + sizeof(XMFLOAT4X4) * 91, &isAnimate, sizeof(int));
-    float powValue = 1.f; // 짝수이면 안됨
-    memcpy(m_mappedData + sizeof(XMFLOAT4X4) * 91 + sizeof(int) * 4, &powValue, sizeof(float));
-    float ambiantValue = 0.4f;
-    memcpy(m_mappedData + sizeof(XMFLOAT4X4) * 91 + sizeof(int) * 4 + sizeof(float), &ambiantValue, sizeof(float));
-}
-
-void TreeObject::LateUpdate(GameTimer& gTimer)
-{
-    Transform* transform = GetComponent<Transform>();
-    XMVECTOR pos = transform->GetPosition();
-    char outstatus = m_parent->ClampToBounds(pos, { 0.0f, 0.0f, 0.0f });
-    transform->SetPosition(pos);
-
-    XMMATRIX world = transform->GetTransformM();
-
-    XMMATRIX adjustScaleM = XMMatrixScaling(20.0f, 20.0f, 20.0f);
-    XMMATRIX adjustTranslateM = XMMatrixTranslation(-16.5f, 4.5f, -50.f);
-    XMMATRIX adjustRotationM = XMMatrixIdentity();
-    XMMATRIX adjustM = adjustScaleM * adjustRotationM * adjustTranslateM;
-
-    memcpy(m_mappedData, &XMMatrixTranspose(adjustM * world), sizeof(XMMATRIX));
 }
 
 TigerObject::TigerObject(Scene* root) : Object{ root }, mTimer{10.0f}
@@ -326,42 +296,10 @@ void TigerObject::OnUpdate(GameTimer& gTimer)
     TigerBehavior(gTimer);
     Transform* transform = GetComponent<Transform>();
 
-    std::string currentFileName = "202411_walk_tiger_center.fbx";
+    Animation* anim = GetComponent<Animation>(); 
+    anim->mCurrentFileName = "202411_walk_tiger_center.fbx";
 
-    Animation* animation = GetComponent<Animation>();
-    int isAnimate = false;
-    if (animation) {
-        isAnimate = true;
-        vector<XMFLOAT4X4> finalTransforms{ 90 };
-        SkinnedData& animData = animation->mAnimData->at(currentFileName);
-        animation->mAnimationTime += gTimer.DeltaTime();
-        string clipName = "Take 001";
-        if (animation->mAnimationTime >= animData.GetClipEndTime(clipName)) animation->mAnimationTime = 0.f;
-        animData.GetFinalTransforms(clipName, animation->mAnimationTime, finalTransforms);
-        memcpy(m_mappedData + sizeof(XMMATRIX), finalTransforms.data(), sizeof(XMMATRIX) * 90); // 처음 매개변수는 시작주소
-    }
-    memcpy(m_mappedData + sizeof(XMMATRIX) * 91, &isAnimate, sizeof(int));
-    float powValue = 1.f; // 짝수이면 안됨
-    memcpy(m_mappedData + sizeof(XMFLOAT4X4) * 91 + sizeof(int) * 4, &powValue, sizeof(float));
-    float ambiantValue = 0.4f;
-    memcpy(m_mappedData + sizeof(XMFLOAT4X4) * 91 + sizeof(int) * 4 + sizeof(float), &ambiantValue, sizeof(float));
-}
-
-void TigerObject::LateUpdate(GameTimer& gTimer)
-{
-    Transform* transform = GetComponent<Transform>();
-    XMVECTOR pos = transform->GetPosition();
-    char outstatus = m_parent->ClampToBounds(pos, { 0.0f, 0.0f, 0.0f });
-    transform->SetPosition(pos);
-    
-    XMMATRIX world = transform->GetTransformM();
-
-    XMMATRIX adjustScaleM = XMMatrixScaling(0.2f, 0.2f, 0.2f);
-    XMMATRIX adjustRotM = XMMatrixRotationRollPitchYaw(0.0f, XMConvertToRadians(180.0f), 0.0f);
-    XMMATRIX adjustTranslateM = XMMatrixTranslation(0.0f, 0.0f, -8.0f);
-    XMMATRIX adjustM = adjustScaleM * adjustRotM * adjustTranslateM;
-
-    memcpy(m_mappedData, &XMMatrixTranspose(adjustM * world), sizeof(XMMATRIX)); // 처음 매개변수는 시작주소
+    Object::OnUpdate(gTimer);
 }
 
 void TigerObject::TigerBehavior(GameTimer& gTimer)
@@ -420,13 +358,5 @@ void TigerObject::TigerBehavior(GameTimer& gTimer)
 //}
 
 StoneObject::StoneObject(Scene* root) : Object{root}
-{
-}
-
-void StoneObject::OnUpdate(GameTimer& gTimer)
-{
-}
-
-void StoneObject::LateUpdate(GameTimer& gTimer)
 {
 }

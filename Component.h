@@ -6,11 +6,8 @@
 #include "FbxExtractor.h"
 #include <queue>
 
-class Object;
-
 struct Component // 객체로 만들지 않는 클래스
 {
-	Component() = default;
 	virtual ~Component() = default;
 };
 
@@ -46,26 +43,49 @@ private:
 	0.0f, 0.0f, 0.0f, 1.0f };
 };
 
+class AdjustTransform : public Component
+{
+public:
+	AdjustTransform(XMVECTOR pos = { 0.0f, 0.0f, 0.0f, 0.0f }, XMVECTOR rot = { 0.0f, 0.0f, 0.0f, 0.0f }, XMVECTOR scale = { 1.0f, 1.0f, 1.0f, 0.0f });
+	XMMATRIX GetScaleM();
+	XMMATRIX GetRotationM();
+	XMMATRIX GetTranslateM();
+	XMMATRIX GetTransformM();
+private:
+	XMFLOAT3 mScale{ 1.0f, 1.0f, 1.0f };
+	XMFLOAT3 mRotation{ 0.0f, 0.0f, 0.0f };
+	XMFLOAT3 mPosition{ 0.0f, 0.0f, 0.0f };
+};
+
 struct Mesh : public Component
 { 
-	Mesh() = default;
-	Mesh(SubMeshData& subMeshData) : mSubMeshData{ subMeshData } {}
-	SubMeshData mSubMeshData;
+	Mesh(string name) : mName{ name } {}
+	string mName = "";
 };
 
 struct Texture : public Component
 {
-	Texture() = default;
-	Texture(int descriptorStartIndex) : mDescriptorStartIndex{descriptorStartIndex} {}
-	int mDescriptorStartIndex;
+	Texture(wstring name, float pow, float ambiant) : mName{ name }, mPowValue{ pow }, mAmbiantValue{ambiant} {}
+	wstring mName = L"";
+	float mPowValue = 0.0f;
+	float mAmbiantValue = 0.0f;
 };
 
 struct Animation : public Component
 {
-	Animation() = default;
-	Animation(unordered_map<string, SkinnedData>& animData) : mAnimData{ &animData }, mAnimationTime{ 0.f }, mSleepTime{ 0.f }, mCurrentFileName{} {}
-	unordered_map<string, SkinnedData>* mAnimData;
-	float mAnimationTime;
-	float mSleepTime;
-	string mCurrentFileName;
+	float mAnimationTime = 0.0f;
+	string mCurrentFileName = "";
+};
+
+class Gravity : public Component
+{
+public:
+	XMVECTOR ProcessGravity(XMVECTOR pos, float deltaTime);
+	void ResetElapseTime();
+	float GetElapseTime();
+	void SetVerticalSpeed(float speed);
+private:
+	float mElapseTime = 0.0f;
+	float mG = 40.0f;
+	float mVerticalSpeed = 0.0f;
 };
