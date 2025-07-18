@@ -11,13 +11,20 @@ default_random_engine dreZ(rdZ());
 uniform_int_distribution uidX(-1,1);
 uniform_int_distribution uidZ(-1,1);
 
-Object::Object(Scene* root) : m_root{ root }, m_mappedData{nullptr}
+Object::~Object()
+{
+    for (Component* component : m_components) {
+        delete component;
+    }
+}
+
+Object::Object(Scene* root) : m_parent{ root }, m_mappedData{nullptr}
 {
 }
 
 void Object::BuildConstantBuffer(ID3D12Device* device)
 {
-    const UINT constantBufferSize = m_root->CalcConstantBufferByteSize(sizeof(ObjectCB));    // CB size is required to be 256-byte aligned.
+    const UINT constantBufferSize = m_parent->CalcConstantBufferByteSize(sizeof(ObjectCB));    // CB size is required to be 256-byte aligned.
 
     ThrowIfFailed(device->CreateCommittedResource(
         &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
@@ -33,20 +40,21 @@ void Object::BuildConstantBuffer(ID3D12Device* device)
     ThrowIfFailed(m_constantBuffer->Map(0, &readRange, reinterpret_cast<void**>(& m_mappedData)));
 }
 
+void Object::AddComponent(Component* component)
+{
+    m_components.push_back(component);
+}
+
 PlayerObject::PlayerObject(Scene* root) : Object{ root } , mRotation{ XMMatrixIdentity()}
 {
 }
 
 void PlayerObject::OnUpdate(GameTimer& gTimer)
 {
-    StateMachine& stateMachine = GetComponent<StateMachine>();
-    stateMachine.HandleKeyBuffer();
-    stateMachine.HandleEventQueue();
-
     CurrentStateUpdate();
     OnKeyboardInput(gTimer);
 
-    ResourceManager& rm = m_root->GetResourceManager();
+    ResourceManager& rm = m_parent->GetResourceManager();
     // terrain Y 로 player Y 설정하기.
     XMFLOAT4 pos = GetComponent<Position>().mFloat4;
     float newY = 0.f;
@@ -56,7 +64,7 @@ void PlayerObject::OnUpdate(GameTimer& gTimer)
 
     if (pos.x >= 0 && pos.z >= 0 && pos.x <= width * terrainScale && pos.z <= height * terrainScale) {
         vector<Vertex>& vertexBuffer = rm.GetVertexBuffer();
-        UINT startVertex = m_root->GetObj<TerrainObject>(L"TerrainObject").GetComponent<Mesh>().mSubMeshData.startVertexLocation;
+        UINT startVertex = m_parent->GetObj<TerrainObject>(L"TerrainObject").GetComponent<Mesh>().mSubMeshData.startVertexLocation;
 
         int indexX = (int)(pos.x / terrainScale);
         int indexZ = (int)(pos.z / terrainScale);
@@ -175,7 +183,7 @@ void PlayerObject::LateUpdate(GameTimer& gTimer)
 
 void PlayerObject::OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
-    CD3DX12_GPU_DESCRIPTOR_HANDLE hDescriptor(m_root->GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart());
+    CD3DX12_GPU_DESCRIPTOR_HANDLE hDescriptor(m_parent->GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart());
     hDescriptor.Offset(1+GetComponent<Texture>().mDescriptorStartIndex, device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
     commandList->SetGraphicsRootDescriptorTable(1, hDescriptor);
     commandList->SetGraphicsRootConstantBufferView(2, m_constantBuffer.Get()->GetGPUVirtualAddress());
@@ -195,7 +203,7 @@ void PlayerObject::OnKeyboardInput(const GameTimer& gTimer)
         speed = 100;
     }
 
-    XMMATRIX view = m_root->GetObj<CameraObject>(L"CameraObject").GetXMMATRIX();
+    XMMATRIX view = m_parent->GetObj<CameraObject>(L"CameraObject").GetXMMATRIX();
     XMMATRIX invView = XMMatrixInverse(NULL, view);
 
     XMVECTOR forward = XMVECTOR{ 0.f, 0.f, 1.f, 0.f };
@@ -240,11 +248,11 @@ void PlayerObject::OnKeyboardInput(const GameTimer& gTimer)
 
 void PlayerObject::CurrentStateUpdate()
 {
-    auto& keyBuffer = m_root->GetKeyBuffer();
+    auto& keyBuffer = m_parent->GetKeyBuffer();
     XMVECTOR velocity = XMVectorZero();
     XMVECTOR forward = XMVECTOR{ 0.f, 0.f, 1.f, 0.f };
     XMVECTOR right = XMVECTOR{ 1.f, 0.f, 0.f, 0.f };
-    XMMATRIX view = m_root->GetObj<CameraObject>(L"CameraObject").GetXMMATRIX();
+    XMMATRIX view = m_parent->GetObj<CameraObject>(L"CameraObject").GetXMMATRIX();
     XMMATRIX invView = XMMatrixInverse(NULL, view);
     int speed = 15;
 
@@ -337,7 +345,7 @@ void TestObject::LateUpdate(GameTimer& gTimer)
 
 void TestObject::OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
-    CD3DX12_GPU_DESCRIPTOR_HANDLE hDescriptor(m_root->GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart());
+    CD3DX12_GPU_DESCRIPTOR_HANDLE hDescriptor(m_parent->GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart());
     hDescriptor.Offset(1 + GetComponent<Texture>().mDescriptorStartIndex, device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
     commandList->SetGraphicsRootDescriptorTable(1, hDescriptor);
     commandList->SetGraphicsRootConstantBufferView(2, m_constantBuffer.Get()->GetGPUVirtualAddress());
@@ -346,7 +354,7 @@ void TestObject::OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* comma
     commandList->DrawInstanced(data.vertexCountPerInstance, 1, data.startVertexLocation, 0);
 }
 
-CameraObject::CameraObject(float radius, Scene* root) :
+CameraObject::CameraObject(Scene* root, float radius) :
     Object{ root }, 
     mLastPosX{ -1 }, 
     mLastPosY{ -1 }, 
@@ -362,7 +370,7 @@ void CameraObject::OnUpdate(GameTimer& gTimer)
     float y = mRadius * cosf(mPhi);
     float z = mRadius * sinf(mPhi) * sinf(mTheta);
 
-    XMVECTOR playerPos = m_root->GetObj<PlayerObject>(L"PlayerObject").GetComponent<Position>().GetXMVECTOR();
+    XMVECTOR playerPos = m_parent->GetObj<PlayerObject>()->GetComponent<Transform>().GetXMVECTOR();
     GetComponent<Position>().SetXMVECTOR(playerPos + XMVECTOR{ x, y, z, 0.f });
 
     // 카메라 변환 행렬.
@@ -371,7 +379,7 @@ void CameraObject::OnUpdate(GameTimer& gTimer)
     XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
     SetXMMATRIX(XMMatrixLookAtLH(eye, target, up));
     // 카메라 변환 행렬 쉐이더에 전달
-    memcpy(m_root->GetConstantBufferMappedData(), &XMMatrixTranspose(GetXMMATRIX()), sizeof(XMMATRIX)); // 처음 매개변수는 시작주소
+    memcpy(m_parent->GetConstantBufferMappedData(), &XMMatrixTranspose(GetXMMATRIX()), sizeof(XMMATRIX)); // 처음 매개변수는 시작주소
 }
 
 void CameraObject::LateUpdate(GameTimer& gTimer)
@@ -472,7 +480,7 @@ void TerrainObject::LateUpdate(GameTimer& gTimer)
 
 void TerrainObject::OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
-    CD3DX12_GPU_DESCRIPTOR_HANDLE hDescriptor(m_root->GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart());
+    CD3DX12_GPU_DESCRIPTOR_HANDLE hDescriptor(m_parent->GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart());
     hDescriptor.Offset(1 + GetComponent<Texture>().mDescriptorStartIndex, device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
     commandList->SetGraphicsRootDescriptorTable(1, hDescriptor);
     commandList->SetGraphicsRootConstantBufferView(2, m_constantBuffer.Get()->GetGPUVirtualAddress());
@@ -489,7 +497,7 @@ void TreeObject::OnUpdate(GameTimer& gTimer)
 {
     // terrain Y 로 object Y 설정하기.
     XMFLOAT4 pos = GetComponent<Position>().mFloat4;
-    ResourceManager& rm = m_root->GetResourceManager();
+    ResourceManager& rm = m_parent->GetResourceManager();
     float newY = 0.f;
     int width = rm.GetTerrainData().terrainWidth;
     int height = rm.GetTerrainData().terrainHeight;
@@ -497,7 +505,7 @@ void TreeObject::OnUpdate(GameTimer& gTimer)
 
     if (pos.x >= 0 && pos.z >= 0 && pos.x <= width * terrainScale && pos.z <= height * terrainScale) {
         vector<Vertex>& vertexBuffer = rm.GetVertexBuffer();
-        UINT startVertex = m_root->GetObj<TerrainObject>(L"TerrainObject").GetComponent<Mesh>().mSubMeshData.startVertexLocation;
+        UINT startVertex = m_parent->GetObj<TerrainObject>(L"TerrainObject").GetComponent<Mesh>().mSubMeshData.startVertexLocation;
 
         int indexX = (int)(pos.x / terrainScale);
         int indexZ = (int)(pos.z / terrainScale);
@@ -562,7 +570,7 @@ void TreeObject::LateUpdate(GameTimer& gTimer)
 
 void TreeObject::OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
-    CD3DX12_GPU_DESCRIPTOR_HANDLE hDescriptor(m_root->GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart());
+    CD3DX12_GPU_DESCRIPTOR_HANDLE hDescriptor(m_parent->GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart());
     hDescriptor.Offset(1 + GetComponent<Texture>().mDescriptorStartIndex, device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
     commandList->SetGraphicsRootDescriptorTable(1, hDescriptor);
     commandList->SetGraphicsRootConstantBufferView(2, m_constantBuffer.Get()->GetGPUVirtualAddress());
@@ -580,7 +588,7 @@ void TigerObject::OnUpdate(GameTimer& gTimer)
 {
     RandomVelocity(gTimer);
     TigerBehavior(gTimer);
-    ResourceManager& rm = m_root->GetResourceManager();
+    ResourceManager& rm = m_parent->GetResourceManager();
     // terrain Y 로 player Y 설정하기.
     XMFLOAT4 pos = GetComponent<Position>().mFloat4;
     float newY = 0.f;
@@ -590,7 +598,7 @@ void TigerObject::OnUpdate(GameTimer& gTimer)
 
     if (pos.x >= 0 && pos.z >= 0 && pos.x <= width * terrainScale && pos.z <= height * terrainScale) {
         vector<Vertex>& vertexBuffer = rm.GetVertexBuffer();
-        UINT startVertex = m_root->GetObj<TerrainObject>(L"TerrainObject").GetComponent<Mesh>().mSubMeshData.startVertexLocation;
+        UINT startVertex = m_parent->GetObj<TerrainObject>(L"TerrainObject").GetComponent<Mesh>().mSubMeshData.startVertexLocation;
 
         int indexX = (int)(pos.x / terrainScale);
         int indexZ = (int)(pos.z / terrainScale);
@@ -730,7 +738,7 @@ void TigerObject::LateUpdate(GameTimer& gTimer)
 
 void TigerObject::OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
-    CD3DX12_GPU_DESCRIPTOR_HANDLE hDescriptor(m_root->GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart());
+    CD3DX12_GPU_DESCRIPTOR_HANDLE hDescriptor(m_parent->GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart());
     hDescriptor.Offset(1 + GetComponent<Texture>().mDescriptorStartIndex, device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
     commandList->SetGraphicsRootDescriptorTable(1, hDescriptor);
     commandList->SetGraphicsRootConstantBufferView(2, m_constantBuffer.Get()->GetGPUVirtualAddress());
@@ -742,7 +750,7 @@ void TigerObject::OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* comm
 void TigerObject::TigerBehavior(GameTimer& gTimer)
 {
     XMVECTOR pos = GetComponent<Position>().GetXMVECTOR();
-    PlayerObject& player = m_root->GetObj<PlayerObject>(L"PlayerObject");
+    PlayerObject& player = m_parent->GetObj<PlayerObject>(L"PlayerObject");
     XMVECTOR playerPos = player.GetComponent<Position>().GetXMVECTOR();
     XMVECTOR velocity{ playerPos - pos };
     XMVECTOR up{ 0.f, 1.f, 0.f, 0.f };

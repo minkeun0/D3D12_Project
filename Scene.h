@@ -11,17 +11,18 @@ class Framework;
 class Scene
 {
 public:
+    ~Scene();
     Scene() = default;
     Scene(Framework* parent, UINT width, UINT height, wstring name);
-    virtual void OnInit(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
-    virtual void OnUpdate(GameTimer& gTimer);
-    virtual void CheckCollision();
-    virtual void LateUpdate(GameTimer& gTimer);
-    virtual void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, ePass pass);
-    virtual void OnResize(UINT width, UINT height);
-    virtual void OnDestroy();
-    virtual void OnKeyDown(UINT8 key);
-    virtual void OnKeyUp(UINT8 key);
+    void OnInit(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
+    void OnUpdate(GameTimer& gTimer);
+    void CheckCollision();
+    void LateUpdate(GameTimer& gTimer);
+    void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, ePass pass);
+    void OnResize(UINT width, UINT height);
+    void OnDestroy();
+    void OnKeyDown(UINT8 key);
+    void OnKeyUp(UINT8 key);
     wstring GetSceneName() const;
     ResourceManager& GetResourceManager();
     void* GetConstantBufferMappedData();
@@ -29,8 +30,17 @@ public:
     UINT CalcConstantBufferByteSize(UINT byteSize);
     Framework* GetFramework();
     UINT GetNumOfTexture();
-    template<typename T> void AddObj(const wstring& name, T&& object) { m_objects.emplace(name, move(object)); }
-    template<typename T> T& GetObj(const wstring& name) { return get<T>(m_objects.at(name)); }
+    void AddObj(Object* object);
+    template<typename T> 
+    T* GetObj() 
+    {
+        Object* temp = nullptr;
+        for (Object* obj : m_objects) {
+            temp = dynamic_cast<T*>(obj);
+            if (temp) break;
+        }
+        return temp; 
+    }
     std::unordered_map<std::string, ComPtr<ID3D12PipelineState>>& GetPSOs();
     void RenderObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
     std::array<eKeyState, static_cast<size_t>(eKeyTable::SIZE)>& GetKeyBuffer();
@@ -58,7 +68,7 @@ private:
 private:
     Framework* m_parent = nullptr;
     wstring m_name;
-    unordered_map<wstring, ObjectVariant> m_objects;
+    vector<Object*> m_objects;
     unique_ptr<ResourceManager> m_resourceManager;
     //
     CD3DX12_VIEWPORT m_viewport;

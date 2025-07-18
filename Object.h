@@ -8,9 +8,9 @@ class Scene;
 class Object
 {
 public:
+	virtual ~Object();
 	Object() = default;
 	Object(Scene* root);
-	virtual ~Object() = default;
 
 	//virtual void OnInit(ID3D12Device* device);
 	virtual void OnUpdate(GameTimer& gTimer) = 0;
@@ -20,23 +20,23 @@ public:
 
 	void BuildConstantBuffer(ID3D12Device* device);
 
-	template<typename T>
-	void AddComponent(T&& component) { m_components.emplace(typeid(T).name(), move(component)); }
+	void AddComponent(Component* component);
 
 	template <typename T>
-	T& GetComponent() { return get<T>(m_components.at(typeid(T).name())); }
-
-	template <typename T>
-	bool FindComponent() { 
-		auto& it = m_components.find(typeid(T).name());
-		return it != m_components.end();
+	T* GetComponent() 
+	{
+		Component* temp = nullptr;
+		for (Component* component : m_components){
+			temp = dynamic_cast<T*>(component);
+			if (temp) break;
+		}
+		return temp; 
 	}
-
-	Scene* GetParent() { return m_root; }
+	Scene* GetParent() { return m_parent; }
 
 protected:
-	Scene* m_root;
-	unordered_map<string, ComponentVariant> m_components;
+	Scene* m_parent;
+	vector<Component*> m_components;
 
 	// 오브젝트 마다 독립적인 CB
 	UINT8* m_mappedData;
@@ -61,7 +61,7 @@ class CameraObject : public Object
 {
 public:
 	CameraObject() = default;
-	CameraObject(float radius, Scene* root);
+	CameraObject(Scene* root, float radius);
 	void OnUpdate(GameTimer& gTimer) override;
 	void LateUpdate(GameTimer& gTimer) override;
 	void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList) override;
@@ -132,5 +132,3 @@ public:
 	void LateUpdate(GameTimer& gTimer) override;
 	void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList) override;
 };
-
-using ObjectVariant = variant<PlayerObject, CameraObject, TestObject, TerrainObject, TreeObject, TigerObject, StoneObject>;

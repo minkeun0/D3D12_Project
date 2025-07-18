@@ -11,89 +11,98 @@ class Object;
 struct Component // 객체로 만들지 않는 클래스
 {
 	Component() = default;
-	Component(Object* root) : mRoot{root} {}
 	virtual ~Component() = default;
-	Object* mRoot;
 };
 
-struct NeedVector // 객체로 만들지 않는 클래스
+class Transform : public Component
 {
-	NeedVector() = default;
-	NeedVector(float x, float y, float z, float w) : mFloat4 { x, y, z, w } {}
-	XMVECTOR GetXMVECTOR() { return XMLoadFloat4(&mFloat4); }
-	void SetXMVECTOR(XMVECTOR& v) {
-		XMStoreFloat4(&mFloat4, v);
-	}
-	XMFLOAT4 mFloat4;
+public:
+	//Transform(XMFLOAT3&& pos, XMFLOAT3&& rot = { 0.0f, 0.0f, 0.0f }, XMFLOAT3&& scale = { 1.0f, 1.0f, 1.0f });
+	Transform(XMVECTOR pos, XMVECTOR rot = { 0.0f, 0.0f, 0.0f, 0.0f }, XMVECTOR scale = { 1.0f, 1.0f, 1.0f, 0.0f });
+	XMVECTOR GetScale();
+	XMVECTOR GetRotation();
+	XMVECTOR GetQuaternion();
+	XMVECTOR GetPosition();
+	XMMATRIX GetTranslateM();
+	XMMATRIX GetScaleM();
+	XMMATRIX GetRotationM();
+	XMMATRIX GetRotationQuaternionM();
+	XMMATRIX GetTransformM();
+	XMMATRIX GetFinalM();
+	void SetPosition(XMVECTOR pos);
+	void SetRotation(XMVECTOR rot);
+	void SetQuaternion(XMVECTOR qua);
+	void SetFinalM(XMMATRIX finalM);
+private:
+	XMVECTOR GetQuaternionFromRotation();
+	XMFLOAT3 mScale{ 1.0f, 1.0f, 1.0f };
+	XMFLOAT3 mRotation{ 0.0f, 0.0f, 0.0f };
+	XMFLOAT4 mQuaternion{ 0.0f, 0.0f, 0.0f, 1.0f };
+	XMFLOAT3 mPosition{ 0.0f, 0.0f, 0.0f };
+	XMFLOAT4X4 mFinalM{
+	1.0f, 0.0f, 0.0f, 0.0f,
+	0.0f, 1.0f, 0.0f, 0.0f,
+	0.0f, 0.0f, 1.0f, 0.0f,
+	0.0f, 0.0f, 0.0f, 1.0f };
 };
 
-struct Mesh : public Component, public NeedVector
+struct Mesh : public Component
 { 
 	Mesh() = default;
-	Mesh(SubMeshData& subMeshData, Object* root) : Component{ root }, mSubMeshData{ subMeshData } {}
+	Mesh(SubMeshData& subMeshData) : mSubMeshData{ subMeshData } {}
 	SubMeshData mSubMeshData;
 };
 
 struct Texture : public Component
 {
 	Texture() = default;
-	Texture(int descriptorStartIndex, Object* root) : Component{ root }, mDescriptorStartIndex{descriptorStartIndex} {}
+	Texture(int descriptorStartIndex) : mDescriptorStartIndex{descriptorStartIndex} {}
 	int mDescriptorStartIndex;
 };
 
 struct Animation : public Component
 {
 	Animation() = default;
-	Animation(unordered_map<string, SkinnedData>& animData, Object* root) : Component{ root }, mAnimData{ &animData }, mAnimationTime{ 0.f }, mSleepTime{ 0.f }, mCurrentFileName{} {}
+	Animation(unordered_map<string, SkinnedData>& animData) : mAnimData{ &animData }, mAnimationTime{ 0.f }, mSleepTime{ 0.f }, mCurrentFileName{} {}
 	unordered_map<string, SkinnedData>* mAnimData;
 	float mAnimationTime;
 	float mSleepTime;
 	string mCurrentFileName;
 };
 
-struct Position : public Component, public NeedVector
+struct Position : public Component
 {
 	Position() = default;
-	Position(float x, float y, float z, float w, Object* root) : Component{ root }, NeedVector { x, y, z, w} {}
+	Position(float x, float y, float z) : mPosition{ x, y, z} {}
+	XMFLOAT3 mPosition{};
 };
 
-struct Velocity : public Component, public NeedVector
+struct Velocity : public Component
 {
 	Velocity() = default;
-	Velocity(float x, float y, float z, float w, Object* root) : Component{ root }, NeedVector{ x, y, z, w } {}
+	Velocity(float x, float y, float z) : mVelocity{ x, y, z} {}
+	XMFLOAT3 mVelocity{};
 };
 
-struct Rotation : public Component, public NeedVector
+struct Rotation : public Component
 {
 	Rotation() = default;
-	Rotation(float x, float y, float z, float w, Object* root) : Component{ root }, NeedVector{ x, y, z, w } {}
+	Rotation(float x, float y, float z, float w) : mRotation{ x, y, z} {}
+	XMFLOAT3 mRotation{};
 };
 
-struct Rotate : public Component, public NeedVector
-{
-	Rotate() = default;
-	Rotate(float x, float y, float z, float w, Object* root) : Component{ root }, NeedVector{ x, y, z, w } {}
-};
 
-struct Scale : public Component, public NeedVector
+struct Scale : public Component
 {
 	Scale() = default;
-	Scale(float x, Object* root) : Component{ root }, NeedVector{ x, x, x, 1 }, mScaleValue{x} {}
-	float mScaleValue;
-};
-
-struct Gravity : public Component, public NeedVector
-{
-	Gravity() = default;
-	Gravity(float value, Object* root) : Component{ root }, NeedVector{ 0.f, -value, 0.f, 0.f}, mGravityTime{0.f} {}
-	float mGravityTime;
+	Scale(float x, float y, float z) : mScale{ x, y, z} {}
+	XMFLOAT3 mScale;
 };
 
 struct Collider : public Component
 {
 	Collider() = default;
-	Collider(float centerX, float centerY, float centerZ, float extentsX, float extentsY, float extentsZ, Object* root) :
-		Component{ root },
+	Collider(float centerX, float centerY, float centerZ, float extentsX, float extentsY, float extentsZ) :
 		mAABB{ XMFLOAT3{centerX, centerY, centerZ}, XMFLOAT3{extentsX, extentsY, extentsZ} },
 		mLocalAABB{ XMFLOAT3{centerX, centerY, centerZ}, XMFLOAT3{extentsX, extentsY, extentsZ} } 
 	{}
@@ -105,19 +114,3 @@ struct Collider : public Component
 	BoundingBox mLocalAABB;
 	unordered_map<Object*, CollisionState> mCollisionStates;
 };
-
-struct StateMachine : public Component
-{
-	StateMachine() = default;
-	StateMachine(std::unordered_map <eBehavior, std::unordered_map<eEvent, eBehavior>>& transitions, Object* root) :
-		mTransitions{transitions},
-		Component{ root }
-	{}
-	void HandleKeyBuffer();
-	void HandleEventQueue();
-	std::unordered_map <eBehavior, std::unordered_map<eEvent, eBehavior>> mTransitions;
-	std::queue<eEvent> mEventQueue;
-	eBehavior mCurrentState = eBehavior::Idle;
-};
-
-using ComponentVariant = variant<Mesh, Position, Velocity, Rotation, Rotate, Scale, Texture, Animation, Gravity, Collider, StateMachine>;
