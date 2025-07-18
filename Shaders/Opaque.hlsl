@@ -18,7 +18,8 @@ struct VSOutput
 };
 
 VSOutput VS(VSInput input)
-{    
+{
+    
     if (isAnimation == 1)
     {
         float3 pos = 0.0f;

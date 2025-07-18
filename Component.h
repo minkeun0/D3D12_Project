@@ -54,8 +54,7 @@ struct Animation : public Component
 struct Position : public Component, public NeedVector
 {
 	Position() = default;
-	Position(float x, float y, float z, float w, Object* root) : Component{ root }, NeedVector { x, y, z, w}, mModify(true) {}
-	bool mModify;
+	Position(float x, float y, float z, float w, Object* root) : Component{ root }, NeedVector { x, y, z, w} {}
 };
 
 struct Velocity : public Component, public NeedVector
@@ -67,8 +66,7 @@ struct Velocity : public Component, public NeedVector
 struct Rotation : public Component, public NeedVector
 {
 	Rotation() = default;
-	Rotation(float x, float y, float z, float w, Object* root) : Component{ root }, NeedVector{ x, y, z, w }, mModify(true) {}
-	bool mModify;
+	Rotation(float x, float y, float z, float w, Object* root) : Component{ root }, NeedVector{ x, y, z, w } {}
 };
 
 struct Rotate : public Component, public NeedVector

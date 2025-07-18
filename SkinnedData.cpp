@@ -175,6 +175,9 @@ void SkinnedData::GetFinalTransforms(const std::string& clipName, float timePos,
 		XMMATRIX offset = XMLoadFloat4x4(&mBoneOffsets[i]);
 		XMMATRIX toRoot = XMLoadFloat4x4(&toRootTransforms[i]);
         XMMATRIX finalTransform = XMMatrixMultiply(offset, toRoot);
-		XMStoreFloat4x4(&finalTransforms[i], XMMatrixTranspose(finalTransform));
+
+		// 애니메이션만 적용하면 x 축 방향으로 90도 회전함 왜 그런지 모르겠음. 따라서 x축 방향으로 -90도 회전시킴.
+		XMMATRIX adjustRotXM = XMMatrixRotationX(XMConvertToRadians(-90.0f));
+		XMStoreFloat4x4(&finalTransforms[i], XMMatrixTranspose(finalTransform * adjustRotXM));
 	}
 }

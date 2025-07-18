@@ -29,6 +29,9 @@ public:
 	ID3D12Device* GetDevice();
 	ID3D12GraphicsCommandList* GetCommandList();
 	ID3D12DescriptorHeap* GetDsvDescHeap();
+
+	BYTE* GetKeyState();
+
 private:
 	void GetHardwareAdapter(
 		IDXGIFactory1* pFactory,
@@ -50,6 +53,8 @@ private:
 	void PopulateCommandList();
 	void BuildScenes(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
 	void WaitForPreviousFrame();
+
+	void processInput();
 
 	unique_ptr<Win32Application> m_win32App;
 
@@ -84,5 +89,6 @@ private:
 	unordered_map<wstring, Scene> m_scenes;
 	wstring m_currentSceneName;
 
+	BYTE mKeyState[256]{};
 };
 

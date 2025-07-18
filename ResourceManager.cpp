@@ -13,7 +13,6 @@ ResourceManager::~ResourceManager()
 void ResourceManager::LoadFbx(const string& fileName, bool onlyAnimation, bool zUp)
 {
 	mFbxExtractor->ImportFbxFile(fileName, onlyAnimation, zUp);
-	
 	mFbxExtractor->ExtractDataFromFbx();
 
 	if (onlyAnimation == false) {
@@ -28,8 +27,7 @@ void ResourceManager::LoadFbx(const string& fileName, bool onlyAnimation, bool z
 
 	SkinnedData animData;
 	animData.Set(mFbxExtractor->GetBoneHierarchyIndex(), mFbxExtractor->GetOffsetMatrix(), mFbxExtractor->GetAnimation());
-	mAnimData.emplace(fileName ,animData);
-
+	mAnimData.emplace(fileName, animData);
 
 	mFbxExtractor->ResetAndClear();
 }

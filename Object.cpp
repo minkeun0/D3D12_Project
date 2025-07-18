@@ -44,8 +44,7 @@ void PlayerObject::OnUpdate(GameTimer& gTimer)
     stateMachine.HandleEventQueue();
 
     CurrentStateUpdate();
-
-    //OnKeyboardInput(gTimer);
+    OnKeyboardInput(gTimer);
 
     ResourceManager& rm = m_root->GetResourceManager();
     // terrain Y 로 player Y 설정하기.
@@ -79,7 +78,7 @@ void PlayerObject::OnUpdate(GameTimer& gTimer)
     }
 
     // 충돌체 위치 조정
-    GetComponent<Collider>().mAABB.Center = { pos.x, newY + 10.f, pos.z };
+    GetComponent<Collider>().mAABB.Center = { pos.x, newY + 10.0f, pos.z };
 
     XMVECTOR newPos = XMVECTOR{pos.x, newY, pos.z};
     GetComponent<Position>().SetXMVECTOR(newPos);
@@ -95,7 +94,6 @@ void PlayerObject::OnUpdate(GameTimer& gTimer)
     {
     case eBehavior::Idle:
         currentFileName = "1P(boy-idle).fbx";
-        //currentFileName = "boy_attack(45).fbx";
         break;
     case eBehavior::Walk:
         currentFileName = "boy_walk_fix.fbx";
@@ -116,7 +114,7 @@ void PlayerObject::OnUpdate(GameTimer& gTimer)
         animComponent.mAnimationTime += gTimer.DeltaTime();
         string clipName = "Take 001";
         if (animComponent.mAnimationTime >= animData.GetClipEndTime(clipName)) animComponent.mAnimationTime = 0.f;
-        animData.GetFinalTransforms(clipName, animComponent.mAnimationTime, finalTransforms);
+        animData.GetFinalTransforms(clipName, animComponent.mAnimationTime, finalTransforms);        
         memcpy(m_mappedData + sizeof(XMMATRIX), finalTransforms.data(), sizeof(XMMATRIX) * 90); // 처음 매개변수는 시작주소
     }
     memcpy(m_mappedData + sizeof(XMMATRIX) * 91, &isAnimate, sizeof(int));
@@ -166,7 +164,12 @@ void PlayerObject::LateUpdate(GameTimer& gTimer)
     XMMATRIX translate = XMMatrixTranslationFromVector(GetComponent<Position>().GetXMVECTOR());
     XMMATRIX world = XMMatrixIdentity();
     world = scale * mRotation * rotate * translate;
-    memcpy(m_mappedData, &XMMatrixTranspose(world), sizeof(XMMATRIX)); // 처음 매개변수는 시작주소 , 열우선으로 변경해서 shader에 전달할경우
+    
+    XMMATRIX adjustScaleM = XMMatrixScaling(0.1f, 0.1f, 0.1f);
+    XMMATRIX adjustTranslateM = XMMatrixIdentity();
+    XMMATRIX adjustM = adjustScaleM * adjustTranslateM;
+
+    memcpy(m_mappedData, &XMMatrixTranspose(adjustM * world), sizeof(XMMATRIX)); // 처음 매개변수는 시작주소 , 열우선으로 변경해서 shader에 전달할경우
     //memcpy(m_mappedData, &world, sizeof(XMMATRIX)); // shader에서 행우선으로 변경하여 사용할경우
 }
 
@@ -312,15 +315,15 @@ void TestObject::OnUpdate(GameTimer& gTimer)
 
     //애니메이션 유무
     int isAnimate = FindComponent<Animation>();
-    if (isAnimate) {
-        vector<XMFLOAT4X4> finalTransforms{ 90 };
-        Animation& animComponent = GetComponent<Animation>();
-        SkinnedData& animData = animComponent.mAnimData->at("humanoid.fbx");
-        animComponent.mAnimationTime += gTimer.DeltaTime();
-        if (animComponent.mAnimationTime > animData.GetClipEndTime("shot")) animComponent.mAnimationTime = 0.f;
-        animData.GetFinalTransforms("shot", animComponent.mAnimationTime, finalTransforms);
-        memcpy(m_mappedData + sizeof(XMFLOAT4X4), finalTransforms.data(), sizeof(XMFLOAT4X4) * 90); // 처음 매개변수는 시작주소
-    }
+    //if (isAnimate) {
+    //    vector<XMFLOAT4X4> finalTransforms{ 90 };
+    //    Animation& animComponent = GetComponent<Animation>();
+    //    SkinnedData& animData = animComponent.mAnimData->at("humanoid.fbx");
+    //    animComponent.mAnimationTime += gTimer.DeltaTime();
+    //    if (animComponent.mAnimationTime > animData.GetClipEndTime("shot")) animComponent.mAnimationTime = 0.f;
+    //    animData.GetFinalTransforms("shot", animComponent.mAnimationTime, finalTransforms);
+    //    memcpy(m_mappedData + sizeof(XMFLOAT4X4), finalTransforms.data(), sizeof(XMFLOAT4X4) * 90); // 처음 매개변수는 시작주소
+    //}
     memcpy(m_mappedData + sizeof(XMFLOAT4X4) * 91, &isAnimate, sizeof(int));
     float powValue = 1.f; // 짝수이면 안됨
     memcpy(m_mappedData + sizeof(XMFLOAT4X4) * 91 + sizeof(int) * 4, &powValue, sizeof(float));
@@ -663,7 +666,7 @@ void TigerObject::OnUpdate(GameTimer& gTimer)
         animComponent.mAnimationTime += gTimer.DeltaTime();
         string clipName = "Take 001";
         if (animComponent.mAnimationTime >= animData.GetClipEndTime(clipName)) animComponent.mAnimationTime = 0.f;
-        animData.GetFinalTransforms(clipName, animComponent.mAnimationTime, finalTransforms);
+        animData.GetFinalTransforms(clipName, animComponent.mAnimationTime, finalTransforms);        
         memcpy(m_mappedData + sizeof(XMMATRIX), finalTransforms.data(), sizeof(XMMATRIX) * 90); // 처음 매개변수는 시작주소
     }
     memcpy(m_mappedData + sizeof(XMMATRIX) * 91, &isAnimate, sizeof(int));
@@ -710,15 +713,19 @@ void TigerObject::LateUpdate(GameTimer& gTimer)
     XMMATRIX scale = XMMatrixScalingFromVector(GetComponent<Scale>().GetXMVECTOR());
     XMMATRIX rotate = XMMatrixRotationRollPitchYawFromVector(GetComponent<Rotation>().GetXMVECTOR() * (XM_PI / 180.0f));
     GetComponent<Position>().SetXMVECTOR(GetComponent<Position>().GetXMVECTOR() + GetComponent<Velocity>().GetXMVECTOR() * gTimer.DeltaTime());
-    XMVECTOR pivot{ 0.f , 0.f, -8.f }; // pivot 조정
-    pivot = XMVector3Transform(pivot, mRotation);
-    XMMATRIX translate = XMMatrixTranslationFromVector(GetComponent<Position>().GetXMVECTOR() + pivot);
+    XMMATRIX translate = XMMatrixTranslationFromVector(GetComponent<Position>().GetXMVECTOR());
     XMMATRIX world = XMMatrixIdentity();
     world = scale * mRotation * rotate * translate;
-    memcpy(m_mappedData, &XMMatrixTranspose(world), sizeof(XMMATRIX)); // 처음 매개변수는 시작주소
+
+
+    XMMATRIX adjustScaleM = XMMatrixScaling(0.2f, 0.2f, 0.2f);
+    XMMATRIX adjustRotM = XMMatrixRotationRollPitchYaw(0.0f, XMConvertToRadians(180.0f), 0.0f);
+    XMMATRIX adjustTranslateM = XMMatrixTranslation(0.0f, 0.0f, -8.0f);
+    XMMATRIX adjustM = adjustScaleM * adjustRotM * adjustTranslateM;
+
+    memcpy(m_mappedData, &XMMatrixTranspose(adjustM * world), sizeof(XMMATRIX)); // 처음 매개변수는 시작주소
 
     GetComponent<Velocity>().SetXMVECTOR(XMVectorZero());
-
 }
 
 void TigerObject::OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)

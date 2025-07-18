@@ -5,7 +5,6 @@
 
 class GameTimer;
 class Scene;
-
 class Object
 {
 public:

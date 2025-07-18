@@ -74,6 +74,7 @@ void Framework::OnInit(HINSTANCE hInstance, int nCmdShow)
 
 void Framework::OnUpdate(GameTimer& gTimer)
 {
+    processInput();
     m_scenes[L"BaseScene"].OnUpdate(gTimer);
 }
 
@@ -454,6 +455,24 @@ void Framework::WaitForPreviousFrame()
     m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 }
 
+void Framework::processInput()
+{
+    static const int keySize = 256;
+    static BYTE keyState[keySize]{};
+    GetKeyboardState(keyState);
+
+    for (int i = 0; i < keySize; ++i)
+    {
+        if (mKeyState[i] & 0x80) keyState[i] |= 0x08;
+    }
+    memcpy(mKeyState, keyState, keySize);
+
+    if ((mKeyState[VK_ESCAPE] & 0x88) == 0x80)
+    {
+        PostQuitMessage(0);
+    }
+}
+
 void Framework::CalculateFrame()
 {
     static int frameCnt = 0;
@@ -508,5 +527,10 @@ ID3D12GraphicsCommandList* Framework::GetCommandList()
 ID3D12DescriptorHeap* Framework::GetDsvDescHeap()
 {
     return m_dsvHeap.Get();
+}
+
+BYTE* Framework::GetKeyState()
+{
+    return mKeyState;
 }
 

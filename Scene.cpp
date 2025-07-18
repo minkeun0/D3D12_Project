@@ -44,11 +44,11 @@ void Scene::BuildObjects(ID3D12Device* device)
 
     AddObj(L"PlayerObject", PlayerObject{ this });
     objectPtr = &GetObj<PlayerObject>(L"PlayerObject");
-    objectPtr->AddComponent(Position{ 60.f, 0.f, 60.f, 1.f, objectPtr });
+    objectPtr->AddComponent(Position{ 60.f, 0.0f, 60.f, 1.f, objectPtr });
     objectPtr->AddComponent(Velocity{ 0.0f, 0.0f, 0.0f, 0.0f, objectPtr });
-    objectPtr->AddComponent(Rotation{ 0.0f, 180.0f, 0.0f, 0.0f, objectPtr });
+    objectPtr->AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, objectPtr });
     objectPtr->AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, objectPtr });
-    objectPtr->AddComponent(Scale{ 0.1f, objectPtr });
+    objectPtr->AddComponent(Scale{ 1.0f, objectPtr });
     objectPtr->AddComponent(Mesh{ subMeshData.at("1P(boy-idle).fbx"), objectPtr });
     objectPtr->AddComponent(Texture{ m_subTextureData.at(L"boy"), objectPtr });
     objectPtr->AddComponent(Animation{ animData, objectPtr });
@@ -70,15 +70,15 @@ void Scene::BuildObjects(ID3D12Device* device)
     objectPtr->AddComponent(Mesh{ subMeshData.at("HeightMap.raw") , objectPtr });
     objectPtr->AddComponent(Texture{ m_subTextureData.at(L"grass"), objectPtr });
 
-    //AddObj(L"TestObject", TestObject{ this });
-    //objectPtr = &GetObj<TestObject>(L"TestObject");
-    //objectPtr->AddComponent(Position{ 0.f, 0.f, 0.f, 1.f, objectPtr });
-    //objectPtr->AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, objectPtr });
-    //objectPtr->AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, objectPtr });
-    //objectPtr->AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, objectPtr });
-    //objectPtr->AddComponent(Scale{ 0.01f, objectPtr });
-    //objectPtr->AddComponent(Mesh{ subMeshData.at("house_1218_attach_fix.fbx") , objectPtr });
-    //objectPtr->AddComponent(Texture{ m_subTextureData.at(L"PP_Color_Palette"), objectPtr });
+    AddObj(L"TestObject", TestObject{ this });
+    objectPtr = &GetObj<TestObject>(L"TestObject");
+    objectPtr->AddComponent(Position{ 0.f, 0.0f, 0.f, 1.f, objectPtr });
+    objectPtr->AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, objectPtr });
+    objectPtr->AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, objectPtr });
+    objectPtr->AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, objectPtr });
+    objectPtr->AddComponent(Scale{ 0.1f, objectPtr });
+    objectPtr->AddComponent(Mesh{ subMeshData.at("broken_house.fbx") , objectPtr });
+    objectPtr->AddComponent(Texture{ m_subTextureData.at(L"broken_house"), objectPtr });
 
     int repeat = 17;
     for (int i = 0; i < repeat; ++i) {
@@ -107,8 +107,8 @@ void Scene::BuildObjects(ID3D12Device* device)
             objectPtr->AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, objectPtr });
             objectPtr->AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, objectPtr });
             objectPtr->AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, objectPtr });
-            objectPtr->AddComponent(Scale{ 0.2f, objectPtr });
-            objectPtr->AddComponent(Mesh{ subMeshData.at("202411_walk_tiger_center.fbx"), objectPtr });
+            objectPtr->AddComponent(Scale{ 1.0f, objectPtr });
+            objectPtr->AddComponent(Mesh{ subMeshData.at("202411_deafult_tiger.fbx"), objectPtr });
             objectPtr->AddComponent(Texture{ m_subTextureData.at(L"tigercolor"), objectPtr });
             objectPtr->AddComponent(Animation{ animData, objectPtr });
             objectPtr->AddComponent(Gravity{ 1.f, objectPtr });
@@ -539,14 +539,20 @@ void Scene::LoadMeshAnimationTexture()
     m_resourceManager = make_unique<ResourceManager>();
     m_resourceManager->CreatePlane("Plane", 500);
     m_resourceManager->CreateTerrain("HeightMap.raw", 100, 10, 80);
-    m_resourceManager->LoadFbx("1P(boy-idle).fbx", false, false);
-    m_resourceManager->LoadFbx("1P(boy-jump).fbx", true, false);
-    m_resourceManager->LoadFbx("boy_run_fix.fbx", true, false);
-    m_resourceManager->LoadFbx("boy_walk_fix.fbx", true, false);
-    m_resourceManager->LoadFbx("boy_pickup_fix.fbx", true, false);
+    m_resourceManager->LoadFbx("1P(boy-idle).fbx", false, true);
+    m_resourceManager->LoadFbx("boy_walk_fix.fbx", true, true);
+    m_resourceManager->LoadFbx("1P(boy-jump).fbx", true, true);
+    m_resourceManager->LoadFbx("boy_run_fix.fbx", true, true);
+    m_resourceManager->LoadFbx("boy_pickup_fix.fbx", true, true);
+    m_resourceManager->LoadFbx("boy_attack(45).fbx", true, true);
+
     m_resourceManager->LoadFbx("long_tree.fbx", false, true);
-    m_resourceManager->LoadFbx("202411_walk_tiger_center.fbx", false, false);
-    m_resourceManager->LoadFbx("boy_attack(45).fbx", true, false);
+    m_resourceManager->LoadFbx("202411_deafult_tiger.fbx", false, true);
+    m_resourceManager->LoadFbx("202411_walk_tiger_center.fbx", true, true);
+
+    m_resourceManager->LoadFbx("background_house.fbx", false, true);
+    m_resourceManager->LoadFbx("broken_house.fbx", false, true);
+    m_resourceManager->LoadFbx("broken_house2.fbx", false, true);
 
     int i = 0;
     m_DDSFileName.push_back(L"./Textures/boy.dds");
@@ -579,6 +585,10 @@ void Scene::LoadMeshAnimationTexture()
     m_subTextureData.insert({ L"longTree", i++ });
     m_DDSFileName.push_back(L"./Textures/rock(smooth).dds");
     m_subTextureData.insert({ L"rock", i++ });
+    m_DDSFileName.push_back(L"./Textures/broken_house.dds");
+    m_subTextureData.insert({ L"broken_house", i++ });
+    m_DDSFileName.push_back(L"./Textures/broken_house2.dds");
+    m_subTextureData.insert({ L"broken_house2", i++ });
 }
 
 // Update frame-based values.
