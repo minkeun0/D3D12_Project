@@ -15,7 +15,7 @@ public:
 	//virtual void OnInit(ID3D12Device* device);
 	virtual void OnUpdate(GameTimer& gTimer) = 0;
 	virtual void LateUpdate(GameTimer& gTimer) = 0;
-	virtual void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList * commandList) = 0;
+	virtual void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList * commandList);
 	//virtual void OnDestroy();
 
 	void BuildConstantBuffer(ID3D12Device* device);
@@ -25,7 +25,7 @@ public:
 	template <typename T>
 	T* GetComponent() 
 	{
-		Component* temp = nullptr;
+		T* temp = nullptr;
 		for (Component* component : m_components){
 			temp = dynamic_cast<T*>(component);
 			if (temp) break;
@@ -50,9 +50,7 @@ public:
 	PlayerObject(Scene* root);
 	void OnUpdate(GameTimer& gTimer) override;
 	void LateUpdate(GameTimer& gTimer) override;
-	void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList) override;
 	void OnKeyboardInput(const GameTimer& gTimer);
-	void CurrentStateUpdate();
 private:
 	XMMATRIX mRotation;
 };
@@ -64,17 +62,13 @@ public:
 	CameraObject(Scene* root, float radius);
 	void OnUpdate(GameTimer& gTimer) override;
 	void LateUpdate(GameTimer& gTimer) override;
-	void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList) override;
 	void OnMouseInput(WPARAM wParam, HWND hWnd);
-	void SetXMMATRIX(XMMATRIX& m);
-	XMMATRIX GetXMMATRIX();
 private:
 	int mLastPosX;
 	int mLastPosY;
 	float mTheta;
 	float mPhi;
 	float mRadius;
-	XMFLOAT4X4 mViewMatrix;
 };
 
 class TerrainObject : public Object
@@ -84,7 +78,6 @@ public:
 	TerrainObject(Scene* root);
 	void OnUpdate(GameTimer& gTimer) override;
 	void LateUpdate(GameTimer& gTimer) override;
-	void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList) override;
 };
 
 class TestObject : public Object
@@ -94,7 +87,6 @@ public:
 	TestObject(Scene* root);
 	void OnUpdate(GameTimer& gTimer) override;
 	void LateUpdate(GameTimer& gTimer) override;
-	void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList) override;
 };
 
 class TreeObject : public Object
@@ -104,7 +96,6 @@ public:
 	TreeObject(Scene* root);
 	void OnUpdate(GameTimer& gTimer) override;
 	void LateUpdate(GameTimer& gTimer) override;
-	void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList) override;
 };
 
 class TigerObject : public Object
@@ -114,7 +105,6 @@ public:
 	TigerObject(Scene* root);
 	void OnUpdate(GameTimer& gTimer) override;
 	void LateUpdate(GameTimer& gTimer) override;
-	void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList) override;
 	void TigerBehavior(GameTimer& gTimer);
 	void RandomVelocity(GameTimer& gTimer);
 private:
@@ -130,5 +120,4 @@ public:
 	StoneObject(Scene* root);
 	void OnUpdate(GameTimer& gTimer) override;
 	void LateUpdate(GameTimer& gTimer) override;
-	void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList) override;
 };

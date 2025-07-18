@@ -2,6 +2,13 @@
 #include "DXSampleHelper.h"
 #include <DirectXColors.h>
 
+Framework::~Framework()
+{
+    for (auto [key, value] : m_scenes) {
+        delete value;
+    }
+}
+
 Framework::Framework(HINSTANCE hInstance, int nCmdShow, UINT width, UINT height, std::wstring name) :
     m_frameIndex(0),
     m_rtvDescriptorSize(0),
@@ -75,17 +82,17 @@ void Framework::OnInit(HINSTANCE hInstance, int nCmdShow)
 void Framework::OnUpdate(GameTimer& gTimer)
 {
     processInput();
-    m_scenes[L"BaseScene"].OnUpdate(gTimer);
+    m_scenes.at(L"BaseScene")->OnUpdate(gTimer);
 }
 
 void Framework::CheckCollision()
 {
-    m_scenes[L"BaseScene"].CheckCollision();
+    m_scenes.at(L"BaseScene")->CheckCollision();
 }
 
 void Framework::LateUpdate(GameTimer& gTimer)
 {
-    m_scenes[L"BaseScene"].LateUpdate(gTimer);
+    m_scenes.at(L"BaseScene")->LateUpdate(gTimer);
 }
 
 // Render the scene.
@@ -130,7 +137,7 @@ void Framework::OnResize(UINT width, UINT height, bool minimized)
         BuildDepthStencilBuffer(width, height);
         BuildDsv();
 
-        m_scenes[m_currentSceneName].OnResize(width, height);
+        m_scenes.at(m_currentSceneName)->OnResize(width, height);
 
         ThrowIfFailed(m_commandList->Close());
         ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
@@ -150,12 +157,12 @@ void Framework::OnDestroy()
 
 void Framework::OnKeyDown(UINT8 key)
 {
-    m_scenes[m_currentSceneName].OnKeyDown(key);
+    m_scenes.at(m_currentSceneName)->OnKeyDown(key);
 }
 
 void Framework::OnKeyUp(UINT8 key)
 {
-    m_scenes[m_currentSceneName].OnKeyUp(key);
+    m_scenes.at(m_currentSceneName)->OnKeyUp(key);
 }
 
 // Helper function for acquiring the first available hardware adapter that supports Direct3D 12.
@@ -400,7 +407,7 @@ void Framework::PopulateCommandList()
     ThrowIfFailed(m_commandAllocator->Reset());
     ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), nullptr));
 
-    m_scenes[L"BaseScene"].OnRender(m_device.Get(), m_commandList.Get(), ePass::Shadow);
+    m_scenes.at(L"BaseScene")->OnRender(m_device.Get(), m_commandList.Get(), ePass::Shadow);
 
     // Indicate that the back buffer will be used as a render target.
     D3D12_RESOURCE_BARRIER barrier{};
@@ -422,7 +429,7 @@ void Framework::PopulateCommandList()
     m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
     
     // Rendering
-    m_scenes[L"BaseScene"].OnRender(m_device.Get(), m_commandList.Get(), ePass::Default);
+    m_scenes.at(L"BaseScene")->OnRender(m_device.Get(), m_commandList.Get(), ePass::Default);
     
     // Indicate that the back buffer will now be used to present.
     barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
@@ -434,8 +441,8 @@ void Framework::PopulateCommandList()
 void Framework::BuildScenes(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
     wstring name = L"BaseScene";
-    m_scenes[name] = Scene{ this, m_win32App->GetWidth(), m_win32App->GetHeight(), name };
-    m_scenes[name].OnInit(device, commandList);
+    m_scenes.emplace(name, new Scene{ this, m_win32App->GetWidth(), m_win32App->GetHeight()});
+    m_scenes.at(name)->OnInit(device, commandList);
     m_currentSceneName = name;
 }
 
@@ -501,7 +508,7 @@ GameTimer& Framework::GetTimer()
 
 Scene& Framework::GetScene(const wstring& name)
 {
-    return m_scenes.at(name);
+    return *m_scenes.at(name);
 }
 
 const wstring& Framework::GetCurrentSceneName()

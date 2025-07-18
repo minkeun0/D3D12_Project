@@ -36,8 +36,9 @@ Shadow::Shadow(Scene* parent, UINT width, UINT height) :
 
 void Shadow::UpdateShadow()
 {
-	PlayerObject& player = mParent->GetObj<PlayerObject>(L"PlayerObject");
-	XMVECTOR pos = player.GetComponent<Position>().GetXMVECTOR();
+	PlayerObject* player = mParent->GetObj<PlayerObject>();
+	Transform* transform = player->GetComponent<Transform>();
+	XMVECTOR pos = transform->GetPosition();
 	float posX = XMVectorGetX(pos);
 	float posZ = XMVectorGetZ(pos);
 	mSceneSphere.Center = { posX, 0.0f, posZ };

@@ -20,9 +20,9 @@ void ResourceManager::LoadFbx(const string& fileName, bool onlyAnimation, bool z
 		SubMeshData subData{};
 		subData.vertexCountPerInstance = vertexData.size();
 		subData.startVertexLocation = mVertexBuffer.size();
+		subData.startIndexLocation = -1;
 		mSubMeshData[fileName] = subData;
 		mVertexBuffer.insert(mVertexBuffer.end(), vertexData.begin(), vertexData.end());
-		OutputDebugStringA(string{ "##### " + (to_string(mVertexBuffer.size()) + "\n") }.c_str());
 	}
 
 	SkinnedData animData;
@@ -51,11 +51,10 @@ void ResourceManager::CreatePlane(const string& name, float size)
 	SubMeshData subData{};
 	subData.vertexCountPerInstance = vertexData.size();
 	subData.startVertexLocation = mVertexBuffer.size();
+	subData.startIndexLocation = -1;
 	mSubMeshData[name] = subData;
 
 	mVertexBuffer.insert(mVertexBuffer.end(), vertexData.begin(), vertexData.end());
-	OutputDebugStringA(string{ "##### " + (to_string(mVertexBuffer.size()) + "\n") }.c_str());
-
 }
 
 void ResourceManager::CreateTerrain(const string& name, int maxHeight , int scale, int maxUV)

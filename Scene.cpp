@@ -12,11 +12,10 @@ Scene::~Scene()
     }
 }
 
-Scene::Scene(Framework* parent, UINT width, UINT height, std::wstring name) :
+Scene::Scene(Framework* parent, UINT width, UINT height) :
     m_parent{ parent },
     m_viewport(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height)),
-    m_scissorRect(0, 0, static_cast<LONG>(width), static_cast<LONG>(height)),
-    m_name(name)
+    m_scissorRect(0, 0, static_cast<LONG>(width), static_cast<LONG>(height))
 {
 }
 
@@ -54,7 +53,6 @@ void Scene::BuildObjects(ID3D12Device* device)
     objectPtr->AddComponent(new Mesh{ subMeshData.at("1P(boy-idle).fbx")});
     objectPtr->AddComponent(new Texture{ m_subTextureData.at(L"boy")});
     objectPtr->AddComponent(new Animation{ animData });
-    objectPtr->AddComponent(new Collider{0.f, 0.f, 0.f, 4.f, 50.f, 4.f});
     AddObj(objectPtr);
 
     objectPtr = new CameraObject(this, 70.0f);
@@ -76,22 +74,16 @@ void Scene::BuildObjects(ID3D12Device* device)
     //objectPtr->AddComponent(Mesh{ subMeshData.at("broken_house.fbx") , objectPtr });
     //objectPtr->AddComponent(Texture{ m_subTextureData.at(L"broken_house"), objectPtr });
 
-    //int repeat = 17;
-    //for (int i = 0; i < repeat; ++i) {
-    //    for (int j = 0; j < repeat; ++j) {
-    //        wstring objectName = L"TreeObject" + to_wstring(j + (repeat * i));
-    //        AddObj(objectName, TreeObject{ this });
-    //        objectPtr = &GetObj<TreeObject>(objectName);
-    //        objectPtr->AddComponent(Position{ 100.f + 150.f * j, 0.f, 100.f + 150.f * i, 1.f, objectPtr });
-    //        objectPtr->AddComponent(Velocity{ 0.f, 0.f, 0.f, 0.f, objectPtr });
-    //        objectPtr->AddComponent(Rotation{ 0.0f, 0.0f, 0.0f, 0.0f, objectPtr });
-    //        objectPtr->AddComponent(Rotate{ 0.0f, 0.0f, 0.0f, 0.0f, objectPtr });
-    //        objectPtr->AddComponent(Scale{ 20.f, objectPtr });
-    //        objectPtr->AddComponent(Mesh{ subMeshData.at("long_tree.fbx") , objectPtr });
-    //        objectPtr->AddComponent(Texture{ m_subTextureData.at(L"longTree"), objectPtr });
-    //        objectPtr->AddComponent(Collider{ 0.f, 0.f, 0.f, 3.f, 50.f, 3.f, objectPtr });
-    //    }
-    //}
+    int repeat = 17;
+    for (int i = 0; i < repeat; ++i) {
+        for (int j = 0; j < repeat; ++j) {
+            objectPtr = new TreeObject(this);
+            objectPtr->AddComponent(new Transform{ {100.f + 150.f * j, -100.f, 100.f + 150.f * i}});
+            objectPtr->AddComponent(new Mesh{ subMeshData.at("long_tree.fbx") });
+            objectPtr->AddComponent(new Texture{ m_subTextureData.at(L"longTree")});
+            AddObj(objectPtr);
+        }
+    }
 
     //repeat = 3;
     //for (int i = 0; i < repeat; ++i) {
@@ -164,44 +156,6 @@ ComPtr<ID3DBlob> Scene::CompileShader(
     return byteCode;
 }
 
-void Scene::UpdateKeyBuffer()
-{
-    if (GetAsyncKeyState(0x57) & 0x8000) {
-        mKeyBuffer[static_cast<int>(eKeyTable::Up)] = eKeyState::Pressed;
-    }
-    else {
-        mKeyBuffer[static_cast<int>(eKeyTable::Up)] = eKeyState::Released;
-    }
-
-    if (GetAsyncKeyState(0x53) & 0x8000) {
-        mKeyBuffer[static_cast<int>(eKeyTable::Down)] = eKeyState::Pressed;
-    }
-    else {
-        mKeyBuffer[static_cast<int>(eKeyTable::Down)] = eKeyState::Released;
-    }
-
-    if (GetAsyncKeyState(0x44) & 0x8000) {
-        mKeyBuffer[static_cast<int>(eKeyTable::Right)] = eKeyState::Pressed;
-    }
-    else {
-        mKeyBuffer[static_cast<int>(eKeyTable::Right)] = eKeyState::Released;
-    }
-
-    if (GetAsyncKeyState(0x41) & 0x8000) {
-        mKeyBuffer[static_cast<int>(eKeyTable::Left)] = eKeyState::Pressed;
-    }
-    else {
-        mKeyBuffer[static_cast<int>(eKeyTable::Left)] = eKeyState::Released;
-    }
-
-    if (GetAsyncKeyState(VK_SHIFT) & 0x8000) {
-        mKeyBuffer[static_cast<int>(eKeyTable::Shift)] = eKeyState::Pressed;
-    }
-    else {
-        mKeyBuffer[static_cast<int>(eKeyTable::Shift)] = eKeyState::Released;
-    }
-}
-
 void Scene::RenderObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
     for (Object* obj : m_objects)
@@ -210,9 +164,95 @@ void Scene::RenderObjects(ID3D12Device* device, ID3D12GraphicsCommandList* comma
     }
 }
 
-std::array<eKeyState, static_cast<size_t>(eKeyTable::SIZE)>& Scene::GetKeyBuffer()
+char Scene::ClampToBounds(XMVECTOR& pos, XMVECTOR offset)
 {
-    return mKeyBuffer;
+    XMFLOAT3 p;
+    XMStoreFloat3(&p, pos);
+    auto [minX, minY, minZ, maxX, maxZ] = GetBounds(p.x, p.z);
+
+    float offsetX = XMVectorGetX(offset);
+    float offsetY = XMVectorGetY(offset);
+    float offsetZ = XMVectorGetZ(offset);
+
+    char outStatus = 0x00;
+
+    if (p.x <= minX + offsetX)
+    {
+        outStatus |= 0x08;
+        p.x = minX + offsetX;
+    }
+    else if (p.x >= maxX - offsetX)
+    {
+        outStatus |= 0x08;
+        p.x = maxX - offsetX;
+    }
+
+    if (p.y <= minY + offsetY)
+    {
+        outStatus |= 0x04;
+        p.y = minY + offsetY;
+    }
+
+    if (p.z <= minZ + offsetZ)
+    {
+        outStatus |= 0x02;
+        p.z = minZ + offsetZ;
+    }
+    else if (p.z >= maxZ - offsetZ)
+    {
+        outStatus |= 0x02;
+        p.z = maxZ - offsetZ;
+    }
+
+    pos = XMLoadFloat3(&p);
+
+    return outStatus;
+}
+
+std::tuple<float, float, float, float, float> Scene::GetBounds(float x, float z)
+{
+    // if 문으로 현제 씬에따라 그에 맞는 바운드 반환하기
+    float minX = 0.0f;
+    float minY = 0.0f;
+    float minZ = 0.0f;
+
+    float maxX = 300.0f;
+    float maxZ = 300.0f;
+
+    if (true) // 터레인 이라면
+    {
+        ResourceManager& rm = GetResourceManager();
+        int width = rm.GetTerrainData().terrainWidth;
+        int height = rm.GetTerrainData().terrainHeight;
+        int terrainScale = rm.GetTerrainData().terrainScale;
+
+        vector<Vertex>& vertexBuffer = rm.GetVertexBuffer();
+        UINT startVertex = rm.GetSubMeshData().at("HeightMap.raw").baseVertexLocation;
+
+        int indexX = (int)(x / terrainScale);
+        int indexZ = (int)(z / terrainScale);
+        if (indexX < 0) indexX = 0;
+        if (indexZ < 0) indexZ = 0;
+
+        float leftBottom = vertexBuffer[startVertex + indexZ * width + indexX].position.y;
+        float rightBottom = vertexBuffer[startVertex + indexZ * width + indexX + 1].position.y;
+        float leftTop = vertexBuffer[startVertex + (indexZ + 1) * width + indexX].position.y;
+        float rightTop = vertexBuffer[startVertex + (indexZ + 1) * width + indexX + 1].position.y;
+
+        float offsetX = x / terrainScale - indexX;
+        float offsetZ = z / terrainScale - indexZ;
+
+        float lerpXBottom = (1 - offsetX) * leftBottom + offsetX * rightBottom;
+        float lerpXTop = (1 - offsetX) * leftTop + offsetX * rightTop;
+
+        float lerpZ = (1 - offsetZ) * lerpXBottom + offsetZ * lerpXTop;
+
+        minY = lerpZ;
+        maxX = (width - 1) * terrainScale;
+        maxZ = (height - 1) * terrainScale;
+    }
+
+    return { minX, minY, minZ, maxX, maxZ };
 }
 
 void Scene::BuildRootSignature(ID3D12Device* device)
@@ -595,8 +635,6 @@ void Scene::LoadMeshAnimationTexture()
 // Update frame-based values.
 void Scene::OnUpdate(GameTimer& gTimer)
 {
-    UpdateKeyBuffer();
-
     for (Object* obj : m_objects)
     {
         obj->OnUpdate(gTimer);
@@ -665,80 +703,6 @@ void Scene::OnKeyUp(UINT8 key)
 
 void Scene::CheckCollision()
 {
-    //for (auto it1 = m_objects.begin(); it1 != m_objects.end(); ++it1) {
-    //    Object* object1 = visit([](auto& arg)->Object* { return &arg; }, it1->second);
-    //    if (object1->FindComponent<Collider>() == false) continue;
-    //    Collider& collider1 = object1->GetComponent<Collider>();
-    //    for (auto it2 = std::next(it1); it2 != m_objects.end(); ++it2) {
-    //        Object* object2 = visit([](auto& arg)->Object* { return &arg; }, it2->second);
-    //        if (object2->FindComponent<Collider>() == false) continue;
-    //        Collider& collider2 = object2->GetComponent<Collider>();
-    //        if (collider1.mAABB.Intersects(collider2.mAABB)) { // obj1 과 obj2 가 충돌했다면?
-    //            if (collider1.FindCollisionObj(object2)) { // 이전에 같은 오브젝트와 충돌한 적이 있다면?
-    //                CollisionState state = collider1.mCollisionStates.at(object2);
-    //                if (state == CollisionState::ENTER || state == CollisionState::STAY) { // 충돌상태가 *** 라면?
-    //                    collider1.mCollisionStates[object2] = CollisionState::STAY;
-    //                    OutputDebugStringW((it1->first + L" 와 " + it2->first + L" 충돌중").c_str());
-    //                    OutputDebugStringW((to_wstring(collider1.mCollisionStates.size()) + L"\n").c_str());
-    //                }
-    //                else { // EXIT 인 상태에서 충돌했을경우. 즉, 확률이 매우 희박함. 참고: EXIT는 딱 한 프레임만 유지된다.
-    //                    collider1.mCollisionStates[object2] = CollisionState::ENTER;
-    //                }
-    //            }
-    //            else {
-    //                collider1.mCollisionStates[object2] = CollisionState::ENTER;
-    //                OutputDebugStringW((it1->first + L" 와 " + it2->first + L" 충돌시작").c_str());
-    //                OutputDebugStringW((to_wstring(collider1.mCollisionStates.size()) + L"\n").c_str());
-    //            }
-
-    //            if (collider2.FindCollisionObj(object1)) {
-    //                CollisionState state = collider2.mCollisionStates.at(object1);
-    //                if (state == CollisionState::ENTER || state == CollisionState::STAY) {
-    //                    collider2.mCollisionStates[object1] = CollisionState::STAY;
-    //                    OutputDebugStringW((it2->first + L" 와 " + it1->first + L" 충돌중").c_str());
-    //                    OutputDebugStringW((to_wstring(collider2.mCollisionStates.size()) + L"\n").c_str());
-    //                }
-    //                else { // EXIT 인 상태에서 충돌했을경우. 즉, 확률이 매우 희박함. 참고: EXIT는 딱 한 프레임만 유지된다.
-    //                    collider2.mCollisionStates[object1] = CollisionState::ENTER;
-    //                }
-    //            }
-    //            else {
-    //                collider2.mCollisionStates[object1] = CollisionState::ENTER;
-    //                OutputDebugStringW((it2->first + L" 와 " + it1->first + L" 충돌시작").c_str());
-    //                OutputDebugStringW((to_wstring(collider2.mCollisionStates.size()) + L"\n").c_str());
-    //            }
-    //        }
-    //        else { // obj1 과 obj2가 충돌하지 않았다면
-    //            if (collider1.FindCollisionObj(object2)) {
-    //                CollisionState state = collider1.mCollisionStates.at(object2);
-    //                if (state == CollisionState::EXIT) {
-    //                    collider1.mCollisionStates.erase(object2);
-    //                    OutputDebugStringW((it1->first + L" 와 " + it2->first + L" 충돌삭제").c_str());
-    //                    OutputDebugStringW((to_wstring(collider1.mCollisionStates.size()) + L"\n").c_str());
-    //                }
-    //                else {
-    //                    collider1.mCollisionStates[object2] = CollisionState::EXIT;
-    //                    OutputDebugStringW((it1->first + L" 와 " + it2->first + L" 충돌끝").c_str());
-    //                    OutputDebugStringW((to_wstring(collider1.mCollisionStates.size()) + L"\n").c_str());
-    //                }
-    //            }
-
-    //            if (collider2.FindCollisionObj(object1)) {
-    //                CollisionState state = collider2.mCollisionStates.at(object1);
-    //                if (state == CollisionState::EXIT) {
-    //                    collider2.mCollisionStates.erase(object1);
-    //                    OutputDebugStringW((it2->first + L" 와 " + it1->first + L" 충돌삭제").c_str());
-    //                    OutputDebugStringW((to_wstring(collider2.mCollisionStates.size()) + L"\n").c_str());
-    //                }
-    //                else {
-    //                    collider2.mCollisionStates[object1] = CollisionState::EXIT;
-    //                    OutputDebugStringW((it2->first + L" 와 " + it1->first + L" 충돌끝").c_str());
-    //                    OutputDebugStringW((to_wstring(collider2.mCollisionStates.size()) + L"\n").c_str());
-    //                }
-    //            }
-    //        }
-    //    }
-    //}
 }
 
 void Scene::LateUpdate(GameTimer& gTimer)
@@ -747,11 +711,6 @@ void Scene::LateUpdate(GameTimer& gTimer)
     {
         obj->LateUpdate(gTimer);
     }
-}
-
-std::wstring Scene::GetSceneName() const
-{
-    return m_name;
 }
 
 ResourceManager& Scene::GetResourceManager()

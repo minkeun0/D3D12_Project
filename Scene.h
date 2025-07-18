@@ -13,7 +13,7 @@ class Scene
 public:
     ~Scene();
     Scene() = default;
-    Scene(Framework* parent, UINT width, UINT height, wstring name);
+    Scene(Framework* parent, UINT width, UINT height);
     void OnInit(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
     void OnUpdate(GameTimer& gTimer);
     void CheckCollision();
@@ -23,7 +23,6 @@ public:
     void OnDestroy();
     void OnKeyDown(UINT8 key);
     void OnKeyUp(UINT8 key);
-    wstring GetSceneName() const;
     ResourceManager& GetResourceManager();
     void* GetConstantBufferMappedData();
     ID3D12DescriptorHeap* GetDescriptorHeap();
@@ -31,19 +30,20 @@ public:
     Framework* GetFramework();
     UINT GetNumOfTexture();
     void AddObj(Object* object);
+    std::unordered_map<std::string, ComPtr<ID3D12PipelineState>>& GetPSOs();
+    void RenderObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
+    char ClampToBounds(XMVECTOR& pos, XMVECTOR offset);
+    std::tuple<float, float, float, float, float> GetBounds(float x, float z);
     template<typename T> 
     T* GetObj() 
     {
-        Object* temp = nullptr;
+        T* temp = nullptr;
         for (Object* obj : m_objects) {
             temp = dynamic_cast<T*>(obj);
             if (temp) break;
         }
         return temp; 
     }
-    std::unordered_map<std::string, ComPtr<ID3D12PipelineState>>& GetPSOs();
-    void RenderObjects(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
-    std::array<eKeyState, static_cast<size_t>(eKeyTable::SIZE)>& GetKeyBuffer();
 private:
     void LoadMeshAnimationTexture();
     void BuildRootSignature(ID3D12Device* device);
@@ -64,10 +64,8 @@ private:
     void BuildInputElement();
     ComPtr<ID3DBlob> CompileShader(
         const std::wstring& fileName, const D3D_SHADER_MACRO* defines, const std::string& entryPoint, const std::string& target);
-    void UpdateKeyBuffer();
 private:
     Framework* m_parent = nullptr;
-    wstring m_name;
     vector<Object*> m_objects;
     unique_ptr<ResourceManager> m_resourceManager;
     //
@@ -101,8 +99,6 @@ private:
     unique_ptr<Shadow> m_shadow = nullptr;
 
     std::vector<D3D12_INPUT_ELEMENT_DESC> m_inputElement;
-
-    std::array<eKeyState, static_cast<size_t>(eKeyTable::SIZE)> mKeyBuffer = {};
 
     std::unordered_map <eBehavior, std::unordered_map<eEvent, eBehavior>> mPlayerTransitions = {
         {eBehavior::Idle, {{eEvent::MoveKeyPressed, eBehavior::Walk}}},

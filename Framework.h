@@ -7,6 +7,7 @@
 class Framework
 {
 public:
+	~Framework();
 	Framework() = default;
 	Framework(HINSTANCE hInstance, int nCmdShow, UINT width, UINT height, std::wstring name);
 	
@@ -86,7 +87,7 @@ private:
 	ComPtr<ID3D12Fence> m_fence;
 	UINT64 m_fenceValue;
 
-	unordered_map<wstring, Scene> m_scenes;
+	unordered_map<wstring, Scene*> m_scenes;
 	wstring m_currentSceneName;
 
 	BYTE mKeyState[256]{};

@@ -99,9 +99,8 @@ LRESULT CALLBACK Win32Application::WindowProc(HWND hWnd, UINT message, WPARAM wP
     case WM_MOUSEMOVE:
         if (pSample)
         {
-            pSample->GetScene(pSample->GetCurrentSceneName()).GetObj<CameraObject>(L"CameraObject").OnMouseInput(
+            pSample->GetScene(pSample->GetCurrentSceneName()).GetObj<CameraObject>()->OnMouseInput(
                 wParam, pSample->GetWin32App().GetHwnd());
-
         }
         return 0;
 

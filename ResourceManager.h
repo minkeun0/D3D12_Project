@@ -28,7 +28,6 @@ private:
 	vector<uint32_t> mIndexBuffer;
 	unordered_map<string, SubMeshData> mSubMeshData;
 	unordered_map<string, SkinnedData> mAnimData;
-
 	TerrainData mTerrainData;
 };
 
