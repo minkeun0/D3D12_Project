@@ -4,12 +4,10 @@
 #include "string"
 #include "info.h"
 #include <array>
-
+#include "Framework.h"
 Scene::~Scene()
 {
-    for (Object* obj : m_objects) {
-        delete obj;
-    }
+    DeleteCurrentObjects();
 }
 
 Scene::Scene(Framework* parent, UINT width, UINT height) :
@@ -23,7 +21,7 @@ void Scene::OnInit(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
     LoadMeshAnimationTexture();
     BuildProjMatrix();
-    BuildObjects(device);
+    BuildObjects();
     BuildRootSignature(device);
     BuildInputElement();
     BuildShaders();
@@ -40,7 +38,7 @@ void Scene::OnInit(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
     BuildShadow();
 }
 
-void Scene::BuildObjects(ID3D12Device* device)
+void Scene::BuildObjects()
 {
     Object* objectPtr = nullptr;
     objectPtr = new PlayerObject(this);
@@ -48,7 +46,7 @@ void Scene::BuildObjects(ID3D12Device* device)
     objectPtr->AddComponent(new AdjustTransform{ {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.1f, 0.1f, 0.1f} });
     objectPtr->AddComponent(new Mesh{ "1P(boy-idle).fbx"});
     objectPtr->AddComponent(new Texture{ L"boy" , 1.0f, 0.4f});
-    objectPtr->AddComponent(new Animation);
+    objectPtr->AddComponent(new Animation{ "1P(boy-idle).fbx" });
     objectPtr->AddComponent(new Gravity);
     objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {2.0f, 2.0f, 2.0f} });
     AddObj(objectPtr);
@@ -91,12 +89,38 @@ void Scene::BuildObjects(ID3D12Device* device)
             objectPtr->AddComponent(new AdjustTransform{ {0.0f, 0.0f, -8.0f}, {0.0f, 180.0f, 0.0f}, {0.2f, 0.2f, 0.2f} });
             objectPtr->AddComponent(new Mesh{ "0113_tiger.fbx" });
             objectPtr->AddComponent(new Texture{ L"tigercolor", 1.0f, 0.4f});
-            objectPtr->AddComponent(new Animation);
+            objectPtr->AddComponent(new Animation{ "0113_tiger_walk.fbx" });
             objectPtr->AddComponent(new Gravity);
             objectPtr->AddComponent(new Collider{ {0.0f, 3.0f, 0.0f}, {2.0f, 2.0f, 10.0f} });
             AddObj(objectPtr);
         }
     }
+}
+
+void Scene::BuildTestObjects()
+{
+    Object* objectPtr = nullptr;
+    objectPtr = new PlayerObject(this);
+    objectPtr->AddComponent(new Transform{ {60.f, 0.0f, 60.f} });
+    objectPtr->AddComponent(new AdjustTransform{ {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.1f, 0.1f, 0.1f} });
+    objectPtr->AddComponent(new Mesh{ "1P(boy-idle).fbx" });
+    objectPtr->AddComponent(new Texture{ L"boy" , 1.0f, 0.4f });
+    objectPtr->AddComponent(new Animation{ "1P(boy-idle).fbx" });
+    objectPtr->AddComponent(new Gravity);
+    objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {2.0f, 2.0f, 2.0f} });
+    AddObj(objectPtr);
+
+    objectPtr = new CameraObject(this, 70.0f);
+    objectPtr->AddComponent(new Transform{ {0.f, 0.0f, 0.f} });
+    AddObj(objectPtr);
+
+
+    objectPtr = new TestObject(this);
+    objectPtr->AddComponent(new Transform{ {0.0f, 0.0f, 0.0f} });
+    objectPtr->AddComponent(new Mesh{ "Plane" });
+    objectPtr->AddComponent(new Texture{ L"tile", 1.0f, 0.4f });
+    AddObj(objectPtr);
+
 }
 
 void Scene::BuildShadow()
@@ -213,7 +237,7 @@ std::tuple<float, float, float, float, float> Scene::GetBounds(float x, float z)
     float maxX = 300.0f;
     float maxZ = 300.0f;
 
-    if (true) // 터레인 이라면
+    if (mCurrentStage == L"Terrain")
     {
         ResourceManager& rm = GetResourceManager();
         int width = rm.GetTerrainData().terrainWidth;
@@ -313,6 +337,14 @@ std::tuple<XMVECTOR, float> Scene::GetCollisionData(BoundingOrientedBox OBB1, Bo
     }
 
     return { normal, penetration };
+}
+
+void Scene::DeleteCurrentObjects()
+{
+    for (Object* obj : m_objects) {
+        delete obj;
+    }
+    m_objects.clear();
 }
 
 void Scene::BuildRootSignature(ID3D12Device* device)
@@ -521,6 +553,11 @@ void Scene::BuildConstantBuffer(ID3D12Device* device)
     CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
     ThrowIfFailed(m_constantBuffer->Map(0, &readRange, &m_mappedData));
 
+    BuildCurrentObjsCB(device);
+}
+
+void Scene::BuildCurrentObjsCB(ID3D12Device* device)
+{
     for (Object* obj : m_objects) {
         obj->BuildConstantBuffer(device);
     }
@@ -635,6 +672,24 @@ std::unordered_map<std::string, ComPtr<ID3D12PipelineState>>& Scene::GetPSOs()
     return m_PSOs;
 }
 
+void Scene::ProcessInput()
+{
+    BYTE* keyState = m_parent->GetKeyState();
+    if ((keyState[VK_F1] & 0x88) == 0x80) {
+        DeleteCurrentObjects();
+        BuildTestObjects();
+        BuildCurrentObjsCB(m_parent->GetDevice());
+        mCurrentStage = L"Plane";
+    }
+
+    if ((keyState[VK_F2] & 0x88) == 0x80) {
+        DeleteCurrentObjects();
+        BuildObjects();
+        BuildCurrentObjsCB(m_parent->GetDevice());
+        mCurrentStage = L"Terrain";
+    }
+}
+
 void Scene::LoadMeshAnimationTexture()
 {
     m_resourceManager = make_unique<ResourceManager>();
@@ -693,6 +748,7 @@ void Scene::LoadMeshAnimationTexture()
 // Update frame-based values.
 void Scene::OnUpdate(GameTimer& gTimer)
 {
+    ProcessInput();
     for (Object* obj : m_objects)
     {
         obj->OnUpdate(gTimer);

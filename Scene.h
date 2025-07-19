@@ -12,7 +12,6 @@ class Scene
 {
 public:
     ~Scene();
-    Scene() = default;
     Scene(Framework* parent, UINT width, UINT height);
     void OnInit(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
     void OnUpdate(GameTimer& gTimer);
@@ -36,6 +35,7 @@ public:
     std::tuple<float, float, float, float, float> GetBounds(float x, float z);
     int GetTextureIndex(wstring name);
     std::tuple<XMVECTOR, float> GetCollisionData(BoundingOrientedBox OBB1, BoundingOrientedBox OBB2);
+    void DeleteCurrentObjects();
 
     template<typename T> 
     T* GetObj() 
@@ -48,6 +48,7 @@ public:
         return temp; 
     }
 private:
+    void ProcessInput();
     void LoadMeshAnimationTexture();
     void BuildRootSignature(ID3D12Device* device);
     void BuildPSO(ID3D12Device* device);
@@ -56,12 +57,14 @@ private:
     void BuildVertexBufferView();
     void BuildIndexBufferView();
     void BuildConstantBuffer(ID3D12Device* device);
+    void BuildCurrentObjsCB(ID3D12Device* device);
     void BuildConstantBufferView(ID3D12Device* device);
     void BuildTextureBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
     void BuildTextureBufferView(ID3D12Device* device);
     void BuildDescriptorHeap(ID3D12Device* device);
     void BuildProjMatrix();
-    void BuildObjects(ID3D12Device* device);
+    void BuildObjects();
+    void BuildTestObjects();
     void BuildShadow();
     void BuildShaders();
     void BuildInputElement();
@@ -70,6 +73,7 @@ private:
 private:
     Framework* m_parent = nullptr;
     vector<Object*> m_objects;
+    wstring mCurrentStage = L"Terrain";
     unique_ptr<ResourceManager> m_resourceManager;
     //
     CD3DX12_VIEWPORT m_viewport;

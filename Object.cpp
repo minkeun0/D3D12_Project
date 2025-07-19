@@ -206,9 +206,7 @@ void PlayerObject::OnKeyboardInput(const GameTimer& gTimer)
     if ((keyState[0x41] & 0x88) == 0x88) { dir -= XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f); } // a
     if ((keyState[0x44] & 0x88) == 0x88) { dir += XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f); } // d
 
-    Animation* anim = GetComponent<Animation>();
     float speed = 15;
-    anim->mCurrentFileName = "1P(boy-idle).fbx";
     
     Gravity* gravity = GetComponent<Gravity>();
     if ((keyState[VK_SPACE] & 0x88) == 0x80 && gravity) {
@@ -330,8 +328,6 @@ void TigerObject::OnUpdate(GameTimer& gTimer)
 {
     // RandomVelocity(gTimer);
     TigerBehavior(gTimer);
-    Animation* anim = GetComponent<Animation>(); 
-    anim->mCurrentFileName = "0208_tiger_attack.fbx";
     Object::OnUpdate(gTimer);
 }
 

@@ -34,18 +34,17 @@ void ResourceManager::LoadFbx(const string& fileName, bool onlyAnimation, bool z
 
 void ResourceManager::CreatePlane(const string& name, float size)
 {
-	float halfSize = size / 2;
-	float wrap = 100;
+	float wrap = 10.0f;
 	vector<Vertex> vertexData;
 
 	// Æò¸é
 	{
-		vertexData.push_back(Vertex{ {-halfSize, 0, halfSize},{0,1,0},{0,0} });
-		vertexData.push_back(Vertex{ {halfSize, 0, halfSize},{0,1,0},{wrap,0} });
-		vertexData.push_back(Vertex{ {-halfSize, 0, -halfSize},{0,1,0},{0,wrap} });
-		vertexData.push_back(Vertex{ {-halfSize, 0, -halfSize},{0,1,0},{0,wrap} });
-		vertexData.push_back(Vertex{ {halfSize, 0, halfSize},{0,1,0},{wrap,0} });
-		vertexData.push_back(Vertex{ {halfSize, 0, -halfSize},{0,1,0},{wrap,wrap} });
+		vertexData.push_back(Vertex{ { 0.0f, 0.0f, size},{0.0f,1.0f,0.0f},{0.0f,0.0f} });
+		vertexData.push_back(Vertex{ {size, 0.0f, size},{0.0f,1.0f,0.0f},{wrap,0.0f} });
+		vertexData.push_back(Vertex{ {size, 0.0f, 0.0f},{0.0f,1.0f,0.0f},{wrap,wrap} });
+		vertexData.push_back(Vertex{ {0.0f, 0.0f, size},{0.0f,1.0f,0.0f},{0.0f,0.0f} });
+		vertexData.push_back(Vertex{ {size, 0.0f, 0.0f},{0.0f,1.0f,0.0f},{wrap,wrap} });
+		vertexData.push_back(Vertex{ {0.0f, 0.0f, 0.0f},{0.0f,1.0f,0.0f},{0.0f,wrap} });
 	}
 
 	SubMeshData subData{};

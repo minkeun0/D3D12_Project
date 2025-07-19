@@ -173,3 +173,7 @@ BoundingOrientedBox& Collider::GetOBB()
 {
 	return mOBB;
 }
+
+Animation::Animation(string initFileName) : mCurrentFileName{initFileName}
+{
+}
