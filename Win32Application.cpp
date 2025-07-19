@@ -76,25 +76,24 @@ LRESULT CALLBACK Win32Application::WindowProc(HWND hWnd, UINT message, WPARAM wP
     {
     case WM_CREATE:
         {
-            // Save the DXSample* passed in to CreateWindow.
             LPCREATESTRUCT pCreateStruct = reinterpret_cast<LPCREATESTRUCT>(lParam);
             SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pCreateStruct->lpCreateParams));
         }
-        return 0;
+        break;
 
     case WM_KEYDOWN:
         if (pSample)
         {
             pSample->OnKeyDown(static_cast<UINT8>(wParam));
         }
-        return 0;
+        break;
 
     case WM_KEYUP:
         if (pSample)
         {
             pSample->OnKeyUp(static_cast<UINT8>(wParam));
         }
-        return 0;
+        break;
 
     case WM_MOUSEMOVE:
         if (pSample)
@@ -102,13 +101,13 @@ LRESULT CALLBACK Win32Application::WindowProc(HWND hWnd, UINT message, WPARAM wP
             pSample->GetScene(pSample->GetCurrentSceneName()).GetObj<CameraObject>()->OnMouseInput(
                 wParam, pSample->GetWin32App().GetHwnd());
         }
-        return 0;
+        break;
 
     case WM_MOVE:
         if (pSample) 
         {
         }
-        return 0;
+        break;
 
     case WM_SIZE:
         if (pSample)
@@ -117,13 +116,15 @@ LRESULT CALLBACK Win32Application::WindowProc(HWND hWnd, UINT message, WPARAM wP
             GetClientRect(hWnd, &clientRect);
             pSample->OnResize(clientRect.right - clientRect.left, clientRect.bottom - clientRect.top, wParam == SIZE_MINIMIZED);
         }
-        return 0;
+        break;
 
     case WM_DESTROY:
         PostQuitMessage(0);
-        return 0;
+        break;
+
+    default:
+        return DefWindowProc(hWnd, message, wParam, lParam);
     }
 
-    // Handle any messages the switch statement didn't.
-    return DefWindowProc(hWnd, message, wParam, lParam);
+    return 0;
 }

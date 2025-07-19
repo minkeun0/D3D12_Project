@@ -57,7 +57,6 @@ private:
     void BuildVertexBufferView();
     void BuildIndexBufferView();
     void BuildConstantBuffer(ID3D12Device* device);
-    void BuildCurrentObjsCB(ID3D12Device* device);
     void BuildConstantBufferView(ID3D12Device* device);
     void BuildTextureBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
     void BuildTextureBufferView(ID3D12Device* device);
@@ -106,10 +105,4 @@ private:
     unique_ptr<Shadow> m_shadow = nullptr;
 
     std::vector<D3D12_INPUT_ELEMENT_DESC> m_inputElement;
-
-    std::unordered_map <eBehavior, std::unordered_map<eEvent, eBehavior>> mPlayerTransitions = {
-        {eBehavior::Idle, {{eEvent::MoveKeyPressed, eBehavior::Walk}}},
-        {eBehavior::Walk, {{eEvent::ShiftKeyPressed, eBehavior::Run}, {eEvent::MoveKeyReleased, eBehavior::Idle}}},
-        {eBehavior::Run, {{eEvent::ShiftKeyReleased, eBehavior::Walk}, {eEvent::MoveKeyReleased, eBehavior::Idle}}},
-    };
 };

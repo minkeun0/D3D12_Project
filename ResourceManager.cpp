@@ -32,9 +32,8 @@ void ResourceManager::LoadFbx(const string& fileName, bool onlyAnimation, bool z
 	mFbxExtractor->ResetAndClear();
 }
 
-void ResourceManager::CreatePlane(const string& name, float size)
+void ResourceManager::CreatePlane(const string& name, float size, float wrap)
 {
-	float wrap = 10.0f;
 	vector<Vertex> vertexData;
 
 	// Æò¸é

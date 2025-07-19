@@ -4,6 +4,7 @@
 
 Framework::~Framework()
 {
+    OnDestroy();
     for (auto [key, value] : m_scenes) {
         delete value;
     }
@@ -20,10 +21,10 @@ Framework::Framework(HINSTANCE hInstance, int nCmdShow, UINT width, UINT height,
 
 int Framework::Run(HINSTANCE hInstance, int nCmdShow)
 {
-    // Initialize the framework.
     OnInit(hInstance, nCmdShow);
 
     ShowWindow(m_win32App->GetHwnd(), nCmdShow);
+    UpdateWindow(m_win32App->GetHwnd());
     ShowCursor(false);
     m_Timer.Reset();
 
@@ -31,7 +32,6 @@ int Framework::Run(HINSTANCE hInstance, int nCmdShow)
     MSG msg{};
     while (msg.message != WM_QUIT)
     {
-        // Process any messages in the queue.
         if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
         {
             TranslateMessage(&msg);
@@ -47,10 +47,7 @@ int Framework::Run(HINSTANCE hInstance, int nCmdShow)
             OnRender();
         }
     }
-    OnDestroy();
-
-    // Return this part of the WM_QUIT message to Windows.
-    return static_cast<char>(msg.wParam);
+    return static_cast<int>(msg.wParam);
 }
 
 void Framework::OnInit(HINSTANCE hInstance, int nCmdShow)
@@ -81,7 +78,7 @@ void Framework::OnInit(HINSTANCE hInstance, int nCmdShow)
 
 void Framework::OnUpdate(GameTimer& gTimer)
 {
-    processInput();
+    ProcessInput();
     m_scenes.at(L"BaseScene")->OnUpdate(gTimer);
 }
 
@@ -113,8 +110,7 @@ void Framework::OnRender()
 
 void Framework::OnResize(UINT width, UINT height, bool minimized)
 {
-    // Determine if the swap buffers and other resources need to be resized or not.
-    if ((width != m_win32App->GetWidth() || height != m_win32App->GetHeight()) && !minimized)
+    //if ((width != m_win32App->GetWidth() || height != m_win32App->GetHeight()) && !minimized)
     {
         WaitForPreviousFrame();
         ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), nullptr));
@@ -149,8 +145,6 @@ void Framework::OnResize(UINT width, UINT height, bool minimized)
 
 void Framework::OnDestroy()
 {
-    // Ensure that the GPU is no longer referencing resources that are about to be
-    // cleaned up by the destructor.
     WaitForPreviousFrame();
     CloseHandle(m_fenceEvent);
 }
@@ -279,7 +273,6 @@ void Framework::BuildFactoryAndDevice()
             IID_PPV_ARGS(&m_device)
         ));
     }
-    //ThrowIfFailed(m_factory->MakeWindowAssociation(m_win32App->GetHwnd(), DXGI_MWA_NO_ALT_ENTER));
 }
 
 void Framework::BuildCommandQueueAndSwapChain()
@@ -312,7 +305,7 @@ void Framework::BuildCommandQueueAndSwapChain()
     ));
     ThrowIfFailed(swapChain.As(&m_swapChain));
     m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
-
+    //ThrowIfFailed(m_factory->MakeWindowAssociation(m_win32App->GetHwnd(), DXGI_MWA_NO_ALT_ENTER));
 }
 
 void Framework::BuildCommandListAndAllocator()
@@ -462,11 +455,11 @@ void Framework::WaitForPreviousFrame()
     m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 }
 
-void Framework::processInput()
+void Framework::ProcessInput()
 {
     static const int keySize = 256;
     static BYTE keyState[keySize]{};
-    GetKeyboardState(keyState);
+    BOOL booooool = GetKeyboardState(keyState);
 
     for (int i = 0; i < keySize; ++i)
     {

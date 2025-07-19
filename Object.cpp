@@ -21,6 +21,7 @@ Object::~Object()
 
 Object::Object(Scene* root) : m_parent{ root }, m_mappedData{nullptr}
 {
+    BuildConstantBuffer(root->GetFramework()->GetDevice());
 }
 
 void Object::OnUpdate(GameTimer& gTimer)
@@ -53,7 +54,7 @@ void Object::LateUpdate(GameTimer& gTimer)
         transform->SetPosition(pos);
 
         Gravity* gravity = GetComponent<Gravity>();
-        if (outstatus == 0x04 && gravity)
+        if ((outstatus & 0x04) && gravity)
         {
             gravity->ResetElapseTime();
         }
@@ -116,9 +117,7 @@ void Object::BuildConstantBuffer(ID3D12Device* device)
         nullptr,
         IID_PPV_ARGS(&m_constantBuffer)));
 
-    // Map and initialize the constant buffer. We don't unmap this until the
-    // app closes. Keeping things mapped for the lifetime of the resource is okay.
-    CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
+    CD3DX12_RANGE readRange(0, 0);
     ThrowIfFailed(m_constantBuffer->Map(0, &readRange, reinterpret_cast<void**>(& m_mappedData)));
 }
 
@@ -175,24 +174,6 @@ void PlayerObject::OnProcessCollision(Object& other, XMVECTOR collisionNormal, f
     XMVECTOR pos = transform->GetPosition();
     pos += -collisionNormal * penetration;
     transform->SetPosition(pos);
-
-    float similarity = XMVectorGetX(XMVector3Dot(XMVECTOR{ 0.0f, 1.0f, 0.0f, 0.0f }, -collisionNormal));
-    Gravity* gravity = GetComponent<Gravity>();
-    if (gravity && similarity > 0.98f) {
-        gravity->ResetElapseTime();
-
-        XMMATRIX invFinalM = XMMatrixInverse(nullptr, transform->GetFinalM());
-        XMFLOAT3 targetNormal{};
-        XMStoreFloat3(&targetNormal, (XMVector3TransformNormal(-collisionNormal, invFinalM)));
-        float pitch = XMConvertToDegrees(atan2f(targetNormal.z, targetNormal.y));
-        float roll = XMConvertToDegrees(atan2f(targetNormal.x, sqrtf(targetNormal.z * targetNormal.z + targetNormal.y * targetNormal.y)));
-
-        XMFLOAT3 rot{};
-        XMStoreFloat3(&rot, transform->GetRotation());
-        rot.x += pitch;
-        rot.z -= roll;
-        transform->SetRotation(XMLoadFloat3(&rot));
-    }
 }
 
 void PlayerObject::OnKeyboardInput(const GameTimer& gTimer)

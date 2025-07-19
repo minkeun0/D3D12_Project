@@ -15,7 +15,7 @@ public:
 	ResourceManager();
 	~ResourceManager();
 	void LoadFbx(const string& fileName, bool onlyAnimation, bool zUp);
-	void CreatePlane(const string& name, float size);
+	void CreatePlane(const string& name, float size, float wrap);
 	void CreateTerrain(const string& name, int maxheight, int scale, int maxUV);
 	vector<Vertex>& GetVertexBuffer();
 	vector<uint32_t>& GetIndexBuffer();

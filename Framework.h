@@ -55,7 +55,7 @@ private:
 	void BuildScenes(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
 	void WaitForPreviousFrame();
 
-	void processInput();
+	void ProcessInput();
 
 	unique_ptr<Win32Application> m_win32App;
 

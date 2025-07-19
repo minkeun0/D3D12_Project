@@ -41,6 +41,10 @@ void Scene::OnInit(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 void Scene::BuildObjects()
 {
     Object* objectPtr = nullptr;
+    objectPtr = new CameraObject(this, 70.0f);
+    objectPtr->AddComponent(new Transform{ {0.f, 0.0f, 0.f} });
+    AddObj(objectPtr);
+
     objectPtr = new PlayerObject(this);
     objectPtr->AddComponent(new Transform{ {60.f, 0.0f, 60.f} });
     objectPtr->AddComponent(new AdjustTransform{ {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.1f, 0.1f, 0.1f} });
@@ -49,10 +53,6 @@ void Scene::BuildObjects()
     objectPtr->AddComponent(new Animation{ "1P(boy-idle).fbx" });
     objectPtr->AddComponent(new Gravity);
     objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {2.0f, 2.0f, 2.0f} });
-    AddObj(objectPtr);
-
-    objectPtr = new CameraObject(this, 70.0f);
-    objectPtr->AddComponent(new Transform{ {0.f, 0.0f, 0.f} });
     AddObj(objectPtr);
 
     objectPtr = new TerrainObject(this);
@@ -76,7 +76,7 @@ void Scene::BuildObjects()
             objectPtr->AddComponent(new AdjustTransform{ {-16.5f, 4.5f, -50.f}, {0.0f, 0.0f, 0.0f}, {20.0f, 20.0f, 20.0f} });
             objectPtr->AddComponent(new Mesh{ "long_tree.fbx" });
             objectPtr->AddComponent(new Texture{ L"longTree", 1.0f, 0.4f });
-            objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {2.0f, 10.0f, 2.0f} });
+            objectPtr->AddComponent(new Collider{ {0.0f, 10.0f, 0.0f}, {2.0f, 10.0f, 2.0f} });
             AddObj(objectPtr);
         }
     }
@@ -100,6 +100,10 @@ void Scene::BuildObjects()
 void Scene::BuildTestObjects()
 {
     Object* objectPtr = nullptr;
+    objectPtr = new CameraObject(this, 70.0f);
+    objectPtr->AddComponent(new Transform{ {0.f, 0.0f, 0.f} });
+    AddObj(objectPtr);
+
     objectPtr = new PlayerObject(this);
     objectPtr->AddComponent(new Transform{ {60.f, 0.0f, 60.f} });
     objectPtr->AddComponent(new AdjustTransform{ {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.1f, 0.1f, 0.1f} });
@@ -110,9 +114,6 @@ void Scene::BuildTestObjects()
     objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {2.0f, 2.0f, 2.0f} });
     AddObj(objectPtr);
 
-    objectPtr = new CameraObject(this, 70.0f);
-    objectPtr->AddComponent(new Transform{ {0.f, 0.0f, 0.f} });
-    AddObj(objectPtr);
 
 
     objectPtr = new TestObject(this);
@@ -234,8 +235,8 @@ std::tuple<float, float, float, float, float> Scene::GetBounds(float x, float z)
     float minY = 0.0f;
     float minZ = 0.0f;
 
-    float maxX = 300.0f;
-    float maxZ = 300.0f;
+    float maxX = 500.0f;
+    float maxZ = 500.0f;
 
     if (mCurrentStage == L"Terrain")
     {
@@ -552,15 +553,6 @@ void Scene::BuildConstantBuffer(ID3D12Device* device)
     // app closes. Keeping things mapped for the lifetime of the resource is okay.
     CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
     ThrowIfFailed(m_constantBuffer->Map(0, &readRange, &m_mappedData));
-
-    BuildCurrentObjsCB(device);
-}
-
-void Scene::BuildCurrentObjsCB(ID3D12Device* device)
-{
-    for (Object* obj : m_objects) {
-        obj->BuildConstantBuffer(device);
-    }
 }
 
 void Scene::BuildConstantBufferView(ID3D12Device* device)
@@ -678,14 +670,12 @@ void Scene::ProcessInput()
     if ((keyState[VK_F1] & 0x88) == 0x80) {
         DeleteCurrentObjects();
         BuildTestObjects();
-        BuildCurrentObjsCB(m_parent->GetDevice());
         mCurrentStage = L"Plane";
     }
 
     if ((keyState[VK_F2] & 0x88) == 0x80) {
         DeleteCurrentObjects();
         BuildObjects();
-        BuildCurrentObjsCB(m_parent->GetDevice());
         mCurrentStage = L"Terrain";
     }
 }
@@ -693,7 +683,7 @@ void Scene::ProcessInput()
 void Scene::LoadMeshAnimationTexture()
 {
     m_resourceManager = make_unique<ResourceManager>();
-    m_resourceManager->CreatePlane("Plane", 500);
+    m_resourceManager->CreatePlane("Plane", 500, 5);
     m_resourceManager->CreateTerrain("HeightMap.raw", 100, 10, 80);
     m_resourceManager->LoadFbx("1P(boy-idle).fbx", false, true);
     m_resourceManager->LoadFbx("boy_walk_fix.fbx", true, true);

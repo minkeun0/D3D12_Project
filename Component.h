@@ -87,7 +87,7 @@ public:
 	void SetVerticalSpeed(float speed);
 private:
 	float mElapseTime = 0.0f;
-	float mG = 40.0f;
+	float mG = 80.0f;
 	float mVerticalSpeed = 0.0f;
 };
 
