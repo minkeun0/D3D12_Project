@@ -89,3 +89,14 @@ private:
 	float mG = 40.0f;
 	float mVerticalSpeed = 0.0f;
 };
+
+class Collider : public Component
+{
+public:
+	Collider(XMFLOAT3&& center = { 0.0f, 0.0f, 0.0f }, XMFLOAT3&& extents = { 0.5f, 0.5f, 0.5f }, XMFLOAT4&& orientation = { 0.0f, 0.0f, 0.0f, 1.0f });
+	void UpdateOBB(XMMATRIX M);
+	BoundingOrientedBox& GetOBB();
+private:
+	BoundingOrientedBox mBaseOBB{};
+	BoundingOrientedBox mOBB{};
+};

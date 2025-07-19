@@ -157,3 +157,19 @@ void Gravity::SetVerticalSpeed(float speed)
 {
 	mVerticalSpeed = speed;
 }
+
+Collider::Collider(XMFLOAT3&& center, XMFLOAT3&& extents, XMFLOAT4&& orientation) :
+	mBaseOBB{ std::move(center), std::move(extents), std::move(orientation) }
+{
+}
+
+void Collider::UpdateOBB(XMMATRIX M)
+{
+	mBaseOBB.Transform(mOBB, M);
+	XMStoreFloat4(&mOBB.Orientation, XMQuaternionNormalize(XMLoadFloat4(&mOBB.Orientation)));
+}
+
+BoundingOrientedBox& Collider::GetOBB()
+{
+	return mOBB;
+}

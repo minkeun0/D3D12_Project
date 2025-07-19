@@ -10,6 +10,7 @@ public:
 	virtual ~Object();
 	Object(Scene* root);
 	virtual void OnUpdate(GameTimer& gTimer);
+	virtual void OnProcessCollision(Object& other, XMVECTOR collisionNormal, float penetration);
 	virtual void LateUpdate(GameTimer& gTimer);
 	virtual void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList * commandList);
 	void BuildConstantBuffer(ID3D12Device* device);
@@ -41,6 +42,7 @@ class PlayerObject : public Object
 public:
 	PlayerObject(Scene* root);
 	void OnUpdate(GameTimer& gTimer) override;
+	void OnProcessCollision(Object& other, XMVECTOR collisionNormal, float penetration) override;
 private:
 	void OnKeyboardInput(const GameTimer& gTimer);
 };
@@ -83,11 +85,12 @@ class TigerObject : public Object
 public:
 	TigerObject(Scene* root);
 	void OnUpdate(GameTimer& gTimer) override;
+	void OnProcessCollision(Object& other, XMVECTOR collisionNormal, float penetration) override;
 private:
 	void TigerBehavior(GameTimer& gTimer);
 	void RandomVelocity(GameTimer& gTimer);
-	float mTimer;
-	XMFLOAT3 mTempVelocity;
+	float mTimer = 0.0f;
+	XMFLOAT3 mTempVelocity{};
 };
 
 class StoneObject : public Object

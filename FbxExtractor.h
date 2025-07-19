@@ -73,5 +73,7 @@ private:
 	bool mBone;
 	bool mNormalize;
 	bool mOnlyAnimation;
+
+	string mDirectory = "./Fbxs/";
 };
 

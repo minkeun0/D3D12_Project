@@ -50,6 +50,7 @@ void Scene::BuildObjects(ID3D12Device* device)
     objectPtr->AddComponent(new Texture{ L"boy" , 1.0f, 0.4f});
     objectPtr->AddComponent(new Animation);
     objectPtr->AddComponent(new Gravity);
+    objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {2.0f, 2.0f, 2.0f} });
     AddObj(objectPtr);
 
     objectPtr = new CameraObject(this, 70.0f);
@@ -77,6 +78,7 @@ void Scene::BuildObjects(ID3D12Device* device)
             objectPtr->AddComponent(new AdjustTransform{ {-16.5f, 4.5f, -50.f}, {0.0f, 0.0f, 0.0f}, {20.0f, 20.0f, 20.0f} });
             objectPtr->AddComponent(new Mesh{ "long_tree.fbx" });
             objectPtr->AddComponent(new Texture{ L"longTree", 1.0f, 0.4f });
+            objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {2.0f, 10.0f, 2.0f} });
             AddObj(objectPtr);
         }
     }
@@ -87,10 +89,11 @@ void Scene::BuildObjects(ID3D12Device* device)
             objectPtr = new TigerObject(this);
             objectPtr->AddComponent(new Transform{ {70.f + 700.f * j, 0.f, 70.f + 700.f * i} });
             objectPtr->AddComponent(new AdjustTransform{ {0.0f, 0.0f, -8.0f}, {0.0f, 180.0f, 0.0f}, {0.2f, 0.2f, 0.2f} });
-            objectPtr->AddComponent(new Mesh{ "202411_deafult_tiger.fbx" });
+            objectPtr->AddComponent(new Mesh{ "0113_tiger.fbx" });
             objectPtr->AddComponent(new Texture{ L"tigercolor", 1.0f, 0.4f});
             objectPtr->AddComponent(new Animation);
             objectPtr->AddComponent(new Gravity);
+            objectPtr->AddComponent(new Collider{ {0.0f, 3.0f, 0.0f}, {2.0f, 2.0f, 10.0f} });
             AddObj(objectPtr);
         }
     }
@@ -249,6 +252,67 @@ std::tuple<float, float, float, float, float> Scene::GetBounds(float x, float z)
 int Scene::GetTextureIndex(wstring name)
 {
     return m_texture_name_to_index.at(name);
+}
+
+std::tuple<XMVECTOR, float> Scene::GetCollisionData(BoundingOrientedBox OBB1, BoundingOrientedBox OBB2)
+{
+    XMVECTOR Center1 = XMLoadFloat3(&OBB1.Center);
+    XMVECTOR Center2 = XMLoadFloat3(&OBB2.Center);
+    XMVECTOR centerToCenter = Center2 - Center1;
+
+    XMVECTOR quaternion1 = XMLoadFloat4(&OBB1.Orientation);
+    XMVECTOR axes1[3]{};
+    axes1[0] = XMVector3Rotate({ 1.0f, 0.0f, 0.0f }, quaternion1);
+    axes1[1] = XMVector3Rotate({ 0.0f, 1.0f, 0.0f }, quaternion1);
+    axes1[2] = XMVector3Rotate({ 0.0f, 0.0f, 1.0f }, quaternion1);
+
+    XMVECTOR quaternion2 = XMLoadFloat4(&OBB2.Orientation);
+    XMVECTOR axes2[3]{};
+    axes2[0] = XMVector3Normalize(XMVector3Rotate({ 1.0f, 0.0f, 0.0f }, quaternion2));
+    axes2[1] = XMVector3Normalize(XMVector3Rotate({ 0.0f, 1.0f, 0.0f }, quaternion2));
+    axes2[2] = XMVector3Normalize(XMVector3Rotate({ 0.0f, 0.0f, 1.0f }, quaternion2));
+
+    const int testAxesCount = 15;
+    XMVECTOR testAxes[testAxesCount] = {
+        axes1[0], axes1[1], axes1[2],
+        axes2[0], axes2[1], axes2[2]
+    };
+
+    int offset = 6;
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            testAxes[offset++] = XMVector3Normalize(XMVector3Cross(axes1[i], axes2[j]));
+        }
+    }
+
+    auto GetProjValue = [](XMVECTOR axis, XMVECTOR* axes, XMFLOAT3 extents) {
+        return fabs(XMVectorGetX(XMVector3Dot(axis, axes[0]))) * extents.x +
+            fabs(XMVectorGetX(XMVector3Dot(axis, axes[1]))) * extents.y +
+            fabs(XMVectorGetX(XMVector3Dot(axis, axes[2]))) * extents.z; };
+
+    float penetration = FLT_MAX;
+    XMVECTOR normal = XMVectorZero();
+    for (int i = 0; i < testAxesCount; ++i) {
+        float lengthSq = XMVectorGetX(XMVector3LengthSq(testAxes[i]));
+        if (lengthSq < 0.001f) continue;
+
+        XMVECTOR axis = testAxes[i];
+        float projValue1 = GetProjValue(axis, axes1, OBB1.Extents);
+        float projValue2 = GetProjValue(axis, axes2, OBB2.Extents);
+        float distance = fabs(XMVectorGetX(XMVector3Dot(centerToCenter, axis)));
+        float overlap = projValue1 + projValue2 - distance;
+
+        if (overlap < penetration) {
+            penetration = overlap;
+            normal = axis;
+        }
+    }
+
+    if (XMVectorGetX(XMVector3Dot(normal, centerToCenter)) < 0.0f) {
+        normal = -normal;
+    }
+
+    return { normal, penetration };
 }
 
 void Scene::BuildRootSignature(ID3D12Device* device)
@@ -578,16 +642,16 @@ void Scene::LoadMeshAnimationTexture()
     m_resourceManager->CreateTerrain("HeightMap.raw", 100, 10, 80);
     m_resourceManager->LoadFbx("1P(boy-idle).fbx", false, true);
     m_resourceManager->LoadFbx("boy_walk_fix.fbx", true, true);
-    m_resourceManager->LoadFbx("1P(boy-jump).fbx", true, true);
     m_resourceManager->LoadFbx("boy_run_fix.fbx", true, true);
     m_resourceManager->LoadFbx("boy_pickup_fix.fbx", true, true);
     m_resourceManager->LoadFbx("boy_attack(45).fbx", true, true);
 
-    m_resourceManager->LoadFbx("long_tree.fbx", false, true);
-    m_resourceManager->LoadFbx("202411_deafult_tiger.fbx", false, true);
-    m_resourceManager->LoadFbx("202411_walk_tiger_center.fbx", true, true);
+    m_resourceManager->LoadFbx("0113_tiger.fbx", false, true);
+    m_resourceManager->LoadFbx("0113_tiger_walk.fbx", true, true);
+    m_resourceManager->LoadFbx("0113_tiger_run.fbx", true, true);
+    m_resourceManager->LoadFbx("0208_tiger_attack.fbx", true, true);
 
-    m_resourceManager->LoadFbx("background_house.fbx", false, true);
+    m_resourceManager->LoadFbx("long_tree.fbx", false, true);
     m_resourceManager->LoadFbx("broken_house.fbx", false, true);
     m_resourceManager->LoadFbx("broken_house2.fbx", false, true);
 
@@ -602,8 +666,6 @@ void Scene::LoadMeshAnimationTexture()
     m_texture_name_to_index.insert({ L"grass", i++ });
     m_DDSFileName.push_back(L"./Textures/tile.dds");
     m_texture_name_to_index.insert({ L"tile", i++ });
-    m_DDSFileName.push_back(L"./Textures/WireFence.dds");
-    m_texture_name_to_index.insert({ L"WireFence", i++ });
     m_DDSFileName.push_back(L"./Textures/god.dds");
     m_texture_name_to_index.insert({ L"god", i++ });
     m_DDSFileName.push_back(L"./Textures/sister.dds");
@@ -697,8 +759,30 @@ void Scene::OnKeyUp(UINT8 key)
 {
 }
 
-void Scene::CheckCollision()
+void Scene::OnProcessCollision()
 {
+    size_t objCount = m_objects.size();
+    for (int i = 0; i < objCount - 1; ++i)
+    {
+        //if (!mObjBuffer[i].IsValid()) continue;
+        Object* obj = m_objects[i];
+        Collider* collider = obj->GetComponent<Collider>();
+        if (!collider) continue;
+        auto& OBB = collider->GetOBB();
+        for (int j = i + 1; j < objCount; ++j)
+        {
+            //if (!mObjBuffer[i].IsValid()) break;
+            //if (!mObjBuffer[j].IsValid()) continue;
+            Object* otherObj = m_objects[j];
+            Collider* otherCollider = otherObj->GetComponent<Collider>();
+            if (!otherCollider) continue;
+            auto& otherOBB = otherCollider->GetOBB();
+            if (!OBB.Intersects(otherOBB)) continue;
+            auto [normal, penetration] = GetCollisionData(OBB, otherOBB);
+            obj->OnProcessCollision(*otherObj, normal, penetration);
+            otherObj->OnProcessCollision(*obj, -normal, penetration);
+        }
+    }
 }
 
 void Scene::LateUpdate(GameTimer& gTimer)

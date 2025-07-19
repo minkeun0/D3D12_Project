@@ -32,7 +32,17 @@ void Object::OnUpdate(GameTimer& gTimer)
         XMVECTOR newPos = gravity->ProcessGravity(transform->GetPosition(), gTimer.DeltaTime());
         transform->SetPosition(newPos);
     }
+
+    Collider* collider = GetComponent<Collider>();
+    if (collider) {
+        collider->UpdateOBB(transform->GetTransformM());
+    }
 }
+void Object::OnProcessCollision(Object& other, XMVECTOR collisionNormal, float penetration)
+{
+
+}
+
 void Object::LateUpdate(GameTimer& gTimer)
 {
     Transform* transform = GetComponent<Transform>();
@@ -157,6 +167,32 @@ void PlayerObject::OnUpdate(GameTimer& gTimer)
     //    break;
     //}
     Object::OnUpdate(gTimer);
+}
+
+void PlayerObject::OnProcessCollision(Object& other, XMVECTOR collisionNormal, float penetration)
+{
+    Transform* transform = GetComponent<Transform>();
+    XMVECTOR pos = transform->GetPosition();
+    pos += -collisionNormal * penetration;
+    transform->SetPosition(pos);
+
+    float similarity = XMVectorGetX(XMVector3Dot(XMVECTOR{ 0.0f, 1.0f, 0.0f, 0.0f }, -collisionNormal));
+    Gravity* gravity = GetComponent<Gravity>();
+    if (gravity && similarity > 0.98f) {
+        gravity->ResetElapseTime();
+
+        XMMATRIX invFinalM = XMMatrixInverse(nullptr, transform->GetFinalM());
+        XMFLOAT3 targetNormal{};
+        XMStoreFloat3(&targetNormal, (XMVector3TransformNormal(-collisionNormal, invFinalM)));
+        float pitch = XMConvertToDegrees(atan2f(targetNormal.z, targetNormal.y));
+        float roll = XMConvertToDegrees(atan2f(targetNormal.x, sqrtf(targetNormal.z * targetNormal.z + targetNormal.y * targetNormal.y)));
+
+        XMFLOAT3 rot{};
+        XMStoreFloat3(&rot, transform->GetRotation());
+        rot.x += pitch;
+        rot.z -= roll;
+        transform->SetRotation(XMLoadFloat3(&rot));
+    }
 }
 
 void PlayerObject::OnKeyboardInput(const GameTimer& gTimer)
@@ -294,12 +330,17 @@ void TigerObject::OnUpdate(GameTimer& gTimer)
 {
     // RandomVelocity(gTimer);
     TigerBehavior(gTimer);
-    Transform* transform = GetComponent<Transform>();
-
     Animation* anim = GetComponent<Animation>(); 
-    anim->mCurrentFileName = "202411_walk_tiger_center.fbx";
-
+    anim->mCurrentFileName = "0208_tiger_attack.fbx";
     Object::OnUpdate(gTimer);
+}
+
+void TigerObject::OnProcessCollision(Object& other, XMVECTOR collisionNormal, float penetration)
+{
+    Transform* transform = GetComponent<Transform>();
+    XMVECTOR pos = transform->GetPosition();
+    pos += -collisionNormal * penetration;
+    transform->SetPosition(pos);
 }
 
 void TigerObject::TigerBehavior(GameTimer& gTimer)
@@ -315,10 +356,9 @@ void TigerObject::TigerBehavior(GameTimer& gTimer)
     
     float speed = 15.f;
     float result = XMVectorGetX(XMVector3Length(vec));
-    if (result < 200.f) {
+    if (result < 200.f && result > 20.0f) {
         vec = XMVector3Normalize(XMVectorSetY(vec, 0.0f));
         transform->SetPosition(pos + vec * speed * gTimer.DeltaTime());
-               
         float yaw = atan2f(XMVectorGetX(vec), XMVectorGetZ(vec)) * 180 / 3.141592f;
         transform->SetRotation({ 0.0f, yaw, 0.0f });
     }

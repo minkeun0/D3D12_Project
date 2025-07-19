@@ -27,9 +27,9 @@ FbxExtractor::~FbxExtractor()
 
 void FbxExtractor::ImportFbxFile(const std::string& fileName, bool onlyAnimation, bool zUp)
 {
-
+	string fullFileName = mDirectory + fileName;
 	mFbxImporter = FbxImporter::Create(mFbxManager, "");
-	if(mFbxImporter->Initialize(fileName.c_str(), -1, mFbxManager->GetIOSettings()) == false) throw;
+	if(mFbxImporter->Initialize(fullFileName.c_str(), -1, mFbxManager->GetIOSettings()) == false) throw;
 
 	mFbxScene = FbxScene::Create(mFbxManager, "");
 	if(mFbxImporter->Import(mFbxScene) == false) throw;

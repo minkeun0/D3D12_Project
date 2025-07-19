@@ -14,7 +14,7 @@ public:
 	int Run(HINSTANCE hInstance, int nCmdShow);
 	void OnInit(HINSTANCE hInstance, int nCmdShow);
 	void OnUpdate(GameTimer& gTimer);
-	void CheckCollision();
+	void OnProcessCollision();
 	void LateUpdate(GameTimer& gTimer);
 	void OnRender();
 	void OnResize(UINT width, UINT height, bool minimized);

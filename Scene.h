@@ -16,7 +16,7 @@ public:
     Scene(Framework* parent, UINT width, UINT height);
     void OnInit(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
     void OnUpdate(GameTimer& gTimer);
-    void CheckCollision();
+    void OnProcessCollision();
     void LateUpdate(GameTimer& gTimer);
     void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, ePass pass);
     void OnResize(UINT width, UINT height);
@@ -35,6 +35,7 @@ public:
     char ClampToBounds(XMVECTOR& pos, XMVECTOR offset);
     std::tuple<float, float, float, float, float> GetBounds(float x, float z);
     int GetTextureIndex(wstring name);
+    std::tuple<XMVECTOR, float> GetCollisionData(BoundingOrientedBox OBB1, BoundingOrientedBox OBB2);
 
     template<typename T> 
     T* GetObj() 

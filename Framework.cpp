@@ -42,7 +42,7 @@ int Framework::Run(HINSTANCE hInstance, int nCmdShow)
             m_Timer.Tick();
             CalculateFrame();
             OnUpdate(m_Timer);
-            CheckCollision();
+            OnProcessCollision();
             LateUpdate(m_Timer);
             OnRender();
         }
@@ -85,9 +85,9 @@ void Framework::OnUpdate(GameTimer& gTimer)
     m_scenes.at(L"BaseScene")->OnUpdate(gTimer);
 }
 
-void Framework::CheckCollision()
+void Framework::OnProcessCollision()
 {
-    m_scenes.at(L"BaseScene")->CheckCollision();
+    m_scenes.at(L"BaseScene")->OnProcessCollision();
 }
 
 void Framework::LateUpdate(GameTimer& gTimer)
