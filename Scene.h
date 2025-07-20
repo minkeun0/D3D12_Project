@@ -4,7 +4,7 @@
 #include "ResourceManager.h"
 #include <utility>
 #include "Shadow.h"
-
+#define MAX_QUEUE 700
 class GameTimer;
 class Framework;
 
@@ -35,19 +35,24 @@ public:
     std::tuple<float, float, float, float, float> GetBounds(float x, float z);
     int GetTextureIndex(wstring name);
     std::tuple<XMVECTOR, float> GetCollisionData(BoundingOrientedBox OBB1, BoundingOrientedBox OBB2);
-    void DeleteCurrentObjects();
+    Object* GetObjFromId(uint32_t id);
 
-    template<typename T> 
-    T* GetObj() 
+    template<typename T>
+    T* GetObj()
     {
         T* temp = nullptr;
         for (Object* obj : m_objects) {
+            if (!obj->GetValid()) continue;
             temp = dynamic_cast<T*>(obj);
             if (temp) break;
         }
-        return temp; 
+        return temp;
     }
 private:
+    void CompactObjects();
+    void ProcessObjectQueue();
+    uint32_t AllocateId();
+    void DeleteCurrentObjects();
     void ProcessInput();
     void LoadMeshAnimationTexture();
     void BuildRootSignature(ID3D12Device* device);
@@ -71,8 +76,12 @@ private:
         const std::wstring& fileName, const D3D_SHADER_MACRO* defines, const std::string& entryPoint, const std::string& target);
 private:
     Framework* m_parent = nullptr;
-    vector<Object*> m_objects;
     wstring mCurrentStage = L"Terrain";
+    vector<Object*> m_objects;
+    uint32_t m_id_counter = 0;
+    Object* m_object_queue[MAX_QUEUE]{};
+    int m_object_queue_index = 0;
+    //
     unique_ptr<ResourceManager> m_resourceManager;
     //
     CD3DX12_VIEWPORT m_viewport;

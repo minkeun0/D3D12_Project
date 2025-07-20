@@ -41,11 +41,11 @@ void Scene::OnInit(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 void Scene::BuildObjects()
 {
     Object* objectPtr = nullptr;
-    objectPtr = new CameraObject(this, 70.0f);
+    objectPtr = new CameraObject(this, AllocateId());
     objectPtr->AddComponent(new Transform{ {0.f, 0.0f, 0.f} });
     AddObj(objectPtr);
 
-    objectPtr = new PlayerObject(this);
+    objectPtr = new PlayerObject(this, AllocateId());
     objectPtr->AddComponent(new Transform{ {60.f, 0.0f, 60.f} });
     objectPtr->AddComponent(new AdjustTransform{ {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.1f, 0.1f, 0.1f} });
     objectPtr->AddComponent(new Mesh{ "1P(boy-idle).fbx"});
@@ -55,13 +55,13 @@ void Scene::BuildObjects()
     objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {2.0f, 2.0f, 2.0f} });
     AddObj(objectPtr);
 
-    objectPtr = new TerrainObject(this);
+    objectPtr = new TerrainObject(this, AllocateId());
     objectPtr->AddComponent(new Transform{ {0.f, 0.0f, 0.f} });
     objectPtr->AddComponent(new Mesh{ "HeightMap.raw"});
     objectPtr->AddComponent(new Texture{ L"grass" , 5.0f, 0.4f});
     AddObj(objectPtr);
 
-    objectPtr = new TestObject(this);
+    objectPtr = new TestObject(this, AllocateId());
     objectPtr->AddComponent(new Transform{ {60.0f, 0.0f, 60.0f} });
     objectPtr->AddComponent(new AdjustTransform{ {0.0f, 0.0f, -5.0f}, {0.0f, 0.0f, 0.0f}, {0.1f, 0.1f, 0.1f} });
     objectPtr->AddComponent(new Mesh{ "broken_house.fbx"});
@@ -71,12 +71,12 @@ void Scene::BuildObjects()
     int repeat = 17;
     for (int i = 0; i < repeat; ++i) {
         for (int j = 0; j < repeat; ++j) {
-            objectPtr = new TreeObject(this);
+            objectPtr = new TreeObject(this, AllocateId());
             objectPtr->AddComponent(new Transform{ {100.f + 150.f * j, -100.f, 100.f + 150.f * i}});
             objectPtr->AddComponent(new AdjustTransform{ {-16.5f, 4.5f, -50.f}, {0.0f, 0.0f, 0.0f}, {20.0f, 20.0f, 20.0f} });
             objectPtr->AddComponent(new Mesh{ "long_tree.fbx" });
             objectPtr->AddComponent(new Texture{ L"longTree", 1.0f, 0.4f });
-            objectPtr->AddComponent(new Collider{ {0.0f, 10.0f, 0.0f}, {2.0f, 10.0f, 2.0f} });
+            objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {2.0f, 15.0f, 2.0f} });
             AddObj(objectPtr);
         }
     }
@@ -84,7 +84,7 @@ void Scene::BuildObjects()
     repeat = 3;
     for (int i = 0; i < repeat; ++i) {
         for (int j = 0; j < repeat; ++j) {
-            objectPtr = new TigerObject(this);
+            objectPtr = new TigerObject(this, AllocateId());
             objectPtr->AddComponent(new Transform{ {70.f + 700.f * j, 0.f, 70.f + 700.f * i} });
             objectPtr->AddComponent(new AdjustTransform{ {0.0f, 0.0f, -8.0f}, {0.0f, 180.0f, 0.0f}, {0.2f, 0.2f, 0.2f} });
             objectPtr->AddComponent(new Mesh{ "0113_tiger.fbx" });
@@ -100,11 +100,11 @@ void Scene::BuildObjects()
 void Scene::BuildTestObjects()
 {
     Object* objectPtr = nullptr;
-    objectPtr = new CameraObject(this, 70.0f);
+    objectPtr = new CameraObject(this, AllocateId());
     objectPtr->AddComponent(new Transform{ {0.f, 0.0f, 0.f} });
     AddObj(objectPtr);
 
-    objectPtr = new PlayerObject(this);
+    objectPtr = new PlayerObject(this, AllocateId());
     objectPtr->AddComponent(new Transform{ {60.f, 0.0f, 60.f} });
     objectPtr->AddComponent(new AdjustTransform{ {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.1f, 0.1f, 0.1f} });
     objectPtr->AddComponent(new Mesh{ "1P(boy-idle).fbx" });
@@ -113,10 +113,24 @@ void Scene::BuildTestObjects()
     objectPtr->AddComponent(new Gravity);
     objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {2.0f, 2.0f, 2.0f} });
     AddObj(objectPtr);
+    
+    objectPtr = new TreeObject(this, AllocateId(), objectPtr->GetId());
+    objectPtr->AddComponent(new Transform{ { 0.0f, 5.0f, -3.0f} });
+    objectPtr->AddComponent(new AdjustTransform{ {-0.8f * 2.0f, 0.3f * 2.0f, -2.5f * 2.0f}, {0.0f, 0.0f, 0.0f}, {2.0f, 2.0f, 2.0f} });
+    objectPtr->AddComponent(new Mesh{ "long_tree.fbx" });
+    objectPtr->AddComponent(new Texture{ L"longTree", 1.0f, 0.4f });
+    AddObj(objectPtr);
 
+    objectPtr = new TestObject(this, AllocateId());
+    objectPtr->AddComponent(new Transform{ {60.0f, 100.0f, 60.0f} });
+    objectPtr->AddComponent(new AdjustTransform{ {-0.8f * 20.0f, 0.3f * 20.0f, -2.5f * 20.0f}, {0.0f, 0.0f, 0.0f}, {20.0f, 20.0f, 20.0f} });
+    objectPtr->AddComponent(new Mesh{ "long_tree.fbx" });
+    objectPtr->AddComponent(new Texture{ L"longTree", 1.0f, 0.4f });
+    objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {2.0f, 15.0f, 2.0f} });
+    objectPtr->AddComponent(new Gravity);
+    AddObj(objectPtr);
 
-
-    objectPtr = new TestObject(this);
+    objectPtr = new TestObject(this, AllocateId());
     objectPtr->AddComponent(new Transform{ {0.0f, 0.0f, 0.0f} });
     objectPtr->AddComponent(new Mesh{ "Plane" });
     objectPtr->AddComponent(new Texture{ L"tile", 1.0f, 0.4f });
@@ -179,6 +193,7 @@ void Scene::RenderObjects(ID3D12Device* device, ID3D12GraphicsCommandList* comma
 {
     for (Object* obj : m_objects)
     {
+        if (!obj->GetValid()) continue;
         obj->OnRender(device, commandList);
     }
 }
@@ -338,6 +353,36 @@ std::tuple<XMVECTOR, float> Scene::GetCollisionData(BoundingOrientedBox OBB1, Bo
     }
 
     return { normal, penetration };
+}
+
+Object* Scene::GetObjFromId(uint32_t id)
+{
+    Object* temp = nullptr;
+    for (Object* obj : m_objects) {
+        if (!obj->GetValid()) continue;
+        if (id == obj->GetId()) {
+            return obj;
+        }
+    }
+    return nullptr;
+}
+
+void Scene::CompactObjects()
+{
+    m_objects.erase(std::remove_if(m_objects.begin(), m_objects.end(), [](Object* obj) { return !(obj->GetValid()); }), m_objects.end());
+}
+
+void Scene::ProcessObjectQueue()
+{
+    for (int i = 0; i < m_object_queue_index; ++i) {
+        m_objects.push_back(m_object_queue[i]);
+    }
+    m_object_queue_index = 0;
+}
+
+uint32_t Scene::AllocateId()
+{
+    return m_id_counter++;
 }
 
 void Scene::DeleteCurrentObjects()
@@ -650,7 +695,8 @@ UINT Scene::GetNumOfTexture()
 
 void Scene::AddObj(Object* object)
 {
-    m_objects.push_back(object);
+    if (m_object_queue_index > MAX_QUEUE - 1) throw; // 공간부족
+    m_object_queue[m_object_queue_index++] = object;
 }
 
 void Scene::BuildProjMatrix()
@@ -739,8 +785,11 @@ void Scene::LoadMeshAnimationTexture()
 void Scene::OnUpdate(GameTimer& gTimer)
 {
     ProcessInput();
+    CompactObjects();
+    ProcessObjectQueue();
     for (Object* obj : m_objects)
     {
+        if (!obj->GetValid()) continue;
         obj->OnUpdate(gTimer);
     }
 
@@ -810,15 +859,15 @@ void Scene::OnProcessCollision()
     size_t objCount = m_objects.size();
     for (int i = 0; i < objCount - 1; ++i)
     {
-        //if (!mObjBuffer[i].IsValid()) continue;
+        if (!m_objects[i]->GetValid()) continue;
         Object* obj = m_objects[i];
         Collider* collider = obj->GetComponent<Collider>();
         if (!collider) continue;
         auto& OBB = collider->GetOBB();
         for (int j = i + 1; j < objCount; ++j)
         {
-            //if (!mObjBuffer[i].IsValid()) break;
-            //if (!mObjBuffer[j].IsValid()) continue;
+            if (!m_objects[i]->GetValid()) break;
+            if (!m_objects[j]->GetValid()) continue;
             Object* otherObj = m_objects[j];
             Collider* otherCollider = otherObj->GetComponent<Collider>();
             if (!otherCollider) continue;
@@ -835,6 +884,7 @@ void Scene::LateUpdate(GameTimer& gTimer)
 {
     for (Object* obj : m_objects)
     {
+        if (!obj->GetValid()) continue;
         obj->LateUpdate(gTimer);
     }
 }

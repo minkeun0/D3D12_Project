@@ -19,9 +19,9 @@ Object::~Object()
     }
 }
 
-Object::Object(Scene* root) : m_parent{ root }, m_mappedData{nullptr}
+Object::Object(Scene* scene, uint32_t id, uint32_t parentId) : m_scene{ scene }, m_id{id}, m_parent_id{parentId}
 {
-    BuildConstantBuffer(root->GetFramework()->GetDevice());
+    BuildConstantBuffer(scene->GetFramework()->GetDevice());
 }
 
 void Object::OnUpdate(GameTimer& gTimer)
@@ -34,23 +34,46 @@ void Object::OnUpdate(GameTimer& gTimer)
         transform->SetPosition(newPos);
     }
 
+    XMMATRIX finalM = transform->GetTransformM();
+    if (m_parent_id != -1) {
+        Object* parentObj = m_scene->GetObjFromId(m_parent_id);
+        if (parentObj) {
+            Transform* parentTransform = parentObj->GetComponent<Transform>();
+            finalM = finalM * parentTransform->GetFinalM();
+        }
+        else {
+            // 부모가 있었지만 현재는 없는상태
+            // 이런경우 일단 해당 오브젝트 삭제
+        }
+    }
+    transform->SetFinalM(finalM);
+
     Collider* collider = GetComponent<Collider>();
     if (collider) {
-        collider->UpdateOBB(transform->GetTransformM());
+        collider->UpdateOBB(finalM);
     }
 }
 void Object::OnProcessCollision(Object& other, XMVECTOR collisionNormal, float penetration)
 {
+    float similarity = XMVectorGetX(XMVector3Dot(XMVECTOR{ 0.0f, 1.0f, 0.0f, 0.0f }, -collisionNormal));
+    Gravity* gravity = GetComponent<Gravity>();
+    if (gravity && similarity > 0.95f) {
+        gravity->ResetElapseTime();
 
+        Transform* transform = GetComponent<Transform>();
+        XMVECTOR pos = transform->GetPosition();
+        pos += -collisionNormal * penetration;
+        transform->SetPosition(pos);
+    }
 }
 
 void Object::LateUpdate(GameTimer& gTimer)
 {
     Transform* transform = GetComponent<Transform>();
     TerrainObject* terrainObj = dynamic_cast<TerrainObject*>(this);
-    if (!terrainObj) {
+    if (!terrainObj && m_parent_id == -1) {
         XMVECTOR pos = transform->GetPosition();
-        char outstatus = m_parent->ClampToBounds(pos, { 0.0f, 0.0f, 0.0f });
+        char outstatus = m_scene->ClampToBounds(pos, { 0.0f, 0.0f, 0.0f });
         transform->SetPosition(pos);
 
         Gravity* gravity = GetComponent<Gravity>();
@@ -60,7 +83,7 @@ void Object::LateUpdate(GameTimer& gTimer)
         }
     }
 
-    XMMATRIX world = transform->GetTransformM();
+    XMMATRIX world = transform->GetFinalM();
     XMMATRIX adjustM = XMMatrixIdentity();
     AdjustTransform* adjustTrnasform = GetComponent<AdjustTransform>();
     if (adjustTrnasform) {
@@ -87,14 +110,14 @@ void Object::OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandLi
     if (!mesh) return;
     
     Texture* texture = GetComponent<Texture>();
-    int textureIndex = m_parent->GetTextureIndex(texture->mName);
+    int textureIndex = m_scene->GetTextureIndex(texture->mName);
 
-    CD3DX12_GPU_DESCRIPTOR_HANDLE hDescriptor(m_parent->GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart());
+    CD3DX12_GPU_DESCRIPTOR_HANDLE hDescriptor(m_scene->GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart());
     hDescriptor.Offset(1 + textureIndex, device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
     commandList->SetGraphicsRootDescriptorTable(1, hDescriptor);
     commandList->SetGraphicsRootConstantBufferView(2, m_constantBuffer.Get()->GetGPUVirtualAddress());
 
-    SubMeshData& data = m_parent->GetResourceManager().GetSubMeshData(mesh->mName);
+    SubMeshData& data = m_scene->GetResourceManager().GetSubMeshData(mesh->mName);
     if (data.startIndexLocation == -1) {
         commandList->DrawInstanced(data.vertexCountPerInstance, 1, data.startVertexLocation, 0);
     }
@@ -107,7 +130,7 @@ void Object::OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandLi
 
 void Object::BuildConstantBuffer(ID3D12Device* device)
 {
-    const UINT constantBufferSize = m_parent->CalcConstantBufferByteSize(sizeof(ObjectCB));    // CB size is required to be 256-byte aligned.
+    const UINT constantBufferSize = m_scene->CalcConstantBufferByteSize(sizeof(ObjectCB));    // CB size is required to be 256-byte aligned.
 
     ThrowIfFailed(device->CreateCommittedResource(
         &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
@@ -133,7 +156,7 @@ void Object::ProcessAnimation(GameTimer& gTimer)
     if (animation) {
         isAnimate = true;
         vector<XMFLOAT4X4> finalTransforms{ 90 };
-        SkinnedData& animData = m_parent->GetResourceManager().GetAnimationData(animation->mCurrentFileName);
+        SkinnedData& animData = m_scene->GetResourceManager().GetAnimationData(animation->mCurrentFileName);
         animation->mAnimationTime += gTimer.DeltaTime();
         string clipName = "Take 001";
         if (animation->mAnimationTime >= animData.GetClipEndTime(clipName)) animation->mAnimationTime = 0.0f;
@@ -143,8 +166,19 @@ void Object::ProcessAnimation(GameTimer& gTimer)
     memcpy(m_mappedData + sizeof(XMMATRIX) * 91, &isAnimate, sizeof(int));
 }
 
-PlayerObject::PlayerObject(Scene* root) : Object{ root }
+uint32_t Object::GetId()
 {
+    return m_id;
+}
+
+bool Object::GetValid()
+{
+    return m_valid;
+}
+
+void Object::Delete()
+{
+    m_valid = false;
 }
 
 void PlayerObject::OnUpdate(GameTimer& gTimer)
@@ -174,12 +208,18 @@ void PlayerObject::OnProcessCollision(Object& other, XMVECTOR collisionNormal, f
     XMVECTOR pos = transform->GetPosition();
     pos += -collisionNormal * penetration;
     transform->SetPosition(pos);
+
+    float similarity = XMVectorGetX(XMVector3Dot(XMVECTOR{ 0.0f, 1.0f, 0.0f, 0.0f }, -collisionNormal));
+    Gravity* gravity = GetComponent<Gravity>();
+    if (gravity && similarity > 0.95f) {
+        gravity->ResetElapseTime();
+    }
 }
 
 void PlayerObject::OnKeyboardInput(const GameTimer& gTimer)
 {
     Transform* transform = GetComponent<Transform>();
-    BYTE* keyState = m_parent->GetFramework()->GetKeyState();
+    BYTE* keyState = m_scene->GetFramework()->GetKeyState();
 
     XMVECTOR dir = XMVectorZero();
     if ((keyState[0x57] & 0x88) == 0x88) { dir += XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f); } // w
@@ -203,7 +243,7 @@ void PlayerObject::OnKeyboardInput(const GameTimer& gTimer)
     }
 
     if (!XMVector3Equal(dir, XMVectorZero())) {
-        CameraObject* cameraObj = m_parent->GetObj<CameraObject>();
+        CameraObject* cameraObj = m_scene->GetObj<CameraObject>();
         Transform* cameraTransform = cameraObj->GetComponent<Transform>();
         dir = XMVector3TransformNormal(dir, cameraTransform->GetRotationM());
 
@@ -218,27 +258,13 @@ void PlayerObject::OnKeyboardInput(const GameTimer& gTimer)
     }
 }
 
-TestObject::TestObject(Scene* root) : Object{root}
-{
-}
-
-CameraObject::CameraObject(Scene* root, float radius) :
-    Object{ root }, 
-    mLastPosX{ -1 }, 
-    mLastPosY{ -1 }, 
-    mTheta{XMConvertToRadians(-90)}, 
-    mPhi{ XMConvertToRadians(70) }, 
-    mRadius{radius}
-{
-}
-
 void CameraObject::OnUpdate(GameTimer& gTimer)
 {
     float x = mRadius * sinf(mPhi) * cosf(mTheta);
     float y = mRadius * cosf(mPhi);
     float z = mRadius * sinf(mPhi) * sinf(mTheta);
 
-    Object* playerObj = m_parent->GetObj<PlayerObject>();
+    Object* playerObj = m_scene->GetObj<PlayerObject>();
     Transform* playerTransform = playerObj->GetComponent<Transform>();
     XMVECTOR playerPos = playerTransform->GetPosition();
 
@@ -260,12 +286,12 @@ void CameraObject::LateUpdate(GameTimer& gTimer)
 {
     Transform* transform = GetComponent<Transform>();
     XMVECTOR pos = transform->GetPosition();
-    char outstatus = m_parent->ClampToBounds(pos, {0.0f, 1.0f, 0.0f});
+    char outstatus = m_scene->ClampToBounds(pos, {0.0f, 1.0f, 0.0f});
     transform->SetPosition(pos);
 
     XMMATRIX transformM = transform->GetTransformM();
     XMMATRIX invtransformM = XMMatrixInverse(nullptr, transformM);
-    memcpy(m_parent->GetConstantBufferMappedData(), &XMMatrixTranspose(invtransformM), sizeof(XMMATRIX)); // 처음 매개변수는 시작주소
+    memcpy(m_scene->GetConstantBufferMappedData(), &XMMatrixTranspose(invtransformM), sizeof(XMMATRIX)); // 처음 매개변수는 시작주소
 }
 
 void CameraObject::OnMouseInput(WPARAM wParam, HWND hWnd)
@@ -293,18 +319,6 @@ void CameraObject::OnMouseInput(WPARAM wParam, HWND hWnd)
     SetCursorPos(centerX, centerY);
 }
 
-TerrainObject::TerrainObject(Scene* root) : Object{ root }
-{
-}
-
-TreeObject::TreeObject(Scene* root) : Object{ root }
-{
-}
-
-TigerObject::TigerObject(Scene* root) : Object{ root }, mTimer{10.0f}
-{
-}
-
 void TigerObject::OnUpdate(GameTimer& gTimer)
 {
     // RandomVelocity(gTimer);
@@ -325,7 +339,7 @@ void TigerObject::TigerBehavior(GameTimer& gTimer)
     Transform* transform = GetComponent<Transform>();
     XMVECTOR pos = transform->GetPosition();
 
-    PlayerObject* player = m_parent->GetObj<PlayerObject>();
+    PlayerObject* player = m_scene->GetObj<PlayerObject>();
     Transform* playerTransform = player->GetComponent<Transform>();
     XMVECTOR playerPos = playerTransform->GetPosition();
 
@@ -374,6 +388,10 @@ void TigerObject::TigerBehavior(GameTimer& gTimer)
 //    }
 //}
 
-StoneObject::StoneObject(Scene* root) : Object{root}
+void TestObject::OnProcessCollision(Object& other, XMVECTOR collisionNormal, float penetration)
 {
+    PlayerObject* playerObj = dynamic_cast<PlayerObject*>(&other);
+    if (playerObj) {
+        Delete();
+    }
 }
