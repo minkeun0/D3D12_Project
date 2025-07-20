@@ -110,7 +110,7 @@ void Framework::OnRender()
 
 void Framework::OnResize(UINT width, UINT height, bool minimized)
 {
-    //if ((width != m_win32App->GetWidth() || height != m_win32App->GetHeight()) && !minimized)
+    if ((width != m_win32App->GetWidth() || height != m_win32App->GetHeight()) && !minimized)
     {
         WaitForPreviousFrame();
         ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), nullptr));

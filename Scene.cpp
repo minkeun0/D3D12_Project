@@ -95,6 +95,8 @@ void Scene::BuildObjects()
             AddObj(objectPtr);
         }
     }
+
+    ProcessObjectQueue();
 }
 
 void Scene::BuildTestObjects()
@@ -136,6 +138,7 @@ void Scene::BuildTestObjects()
     objectPtr->AddComponent(new Texture{ L"tile", 1.0f, 0.4f });
     AddObj(objectPtr);
 
+    ProcessObjectQueue();
 }
 
 void Scene::BuildShadow()
@@ -745,6 +748,7 @@ void Scene::LoadMeshAnimationTexture()
     m_resourceManager->LoadFbx("long_tree.fbx", false, true);
     m_resourceManager->LoadFbx("broken_house.fbx", false, true);
     m_resourceManager->LoadFbx("broken_house2.fbx", false, true);
+    //m_resourceManager->LoadFbx("background_house.fbx", false, true);
 
     int i = 0;
     m_DDSFileName.push_back(L"./Textures/boy.dds");
