@@ -232,12 +232,11 @@ void PlayerObject::ProcessInput(const GameTimer& gTimer)
         Idle();
     }
 
-    if ((keyState[VK_LBUTTON] & 0x88) == 0x80) { Attack(); }
+    if ((keyState[VK_LBUTTON] & 0x88) == 0x80)  Attack(); 
 
 
-    Gravity* gravity = GetComponent<Gravity>();
-    if ((keyState[VK_SPACE] & 0x88) == 0x80 && gravity) {
-        gravity->SetVerticalSpeed(20.0f);
+    if ((keyState[VK_SPACE] & 0x88) == 0x80) {
+        Jump();
     }
 }
 
@@ -278,6 +277,16 @@ void PlayerObject::Idle()
     if (anim->mCurrentFileName == "boy_dying_fix.fbx") return;
 
     anim->ResetAnim("1P(boy-idle).fbx", 0.0f);
+}
+
+void PlayerObject::Jump()
+{
+    Gravity* gravity = GetComponent<Gravity>();
+    Animation* anim = GetComponent<Animation>();
+    if (!gravity) return;
+    if (anim->mCurrentFileName == "boy_hit.fbx") return;
+    if (anim->mCurrentFileName == "boy_dying_fix.fbx") return;
+    gravity->SetVerticalSpeed(20.0f);
 }
 
 void PlayerObject::Attack()
@@ -530,8 +539,8 @@ void TigerObject::Fire()
     mIsFired = true;
 
     Object* obj = new TigerAttackObject(m_scene, m_scene->AllocateId(), m_id);
-    obj->AddComponent(new Transform{ {0.0f, 6.0f, 16.0f} });
-    obj->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {2.0f, 6.0f, 6.0f} });
+    obj->AddComponent(new Transform{ {0.0f, 6.0f, 18.0f} });
+    obj->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {4.0f, 6.0f, 8.0f} });
     m_scene->AddObj(obj);
 }
 
