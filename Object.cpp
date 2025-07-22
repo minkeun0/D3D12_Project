@@ -330,12 +330,6 @@ void PlayerObject::TimeOut()
         ChangeState("1P(boy-idle).fbx");
         return;
     }
-
-    if (mJumped)
-    {
-        mJumped = false;
-        return;
-    }
 }
 
 void PlayerObject::Fire()
@@ -395,10 +389,12 @@ void PlayerObject::CalcTime(float deltaTime)
     if (mJumped)
     {
         mJumpTime += deltaTime;
-        if (mJumpTime > 1.2f) TimeOut();
+        if (mJumpTime > 1.2f)
+        {
+            mJumped = false;
+        }
     }
 }
-
 
 void CameraObject::OnUpdate(GameTimer& gTimer)
 {
