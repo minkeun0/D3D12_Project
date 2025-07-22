@@ -42,8 +42,7 @@ void Object::OnUpdate(GameTimer& gTimer)
             finalM = finalM * parentTransform->GetFinalM();
         }
         else {
-            // 부모가 있었지만 현재는 없는상태
-            // 이런경우 일단 해당 오브젝트 삭제
+            Delete();
         }
     }
     transform->SetFinalM(finalM);
@@ -53,6 +52,7 @@ void Object::OnUpdate(GameTimer& gTimer)
         collider->UpdateOBB(finalM);
     }
 }
+
 void Object::OnProcessCollision(Object& other, XMVECTOR collisionNormal, float penetration)
 {
     float similarity = XMVectorGetX(XMVector3Dot(XMVECTOR{ 0.0f, 1.0f, 0.0f, 0.0f }, -collisionNormal));
@@ -183,22 +183,7 @@ void Object::Delete()
 
 void PlayerObject::OnUpdate(GameTimer& gTimer)
 {
-    OnKeyboardInput(gTimer);
-    //string currentFileName = "boy_walk_fix.fbx";
-    //switch (GetComponent<StateMachine>().mCurrentState)
-    //{
-    //case eBehavior::Idle:
-    //    currentFileName = "1P(boy-idle).fbx";
-    //    break;
-    //case eBehavior::Walk:
-    //    currentFileName = "boy_walk_fix.fbx";
-    //    break;
-    //case eBehavior::Run:
-    //    currentFileName = "boy_run_fix.fbx";
-    //    break;
-    //default:
-    //    break;
-    //}
+    ProcessInput(gTimer);
     Object::OnUpdate(gTimer);
 }
 
@@ -214,12 +199,20 @@ void PlayerObject::OnProcessCollision(Object& other, XMVECTOR collisionNormal, f
     if (gravity && similarity > 0.95f) {
         gravity->ResetElapseTime();
     }
+
+    TigerAttackObject* ta = dynamic_cast<TigerAttackObject*>(&other);
+    if (ta)
+    {
+        XMVECTOR addVec = XMVector3TransformNormal(XMVECTOR{ 0.0f, 10.0f, -30.0f }, transform->GetRotationM());
+        transform->SetPosition(pos + -collisionNormal * 10.0f);
+    }
 }
 
-void PlayerObject::OnKeyboardInput(const GameTimer& gTimer)
+void PlayerObject::ProcessInput(const GameTimer& gTimer)
 {
-    Transform* transform = GetComponent<Transform>();
+    CalcTime(gTimer.DeltaTime());
     BYTE* keyState = m_scene->GetFramework()->GetKeyState();
+    Transform* transform = GetComponent<Transform>();
 
     XMVECTOR dir = XMVectorZero();
     if ((keyState[0x57] & 0x88) == 0x88) { dir += XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f); } // w
@@ -227,36 +220,101 @@ void PlayerObject::OnKeyboardInput(const GameTimer& gTimer)
     if ((keyState[0x41] & 0x88) == 0x88) { dir -= XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f); } // a
     if ((keyState[0x44] & 0x88) == 0x88) { dir += XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f); } // d
 
-    float speed = 15;
-    
+    if (!XMVector3Equal(dir, XMVectorZero())) {
+        float speed = mWalkSpeed;
+        if ((keyState[VK_SHIFT] & 0x88) == 0x88) {
+            speed = mRunSpeed;
+        }
+        if ((keyState[VK_CONTROL] & 0x88) == 0x88) {
+            speed = 100.0f;
+        }
+        Move(dir, speed, gTimer.DeltaTime());
+    }
+    else {
+        Idle();
+    }
+
+    if ((keyState[VK_LBUTTON] & 0x88) == 0x80) { Attack(); }
+
+
     Gravity* gravity = GetComponent<Gravity>();
     if ((keyState[VK_SPACE] & 0x88) == 0x80 && gravity) {
         gravity->SetVerticalSpeed(20.0f);
     }
-    
-    if ((keyState[VK_SHIFT] & 0x88) == 0x88) {
-        speed = 30;
+}
+
+void PlayerObject::Move(XMVECTOR dir, float speed,float deltaTime)
+{
+    Animation* anim = GetComponent<Animation>();
+    if (anim->mCurrentFileName == "boy_attack(45).fbx") {
+        return;
     }
 
-    if ((keyState[VK_CONTROL] & 0x88) == 0x88) {
-        speed = 100;
+    if (speed >= mRunSpeed) {
+        anim->ResetAnim("boy_run_fix.fbx", 0.0f);
+    }
+    else if (speed >= mWalkSpeed) {
+        anim->ResetAnim("boy_walk_fix.fbx", 0.0f);
     }
 
-    if (!XMVector3Equal(dir, XMVectorZero())) {
-        CameraObject* cameraObj = m_scene->GetObj<CameraObject>();
-        Transform* cameraTransform = cameraObj->GetComponent<Transform>();
-        dir = XMVector3TransformNormal(dir, cameraTransform->GetRotationM());
+    Transform* transform = GetComponent<Transform>();
+    CameraObject* cameraObj = m_scene->GetObj<CameraObject>();
+    Transform* cameraTransform = cameraObj->GetComponent<Transform>();
+    dir = XMVector3TransformNormal(dir, cameraTransform->GetRotationM());
 
-        dir = XMVector3Normalize(XMVectorSetY(dir, 0.0f));
+    dir = XMVector3Normalize(XMVectorSetY(dir, 0.0f));
 
-        XMVECTOR pos = transform->GetPosition();
-        pos += dir * speed * gTimer.DeltaTime();
-        transform->SetPosition(pos);
+    XMVECTOR pos = transform->GetPosition();
+    pos += dir * speed * deltaTime;
+    transform->SetPosition(pos);
 
-        float yaw = atan2f(XMVectorGetX(dir), XMVectorGetZ(dir)) * 180 / 3.141592f;
-        transform->SetRotation({ 0.0f, yaw, 0.0f });
+    float yaw = atan2f(XMVectorGetX(dir), XMVectorGetZ(dir)) * 180 / 3.141592f;
+    transform->SetRotation({ 0.0f, yaw, 0.0f });
+}
+
+void PlayerObject::Idle()
+{
+    Animation* anim = GetComponent<Animation>();
+    if (anim->mCurrentFileName == "boy_attack(45).fbx") {
+        return;
+    }
+    anim->ResetAnim("1P(boy-idle).fbx", 0.0f);
+}
+
+void PlayerObject::Attack()
+{
+    Animation* anim = GetComponent<Animation>();
+    anim->ResetAnim("boy_attack(45).fbx", 0.0f);
+}
+
+void PlayerObject::TimeOut()
+{
+    mElapseTime = 0.0f;
+    Animation* anim = GetComponent<Animation>();
+    if (anim->mCurrentFileName == "boy_attack(45).fbx") {
+        anim->ResetAnim("1P(boy-idle).fbx", 0.0f);
+        mIsFired = false;
     }
 }
+
+void PlayerObject::Fire()
+{
+    if (mIsFired) return;
+
+    // 투사체 생성
+    mIsFired = true;
+}
+
+void PlayerObject::CalcTime(float deltaTime)
+{
+    Animation* anim = GetComponent<Animation>();
+    if (anim->mCurrentFileName == "boy_attack(45).fbx") {
+        mElapseTime += deltaTime;
+        if (mElapseTime >= 0.5f) Fire();
+        if (mElapseTime >= 1.0f) TimeOut();
+    }
+}
+
 
 void CameraObject::OnUpdate(GameTimer& gTimer)
 {
@@ -266,13 +324,13 @@ void CameraObject::OnUpdate(GameTimer& gTimer)
 
     Object* playerObj = m_scene->GetObj<PlayerObject>();
     Transform* playerTransform = playerObj->GetComponent<Transform>();
-    XMVECTOR playerPos = playerTransform->GetPosition();
+    XMVECTOR targetPos = playerTransform->GetPosition() + XMVECTOR{0.0f, 10.0f, 0.0f};
 
     Transform* myTransform = GetComponent<Transform>();
-    myTransform->SetPosition(playerPos + XMVECTOR{ x, y, z, 0.f });
+    myTransform->SetPosition(targetPos + XMVECTOR{ x, y, z, 0.f });
     
     XMVECTOR myPos = myTransform->GetPosition();
-    XMVECTOR dir = playerPos - myPos;
+    XMVECTOR dir = targetPos - myPos;
 
     XMFLOAT3 yawPitch{};
     XMStoreFloat3(&yawPitch, dir);
@@ -280,6 +338,8 @@ void CameraObject::OnUpdate(GameTimer& gTimer)
     float yaw = atan2f(yawPitch.x, yawPitch.z) * 180 / 3.141592f;
     float pitch = atan2f(yawPitch.y, sqrtf(yawPitch.x * yawPitch.x + yawPitch.z * yawPitch.z)) * 180 / 3.141592f;
     myTransform->SetRotation({ -pitch, yaw, 0.0f });
+
+    Object::OnUpdate(gTimer);
 }
 
 void CameraObject::LateUpdate(GameTimer& gTimer)
@@ -322,12 +382,16 @@ void CameraObject::OnMouseInput(WPARAM wParam, HWND hWnd)
 void TigerObject::OnUpdate(GameTimer& gTimer)
 {
     // RandomVelocity(gTimer);
+    CalcTime(gTimer.DeltaTime());
     TigerBehavior(gTimer);
     Object::OnUpdate(gTimer);
 }
 
 void TigerObject::OnProcessCollision(Object& other, XMVECTOR collisionNormal, float penetration)
 {
+    TigerAttackObject* ta = dynamic_cast<TigerAttackObject*>(&other);
+    if (ta) return;
+
     Transform* transform = GetComponent<Transform>();
     XMVECTOR pos = transform->GetPosition();
     pos += -collisionNormal * penetration;
@@ -343,18 +407,76 @@ void TigerObject::TigerBehavior(GameTimer& gTimer)
     Transform* playerTransform = player->GetComponent<Transform>();
     XMVECTOR playerPos = playerTransform->GetPosition();
 
-    XMVECTOR vec = playerPos - pos;
     
-    float speed = 15.f;
-    float result = XMVectorGetX(XMVector3Length(vec));
-    if (result < 200.f && result > 20.0f) {
-        vec = XMVector3Normalize(XMVectorSetY(vec, 0.0f));
-        transform->SetPosition(pos + vec * speed * gTimer.DeltaTime());
-        float yaw = atan2f(XMVectorGetX(vec), XMVectorGetZ(vec)) * 180 / 3.141592f;
-        transform->SetRotation({ 0.0f, yaw, 0.0f });
+    float speed = 20.f;
+    float result = XMVectorGetX(XMVector3Length(playerPos - pos));
+    XMVECTOR dir = XMVector3Normalize(playerPos - pos);
+    float yaw = atan2f(XMVectorGetX(dir), XMVectorGetZ(dir)) * 180 / 3.141592f;
+    Animation* anim = GetComponent<Animation>();
+
+    if (result < 200.f) // 플레이어가 탐색 범위 안에 들어오면... 
+    {
+        if (result < 17.0f) // 탐색범위 안에 플레이어가 있지만 매우 가깝다면....
+        {
+            if (anim->mCurrentFileName != "0208_tiger_attack.fbx") 
+            {
+                // 공격 모션 중에는 회전하지 않는다.
+                transform->SetRotation({ 0.0f, yaw, 0.0f });
+            }
+            Attack();
+        }
+        else // 탐색범위 안에 플레이어가 있고 매우 가깝지 않다면...
+        {
+            if (anim->mCurrentFileName != "0208_tiger_attack.fbx") 
+            {
+                // 공격 모션 중에는 움직이면 안된다.
+                transform->SetPosition(pos + dir * speed * gTimer.DeltaTime());
+                transform->SetRotation({ 0.0f, yaw, 0.0f });
+            }
+        }
     }
-    else {
-        // 탐색 시 행동
+    else // 플레이어 탐색
+    {
+   
+    }
+}
+
+void TigerObject::Attack()
+{
+    
+    Animation* anim = GetComponent<Animation>();
+    anim->ResetAnim("0208_tiger_attack.fbx", 0.0f);
+}
+void TigerObject::TimeOut()
+{
+    mElapseTime = 0.0f;
+    Animation* anim = GetComponent<Animation>();
+    
+    if (anim->mCurrentFileName == "0208_tiger_attack.fbx") 
+    {
+        anim->ResetAnim("0113_tiger_walk.fbx", 0.0f);
+        mIsFired = false;
+    }
+}
+void TigerObject::Fire()
+{
+    if (mIsFired) return;
+    mIsFired = true;
+
+    Object* obj = new TigerAttackObject(m_scene, m_scene->AllocateId(), m_id);
+    obj->AddComponent(new Transform{ {0.0f, 6.0f, 16.0f} });
+    obj->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {2.0f, 6.0f, 6.0f} });
+    m_scene->AddObj(obj);
+}
+
+void TigerObject::CalcTime(float deltaTime) 
+{
+    Animation* anim = GetComponent<Animation>();
+    if (anim->mCurrentFileName == "0208_tiger_attack.fbx") 
+    {
+        mElapseTime += deltaTime;
+        if (mElapseTime >= 0.4f) Fire();
+        if (mElapseTime >= 0.8f) TimeOut();
     }
 }
 
@@ -388,10 +510,16 @@ void TigerObject::TigerBehavior(GameTimer& gTimer)
 //    }
 //}
 
-void TestObject::OnProcessCollision(Object& other, XMVECTOR collisionNormal, float penetration)
+void TigerAttackObject::OnUpdate(GameTimer& gTimer)
 {
-    PlayerObject* playerObj = dynamic_cast<PlayerObject*>(&other);
-    if (playerObj) {
-        Delete();
-    }
+    mElapseTime += gTimer.DeltaTime();
+    if (mElapseTime >= 0.05) Delete();
+    Object::OnUpdate(gTimer);
+}
+
+void QuadObject::OnUpdate(GameTimer& gTimer)
+{
+    CameraObject* camera = m_scene->GetObj<CameraObject>();
+    m_parent_id = camera->GetId();
+    Object::OnUpdate(gTimer);
 }

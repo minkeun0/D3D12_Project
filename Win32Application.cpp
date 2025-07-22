@@ -1,29 +1,16 @@
-//*********************************************************
-//
-// Copyright (c) Microsoft. All rights reserved.
-// This code is licensed under the MIT License (MIT).
-// THIS CODE IS PROVIDED *AS IS* WITHOUT WARRANTY OF
-// ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING ANY
-// IMPLIED WARRANTIES OF FITNESS FOR A PARTICULAR
-// PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
-//
-//*********************************************************
-
 #include "Win32Application.h"
 #include "Framework.h"
 #include <WindowsX.h>
 
-Win32Application::Win32Application(UINT width, UINT height, std::wstring name) : 
-    m_hwnd{ nullptr },
+Win32Application::Win32Application(HINSTANCE hInstance, UINT width, UINT height) :
     m_width{ width },
     m_height{ height },
-    m_title{ name },
-    m_windowVisible{ true }
+    m_aspectRatio{ static_cast<float>(width) / static_cast<float>(height) }
 {
-    m_aspectRatio = static_cast<float>(width) / static_cast<float>(height);
+    CreateWnd(hInstance);
 }
 
-void Win32Application::CreateWnd(Framework* framework, HINSTANCE hInstance)
+void Win32Application::CreateWnd(HINSTANCE hInstance)
 {
     // Initialize the window class.
     WNDCLASSEX windowClass = { 0 };
@@ -50,10 +37,9 @@ void Win32Application::CreateWnd(Framework* framework, HINSTANCE hInstance)
         nullptr,        // We have no parent window.
         nullptr,        // We aren't using menus.
         hInstance,
-        framework);
+        nullptr);
 }
 
-// Helper function for setting the window's title text.
 void Win32Application::SetCustomWindowText(LPCWSTR text)
 {
     std::wstring windowText = m_title + L" : " + text;
@@ -67,45 +53,17 @@ void Win32Application::OnResize(UINT width, UINT height)
     m_aspectRatio = static_cast<float>(width) / static_cast<float>(height);
 }
 
-// Main message handler for the sample.
 LRESULT CALLBACK Win32Application::WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     Framework* pSample = reinterpret_cast<Framework*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
 
     switch (message)
     {
-    case WM_CREATE:
-        {
-            LPCREATESTRUCT pCreateStruct = reinterpret_cast<LPCREATESTRUCT>(lParam);
-            SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pCreateStruct->lpCreateParams));
-        }
-        break;
-
-    case WM_KEYDOWN:
-        if (pSample)
-        {
-            pSample->OnKeyDown(static_cast<UINT8>(wParam));
-        }
-        break;
-
-    case WM_KEYUP:
-        if (pSample)
-        {
-            pSample->OnKeyUp(static_cast<UINT8>(wParam));
-        }
-        break;
-
     case WM_MOUSEMOVE:
         if (pSample)
         {
             pSample->GetScene(pSample->GetCurrentSceneName()).GetObj<CameraObject>()->OnMouseInput(
                 wParam, pSample->GetWin32App().GetHwnd());
-        }
-        break;
-
-    case WM_MOVE:
-        if (pSample) 
-        {
         }
         break;
 

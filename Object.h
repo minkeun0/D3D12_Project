@@ -51,7 +51,17 @@ public:
 	void OnUpdate(GameTimer& gTimer) override;
 	void OnProcessCollision(Object& other, XMVECTOR collisionNormal, float penetration) override;
 private:
-	void OnKeyboardInput(const GameTimer& gTimer);
+	void ProcessInput(const GameTimer& gTimer);
+	void Move(XMVECTOR dir, float speed, float deltatime);
+	void Idle();
+	void Attack();
+	void TimeOut();
+	void Fire();
+	void CalcTime(float deltaTime);
+	float mWalkSpeed = 20.0f;
+	float mRunSpeed = 40.0f;
+	float mElapseTime = 0.0f;
+	bool mIsFired = false;
 };
 
 class CameraObject : public Object
@@ -79,7 +89,6 @@ class TestObject : public Object
 {
 public:
 	using Object::Object;
-	void OnProcessCollision(Object& other, XMVECTOR collisionNormal, float penetration) override;
 };
 
 class TreeObject : public Object
@@ -96,13 +105,36 @@ public:
 	void OnProcessCollision(Object& other, XMVECTOR collisionNormal, float penetration) override;
 private:
 	void TigerBehavior(GameTimer& gTimer);
-	void RandomVelocity(GameTimer& gTimer);
-	float mTimer = 0.0f;
-	XMFLOAT3 mTempVelocity{};
+	void Attack();
+	void TimeOut();
+	void Fire();
+	void CalcTime(float deltaTime);
+	//void RandomVelocity(GameTimer& gTimer);
+	float mElapseTime = 0.0f;
+	float mAttack = 1.0f;
+	bool mIsFired = false;
+	//XMFLOAT3 mTempVelocity{};
 };
 
 class StoneObject : public Object
 {
 public:
 	using Object::Object;
+};
+
+class TigerAttackObject : public Object
+{
+public:
+	using Object::Object;
+	void OnUpdate(GameTimer& gTimer) override;
+private:
+	float mElapseTime = 0.0f;
+};
+
+class QuadObject : public Object
+{
+public:
+	using Object::Object;
+	void OnUpdate(GameTimer& gTimer) override;
+private:
 };

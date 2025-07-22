@@ -7,21 +7,14 @@
 class Framework
 {
 public:
-	~Framework();
-	Framework() = default;
-	Framework(HINSTANCE hInstance, int nCmdShow, UINT width, UINT height, std::wstring name);
-	
-	int Run(HINSTANCE hInstance, int nCmdShow);
-	void OnInit(HINSTANCE hInstance, int nCmdShow);
-	void OnUpdate(GameTimer& gTimer);
+	~Framework();	
+	void OnInit(HINSTANCE hInstance, UINT width, UINT height);
+	void OnUpdate();
 	void OnProcessCollision();
-	void LateUpdate(GameTimer& gTimer);
+	void LateUpdate();
 	void OnRender();
 	void OnResize(UINT width, UINT height, bool minimized);
 	void OnDestroy();
-
-	void OnKeyDown(UINT8 key);
-	void OnKeyUp(UINT8 key);
 
 	GameTimer& GetTimer();
 	Scene& GetScene(const wstring& name);
@@ -30,8 +23,8 @@ public:
 	ID3D12Device* GetDevice();
 	ID3D12GraphicsCommandList* GetCommandList();
 	ID3D12DescriptorHeap* GetDsvDescHeap();
-
 	BYTE* GetKeyState();
+	HWND GetHWnd();
 
 private:
 	void GetHardwareAdapter(
@@ -39,7 +32,6 @@ private:
 		IDXGIAdapter1** ppAdapter,
 		bool requestHighPerformanceAdapter = false
 	);
-	void InitWnd(HINSTANCE hInstance);
 	void BuildFactoryAndDevice();
 	void BuildCommandQueueAndSwapChain();
 	void BuildCommandListAndAllocator();
@@ -62,7 +54,7 @@ private:
 	GameTimer m_Timer;
 
 	// Adapter info.
-	bool m_useWarpDevice;
+	bool m_useWarpDevice = false;
 
 	static const UINT FrameCount = 2;
 

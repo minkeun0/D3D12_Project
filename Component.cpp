@@ -177,3 +177,10 @@ BoundingOrientedBox& Collider::GetOBB()
 Animation::Animation(string initFileName) : mCurrentFileName{initFileName}
 {
 }
+
+void Animation::ResetAnim(string fileName, float time)
+{
+	if (fileName == mCurrentFileName) return;
+	mCurrentFileName = fileName;
+	mAnimationTime = time;
+}

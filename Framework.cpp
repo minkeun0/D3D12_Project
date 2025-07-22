@@ -10,52 +10,13 @@ Framework::~Framework()
     }
 }
 
-Framework::Framework(HINSTANCE hInstance, int nCmdShow, UINT width, UINT height, std::wstring name) :
-    m_frameIndex(0),
-    m_rtvDescriptorSize(0),
-    m_useWarpDevice(false)
+void Framework::OnInit(HINSTANCE hInstance, UINT width, UINT height)
 {
-    //ThrowIfFailed(DXGIDeclareAdapterRemovalSupport());
-    m_win32App = make_unique<Win32Application>(width, height, name);
-}
+    // 윈도우
+    m_win32App = make_unique<Win32Application>(hInstance, width, height);
+    SetWindowLongPtr(m_win32App->GetHwnd(), GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
 
-int Framework::Run(HINSTANCE hInstance, int nCmdShow)
-{
-    OnInit(hInstance, nCmdShow);
-
-    ShowWindow(m_win32App->GetHwnd(), nCmdShow);
-    UpdateWindow(m_win32App->GetHwnd());
-    ShowCursor(false);
-    m_Timer.Reset();
-
-    // Main loop.
-    MSG msg{};
-    while (msg.message != WM_QUIT)
-    {
-        if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-        {
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-        }
-        else
-        {
-            m_Timer.Tick();
-            CalculateFrame();
-            OnUpdate(m_Timer);
-            OnProcessCollision();
-            LateUpdate(m_Timer);
-            OnRender();
-        }
-    }
-    return static_cast<int>(msg.wParam);
-}
-
-void Framework::OnInit(HINSTANCE hInstance, int nCmdShow)
-{
-    // 윈도우 초기화
-    InitWnd(hInstance);
-
-    // D3D12 초기화
+    // D3D12 
     BuildFactoryAndDevice();
     BuildCommandQueueAndSwapChain();
     BuildCommandListAndAllocator();
@@ -74,12 +35,15 @@ void Framework::OnInit(HINSTANCE hInstance, int nCmdShow)
     ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
     m_commandQueue.Get()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
     WaitForPreviousFrame();
+
+    m_Timer.Reset();
 }
 
-void Framework::OnUpdate(GameTimer& gTimer)
+void Framework::OnUpdate()
 {
+    CalculateFrame();
     ProcessInput();
-    m_scenes.at(L"BaseScene")->OnUpdate(gTimer);
+    m_scenes.at(L"BaseScene")->OnUpdate(m_Timer);
 }
 
 void Framework::OnProcessCollision()
@@ -87,9 +51,9 @@ void Framework::OnProcessCollision()
     m_scenes.at(L"BaseScene")->OnProcessCollision();
 }
 
-void Framework::LateUpdate(GameTimer& gTimer)
+void Framework::LateUpdate()
 {
-    m_scenes.at(L"BaseScene")->LateUpdate(gTimer);
+    m_scenes.at(L"BaseScene")->LateUpdate(m_Timer);
 }
 
 // Render the scene.
@@ -149,18 +113,6 @@ void Framework::OnDestroy()
     CloseHandle(m_fenceEvent);
 }
 
-void Framework::OnKeyDown(UINT8 key)
-{
-    m_scenes.at(m_currentSceneName)->OnKeyDown(key);
-}
-
-void Framework::OnKeyUp(UINT8 key)
-{
-    m_scenes.at(m_currentSceneName)->OnKeyUp(key);
-}
-
-// Helper function for acquiring the first available hardware adapter that supports Direct3D 12.
-// If no such adapter can be found, *ppAdapter will be set to nullptr.
 void Framework::GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1** ppAdapter, bool requestHighPerformanceAdapter)
 {
     *ppAdapter = nullptr;
@@ -221,11 +173,6 @@ void Framework::GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1** ppAd
     //}
 
     *ppAdapter = adapter.Detach();
-}
-
-void Framework::InitWnd(HINSTANCE hInstance)
-{
-    m_win32App->CreateWnd(this, hInstance);
 }
 
 void Framework::BuildFactoryAndDevice()
@@ -469,12 +416,18 @@ void Framework::ProcessInput()
 
     if ((mKeyState[VK_ESCAPE] & 0x88) == 0x80)
     {
+        BOOL state;
+        ThrowIfFailed(m_swapChain.Get()->GetFullscreenState(&state, nullptr));
+        if (state) {
+            ThrowIfFailed(m_swapChain.Get()->SetFullscreenState(!state, nullptr));
+        }
         PostQuitMessage(0);
     }
 }
 
 void Framework::CalculateFrame()
 {
+    m_Timer.Tick();
     static int frameCnt = 0;
     static float timeElapsed = 0.0f;
 
@@ -532,5 +485,10 @@ ID3D12DescriptorHeap* Framework::GetDsvDescHeap()
 BYTE* Framework::GetKeyState()
 {
     return mKeyState;
+}
+
+HWND Framework::GetHWnd()
+{
+    return m_win32App->GetHwnd();
 }
 

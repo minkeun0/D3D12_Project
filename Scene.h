@@ -20,8 +20,6 @@ public:
     void OnRender(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, ePass pass);
     void OnResize(UINT width, UINT height);
     void OnDestroy();
-    void OnKeyDown(UINT8 key);
-    void OnKeyUp(UINT8 key);
     ResourceManager& GetResourceManager();
     void* GetConstantBufferMappedData();
     ID3D12DescriptorHeap* GetDescriptorHeap();
@@ -36,6 +34,7 @@ public:
     int GetTextureIndex(wstring name);
     std::tuple<XMVECTOR, float> GetCollisionData(BoundingOrientedBox OBB1, BoundingOrientedBox OBB2);
     Object* GetObjFromId(uint32_t id);
+    uint32_t AllocateId();
 
     template<typename T>
     T* GetObj()
@@ -51,7 +50,6 @@ public:
 private:
     void CompactObjects();
     void ProcessObjectQueue();
-    uint32_t AllocateId();
     void DeleteCurrentObjects();
     void ProcessInput();
     void LoadMeshAnimationTexture();
@@ -68,7 +66,7 @@ private:
     void BuildDescriptorHeap(ID3D12Device* device);
     void BuildProjMatrix();
     void BuildObjects();
-    void BuildTestObjects();
+    void BuildBaseObjects();
     void BuildShadow();
     void BuildShaders();
     void BuildInputElement();
@@ -76,7 +74,7 @@ private:
         const std::wstring& fileName, const D3D_SHADER_MACRO* defines, const std::string& entryPoint, const std::string& target);
 private:
     Framework* m_parent = nullptr;
-    wstring mCurrentStage = L"Terrain";
+    wstring mCurrentStage = L"Base";
     vector<Object*> m_objects;
     uint32_t m_id_counter = 0;
     Object* m_object_queue[MAX_QUEUE]{};
