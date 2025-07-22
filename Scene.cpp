@@ -974,6 +974,8 @@ void Scene::LoadMeshAnimationTexture()
     m_resourceManager->LoadFbx("boy_run_fix.fbx", true, true);
     m_resourceManager->LoadFbx("boy_pickup_fix.fbx", true, true);
     m_resourceManager->LoadFbx("boy_attack(45).fbx", true, true);
+    m_resourceManager->LoadFbx("boy_hit.fbx", true, true);
+    m_resourceManager->LoadFbx("boy_dying_fix.fbx", true, true);
 
     m_resourceManager->LoadFbx("0113_tiger.fbx", false, true);
     m_resourceManager->LoadFbx("0113_tiger_walk.fbx", true, true);

@@ -57,11 +57,15 @@ private:
 	void Attack();
 	void TimeOut();
 	void Fire();
+	void Hit();
+	void Dead();
 	void CalcTime(float deltaTime);
 	float mWalkSpeed = 20.0f;
 	float mRunSpeed = 40.0f;
 	float mElapseTime = 0.0f;
 	bool mIsFired = false;
+	bool mIsHitted = false;
+	int mLife = 3;
 };
 
 class CameraObject : public Object
@@ -105,15 +109,16 @@ public:
 	void OnProcessCollision(Object& other, XMVECTOR collisionNormal, float penetration) override;
 private:
 	void TigerBehavior(GameTimer& gTimer);
+	void Search(float deltaTime);
 	void Attack();
 	void TimeOut();
 	void Fire();
 	void CalcTime(float deltaTime);
-	//void RandomVelocity(GameTimer& gTimer);
+	float mSpeed = 20.0f;
 	float mElapseTime = 0.0f;
-	float mAttack = 1.0f;
+	float mAttackTime = 0.0f;
+	float mSearchTime = 0.0f;
 	bool mIsFired = false;
-	//XMFLOAT3 mTempVelocity{};
 };
 
 class StoneObject : public Object
