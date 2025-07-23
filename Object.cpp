@@ -413,9 +413,10 @@ void CameraObject::OnUpdate(GameTimer& gTimer)
     XMVECTOR targetPos = playerTransform->GetPosition() + XMVECTOR{0.0f, 10.0f, 0.0f};
 
     Transform* myTransform = GetComponent<Transform>();
-    myTransform->SetPosition(targetPos + XMVECTOR{ x, y, z, 0.f });
+    XMVECTOR myPos = targetPos + XMVECTOR{ x, y, z, 0.f };
+    char outstatus = m_scene->ClampToBounds(myPos, { 0.0f, 1.0f, 0.0f });
+    myTransform->SetPosition(myPos);
     
-    XMVECTOR myPos = myTransform->GetPosition();
     XMVECTOR dir = targetPos - myPos;
 
     XMFLOAT3 yawPitch{};
@@ -431,10 +432,6 @@ void CameraObject::OnUpdate(GameTimer& gTimer)
 void CameraObject::LateUpdate(GameTimer& gTimer)
 {
     Transform* transform = GetComponent<Transform>();
-    XMVECTOR pos = transform->GetPosition();
-    char outstatus = m_scene->ClampToBounds(pos, {0.0f, 1.0f, 0.0f});
-    transform->SetPosition(pos);
-
     XMMATRIX transformM = transform->GetTransformM();
     XMMATRIX invtransformM = XMMatrixInverse(nullptr, transformM);
     memcpy(m_scene->GetConstantBufferMappedData(), &XMMatrixTranspose(invtransformM), sizeof(XMMATRIX)); // 처음 매개변수는 시작주소
