@@ -303,6 +303,7 @@ void PlayerObject::Attack()
     Animation* anim = GetComponent<Animation>();
     if (anim->mCurrentFileName == "boy_hit.fbx") return;
     if (anim->mCurrentFileName == "boy_dying_fix.fbx") return;
+    if (mAttackTime < 1.0) return;
     ChangeState("boy_attack(45).fbx");
 }
 
@@ -312,6 +313,7 @@ void PlayerObject::TimeOut()
     if (anim->mCurrentFileName == "boy_attack(45).fbx") 
     {
         mIsFired = false;
+        mAttackTime = 0.0f;
         ChangeState("1P(boy-idle).fbx");
         return;
     }
@@ -372,6 +374,10 @@ void PlayerObject::CalcTime(float deltaTime)
         mElapseTime += deltaTime;
         if (mElapseTime > 0.5f) Fire();
         if (mElapseTime > 1.0f) TimeOut();
+    }
+    else
+    {
+        mAttackTime += deltaTime;
     }
 
     if (anim->mCurrentFileName == "boy_hit.fbx")
@@ -502,19 +508,18 @@ void TigerObject::TigerBehavior(GameTimer& gTimer)
     {
         if (result < 17.0f) // 탐색범위 안에 플레이어가 있고, 매우 가깝다면....
         {
-            if (anim->mCurrentFileName == "0113_tiger_walk.fbx") 
+            Attack();
+            if (anim->mCurrentFileName == "0208_tiger_attack.fbx" && mElapseTime == 0)
             {
-                // 걷기 모션 중에만 회전 또는 이동한다.
                 transform->SetRotation({ 0.0f, yaw, 0.0f });
             }
-            Attack();
         }
         else // 탐색범위 안에 플레이어가 있지만, 매우 가깝지 않다면...
         {
-            if (anim->mCurrentFileName == "0113_tiger_walk.fbx") 
+            Run();
+            if (anim->mCurrentFileName == "0722_tiger_run.fbx") 
             {
-                // 걷기 모션 중에만 회전 또는 이동한다.
-                transform->SetPosition(pos + dir * mSpeed * gTimer.DeltaTime());
+                transform->SetPosition(pos + dir * mRunSpeed * gTimer.DeltaTime());
                 transform->SetRotation({ 0.0f, yaw, 0.0f });
             }
         }
@@ -547,7 +552,19 @@ void TigerObject::Search(float deltaTime)
     XMVECTOR dir = XMVector3TransformNormal({ 0.0f, 0.0f, 1.0f }, transform->GetRotationM());
     dir = XMVector3Normalize(dir);
     XMVECTOR pos = transform->GetPosition();
-    transform->SetPosition(pos + dir * mSpeed * deltaTime);
+    transform->SetPosition(pos + dir * mWalkSpeed * deltaTime);
+
+    ChangeState("0113_tiger_walk.fbx");
+}
+
+void TigerObject::Run()
+{
+    Animation* anim = GetComponent<Animation>();
+    if (anim->mCurrentFileName == "0208_tiger_attack.fbx") return;
+    if (anim->mCurrentFileName == "0208_tiger_hit.fbx") return;
+    if (anim->mCurrentFileName == "0208_tiger_dying.fbx") return;
+    if (mAttackTime < 2.0f) return;
+    ChangeState("0722_tiger_run.fbx");
 }
 
 void TigerObject::Attack()
@@ -565,7 +582,7 @@ void TigerObject::TimeOut()
     {
         mIsFired = false;
         mAttackTime = 0.0f;
-        ChangeState("0113_tiger_walk.fbx");
+        ChangeState("0722_tiger_idle2.fbx");
     }
 
     if (anim->mCurrentFileName == "0208_tiger_hit.fbx")
@@ -614,6 +631,12 @@ void TigerObject::Dead()
 void TigerObject::CalcTime(float deltaTime) 
 {
     Animation* anim = GetComponent<Animation>();
+    
+    if (anim->mCurrentFileName == "0113_tiger_walk.fbx")
+    {
+        mSearchTime += deltaTime;
+    }
+
     if (anim->mCurrentFileName == "0208_tiger_attack.fbx") 
     {
         mElapseTime += deltaTime;
@@ -623,7 +646,6 @@ void TigerObject::CalcTime(float deltaTime)
     else
     {
         mAttackTime += deltaTime;
-        mSearchTime += deltaTime;
     }
 
     if (anim->mCurrentFileName == "0208_tiger_hit.fbx")
