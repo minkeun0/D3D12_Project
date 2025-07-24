@@ -78,7 +78,7 @@ void Scene::BuildHuntingStage()
         float basePosX = 100.0f;
         float basePosZ = 100.0f;
         float offset = 200.0f;
-        int repeat = 5;
+        int repeat = 6;
         for (int i = 0; i < repeat; ++i) {
             for (int j = 0; j < repeat; ++j) {
                 objectPtr = new TreeObject(this, AllocateId());
@@ -98,7 +98,7 @@ void Scene::BuildHuntingStage()
         float basePosX = 200.0f;
         float basePosZ = 200.0f;
         float offset = 200.0f;
-        int repeat = 5;
+        int repeat = 6;
         for (int i = 0; i < repeat; ++i) {
             for (int j = 0; j < repeat; ++j) {
                 objectPtr = new TreeObject(this, AllocateId());
