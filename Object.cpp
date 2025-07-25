@@ -174,6 +174,7 @@ void Object::ProcessAnimation(GameTimer& gTimer)
         memcpy(m_mappedData + sizeof(XMMATRIX), finalTransforms.data(), sizeof(XMMATRIX) * 90); // 처음 매개변수는 시작주소
     }
     memcpy(m_mappedData + sizeof(XMMATRIX) * 91, &isAnimate, sizeof(int));
+
 }
 
 uint32_t Object::GetId()
@@ -200,12 +201,20 @@ void PlayerObject::OnUpdate(GameTimer& gTimer)
 void PlayerObject::OnProcessCollision(Object& other, XMVECTOR collisionNormal, float penetration)
 {
     Transform* transform = GetComponent<Transform>();
+    
     PlayerAttackObject* pa = dynamic_cast<PlayerAttackObject*>(&other);
     if (pa) return;
+
     TigerAttackObject* ta = dynamic_cast<TigerAttackObject*>(&other);
     if (ta) // 호랑이 공격에 맞으면...
     {
         Hit();
+        return;
+    }
+
+    AxeObject* axe = dynamic_cast<AxeObject*>(&other);
+    if (axe)
+    {
         return;
     }
 
@@ -309,6 +318,7 @@ void PlayerObject::Jump()
     if (anim->mCurrentFileName == "boy_hit.fbx") return;
     if (anim->mCurrentFileName == "boy_dying_fix.fbx") return;
     gravity->SetVerticalSpeed(40.0f);
+    gravity->ResetElapseTime();
 }
 
 void PlayerObject::Attack()
@@ -758,4 +768,53 @@ void TigerLeather::OnProcessCollision(Object& other, XMVECTOR collisionNormal, f
 {
     PlayerObject* player = dynamic_cast<PlayerObject*>(&other);
     if (player) Delete();
+}
+
+void RotFenceObject::OnUpdate(GameTimer& gTimer)
+{
+    Transform* transform = GetComponent<Transform>();
+    XMFLOAT3 rot{};
+    XMStoreFloat3(&rot, transform->GetRotation());
+    rot.z += 30.0f * gTimer.DeltaTime();
+    transform->SetRotation(XMLoadFloat3(&rot));
+    Object::OnUpdate(gTimer);
+}
+
+void AxeObject::OnUpdate(GameTimer& gTimer)
+{
+    Transform* transform = GetComponent<Transform>();
+    if (m_parent_id != -1) 
+    {
+        XMMATRIX finalM = transform->GetTransformM();
+        if (m_parent_id != -1) {
+            Object* parentObj = m_scene->GetObjFromId(m_parent_id);
+            if (parentObj) {
+                Transform* parentTransform = parentObj->GetComponent<Transform>();
+                finalM = finalM * parentTransform->GetFinalM();
+            }
+        }
+        transform->SetFinalM(finalM);
+
+        Collider* collider = GetComponent<Collider>();
+        if (collider) {
+            collider->UpdateOBB(finalM);
+        }
+    }
+    else
+    {
+        Object::OnUpdate(gTimer);
+    }
+}
+
+void AxeObject::OnProcessCollision(Object& other, XMVECTOR collisionNormal, float penetration)
+{
+    PlayerObject* player = dynamic_cast<PlayerObject*>(&other);
+    if (player)
+    {
+        m_parent_id = player->GetId();
+        Transform* transform = GetComponent<Transform>();
+        transform->SetPosition({ 0.0f, 6.0f, -2.0f });
+        transform->SetRotation({ 0.0f, 90.0f, 0.0f });
+    }
+    Object::OnProcessCollision(other, collisionNormal, penetration);
 }
