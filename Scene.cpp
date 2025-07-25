@@ -278,7 +278,7 @@ void Scene::BuildBaseStage()
     {
         float scale = 4.0f;
         objectPtr = new TestObject(this, AllocateId());
-        objectPtr->AddComponent(new Transform{ {300.0f, 0.0f, 350.0f} });
+        objectPtr->AddComponent(new Transform{ {300.0f, 0.0f, 350.0f}, {-30.0f, 0.0f, 0.0f} });
         objectPtr->AddComponent(new AdjustTransform{ {0.0f * scale, 1.0f * scale, 0.0f * scale}, {0.0f, 0.0f, 0.0f}, {scale, scale, scale} });
         objectPtr->AddComponent(new Mesh{ "table.fbx" });
         objectPtr->AddComponent(new Texture{ L"Brown", 1.0f, 0.4f });

@@ -38,9 +38,6 @@ void Object::OnUpdate(GameTimer& gTimer)
             Transform* parentTransform = parentObj->GetComponent<Transform>();
             finalM = finalM * parentTransform->GetFinalM();
         }
-        else {
-            Delete();
-        }
     }
     transform->SetFinalM(finalM);
 
@@ -80,6 +77,21 @@ void Object::LateUpdate(GameTimer& gTimer)
             gravity->ResetElapseTime();
         }
     }
+
+    XMMATRIX finalM = transform->GetTransformM();
+    if (m_parent_id != -1) {
+        Object* parentObj = m_scene->GetObjFromId(m_parent_id);
+        if (parentObj) 
+        {
+            Transform* parentTransform = parentObj->GetComponent<Transform>();
+            finalM = finalM * parentTransform->GetFinalM();
+        }
+        else 
+        {
+            Delete();
+        }
+    }
+    transform->SetFinalM(finalM);
 
     XMMATRIX world = transform->GetFinalM();
     XMMATRIX adjustM = XMMatrixIdentity();
