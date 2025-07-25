@@ -1288,8 +1288,7 @@ void Scene::OnResize(UINT width, UINT height)
 
 void Scene::OnDestroy()
 {
-    CD3DX12_RANGE Range(0, CalcConstantBufferByteSize(sizeof(ObjectCB)));
-    m_constantBuffer->Unmap(0, &Range);
+    m_constantBuffer->Unmap(0, nullptr);
 }
 
 void Scene::OnProcessCollision()
