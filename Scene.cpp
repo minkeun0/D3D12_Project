@@ -252,7 +252,7 @@ void Scene::BuildBaseStage()
         objectPtr->AddComponent(new Transform{ {300.0f, 0.0f, 350.0f} });
         objectPtr->AddComponent(new AdjustTransform{ {0.0f * scale, 1.0f * scale, 0.0f * scale}, {0.0f, 0.0f, 0.0f}, {scale, scale, scale} });
         objectPtr->AddComponent(new Mesh{ "table.fbx" });
-        objectPtr->AddComponent(new Texture{ L"woodBrown", 1.0f, 0.4f });
+        objectPtr->AddComponent(new Texture{ L"Brown", 1.0f, 0.4f });
         objectPtr->AddComponent(new Collider{ {0.0f, 1.2f * scale, 0.0f}, {6.5f * scale, 1.2f * scale, 5.0f * scale} });
         objectPtr->AddComponent(new Gravity);
         AddObj(objectPtr);
@@ -261,7 +261,7 @@ void Scene::BuildBaseStage()
         objectPtr->AddComponent(new Transform{ {500.0f, 0.0f, 600.0f} });
         objectPtr->AddComponent(new AdjustTransform{ {0.0f * scale, 1.0f * scale, 0.0f * scale}, {0.0f, 0.0f, 0.0f}, {scale, scale, scale} });
         objectPtr->AddComponent(new Mesh{ "table.fbx" });
-        objectPtr->AddComponent(new Texture{ L"woodBrown", 1.0f, 0.4f });
+        objectPtr->AddComponent(new Texture{ L"Brown", 1.0f, 0.4f });
         objectPtr->AddComponent(new Collider{ {0.0f, 1.2f * scale, 0.0f}, {6.5f * scale, 1.2f * scale, 5.0f * scale} });
         objectPtr->AddComponent(new Gravity);
         AddObj(objectPtr);
@@ -420,7 +420,7 @@ void Scene::BuildBaseStage()
             objectPtr->AddComponent(new Transform{ {baseX + offset * i, 0.0f, baseZ} });
             objectPtr->AddComponent(new AdjustTransform{ {0.0f * scale, 0.0f * scale, 0.0f * scale}, {-90.0f, 0.0f, 0.0f}, {scale, scale, scale} });
             objectPtr->AddComponent(new Mesh{ "fence.fbx" });
-            objectPtr->AddComponent(new Texture{ L"woodBrown", 1.0f, 0.4f });
+            objectPtr->AddComponent(new Texture{ L"Brown", 1.0f, 0.4f });
             objectPtr->AddComponent(new Collider{ {150.0f * scale, 100.0f * scale, 0.0f}, {150.0f * scale, 100.0f * scale, 50.0f * scale } });
             objectPtr->AddComponent(new Gravity);
             AddObj(objectPtr);
@@ -431,7 +431,7 @@ void Scene::BuildBaseStage()
             objectPtr->AddComponent(new Transform{ {baseX + offset * i, 0.0f, baseZ + offset * repeat} });
             objectPtr->AddComponent(new AdjustTransform{ {0.0f * scale, 0.0f * scale, 0.0f * scale}, {-90.0f, 0.0f, 0.0f}, {scale, scale, scale} });
             objectPtr->AddComponent(new Mesh{ "fence.fbx" });
-            objectPtr->AddComponent(new Texture{ L"woodBrown", 1.0f, 0.4f });
+            objectPtr->AddComponent(new Texture{ L"Brown", 1.0f, 0.4f });
             objectPtr->AddComponent(new Collider{ {150.0f * scale, 100.0f * scale, 0.0f}, {150.0f * scale, 100.0f * scale, 50.0f * scale} });
             objectPtr->AddComponent(new Gravity);
             AddObj(objectPtr);
@@ -442,7 +442,7 @@ void Scene::BuildBaseStage()
             objectPtr->AddComponent(new Transform{ {baseX, 0.0f, baseZ + offset * i}, {0.0f, -90.0f, 0.0f} });
             objectPtr->AddComponent(new AdjustTransform{ {0.0f * scale, 0.0f * scale, 0.0f * scale}, {-90.0f, 0.0f, 0.0f}, {scale, scale, scale} });
             objectPtr->AddComponent(new Mesh{ "fence.fbx" });
-            objectPtr->AddComponent(new Texture{ L"woodBrown", 1.0f, 0.4f });
+            objectPtr->AddComponent(new Texture{ L"Brown", 1.0f, 0.4f });
             objectPtr->AddComponent(new Collider{ {150.0f * scale, 100.0f * scale, 0.0f}, {150.0f * scale, 100.0f * scale, 50.0f * scale} });
             objectPtr->AddComponent(new Gravity);
             AddObj(objectPtr);
@@ -453,7 +453,7 @@ void Scene::BuildBaseStage()
             objectPtr->AddComponent(new Transform{ {baseX + offset * repeat, 0.0f, baseZ + offset * i}, {0.0f, -90.0f, 0.0f} });
             objectPtr->AddComponent(new AdjustTransform{ {0.0f * scale, 0.0f * scale, 0.0f * scale}, {-90.0f, 0.0f, 0.0f}, {scale, scale, scale} });
             objectPtr->AddComponent(new Mesh{ "fence.fbx" });
-            objectPtr->AddComponent(new Texture{ L"woodBrown", 1.0f, 0.4f });
+            objectPtr->AddComponent(new Texture{ L"Brown", 1.0f, 0.4f });
             objectPtr->AddComponent(new Collider{ {150.0f * scale, 100.0f * scale, 0.0f}, {150.0f * scale, 100.0f * scale, 50.0f * scale} });
             objectPtr->AddComponent(new Gravity);
             AddObj(objectPtr);
@@ -1221,8 +1221,8 @@ void Scene::LoadMeshAnimationTexture()
     m_texture_name_to_index.insert({ L"broken_house", i++ });
     m_DDSFileName.push_back(L"./Textures/broken_house2.dds");
     m_texture_name_to_index.insert({ L"broken_house2", i++ });
-    m_DDSFileName.push_back(L"./Textures/ColorsheetWoodBrown.dds");
-    m_texture_name_to_index.insert({ L"woodBrown", i++ });
+    m_DDSFileName.push_back(L"./Textures/Brown.dds");
+    m_texture_name_to_index.insert({ L"Brown", i++ });
     m_DDSFileName.push_back(L"./Textures/tiger.dds");
     m_texture_name_to_index.insert({ L"tigerLeather", i++ });
 }
