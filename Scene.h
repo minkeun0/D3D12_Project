@@ -36,6 +36,9 @@ public:
     Object* GetObjFromId(uint32_t id);
     uint32_t AllocateId();
     void SetStage(wstring stage);
+    void IncreaseLeatherCount();
+    void ResetLeatherCount();
+    bool HasEnoughLeather();
 
     template<typename T>
     T* GetObj()
@@ -71,6 +74,7 @@ private:
     void BuildBaseStage();
     void BuildHuntingStage();
     void BuildGodStage();
+    void BuildTitleStage();
     void BuildShadow();
     void BuildShaders();
     void BuildInputElement();
@@ -78,12 +82,13 @@ private:
         const std::wstring& fileName, const D3D_SHADER_MACRO* defines, const std::string& entryPoint, const std::string& target);
 private:
     Framework* m_parent = nullptr;
-    wstring m_current_stage = L"Base";
+    wstring m_current_stage = L"Title";
     wstring m_stage_queue = L"";
     vector<Object*> m_objects;
     uint32_t m_id_counter = 0;
     Object* m_object_queue[MAX_QUEUE]{};
     int m_object_queue_index = 0;
+    int mLeatherCount = 0;
     //
     unique_ptr<ResourceManager> m_resourceManager;
     //

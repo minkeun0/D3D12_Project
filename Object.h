@@ -50,6 +50,8 @@ public:
 	using Object::Object;
 	void OnUpdate(GameTimer& gTimer) override;
 	void OnProcessCollision(Object& other, XMVECTOR collisionNormal, float penetration) override;
+	int GetRicecakeCount();
+
 private:
 	void ProcessInput(const GameTimer& gTimer);
 	void ChangeState(string fileName);
@@ -57,11 +59,13 @@ private:
 	void Idle();
 	void Jump();
 	void Attack();
+	void Throw();
 	void TimeOut();
 	void Fire();
 	void Hit();
 	void Dead();
 	void CalcTime(float deltaTime);
+	void ProcessRicecakeMockUp();
 	float mWalkSpeed = 20.0f;
 	float mRunSpeed = 40.0f;
 	float mElapseTime = 0.0f;
@@ -71,6 +75,9 @@ private:
 	bool mIsHitted = false;
 	bool mJumped = false;
 	int mLife = 3;
+	XMFLOAT3 mDir{};
+	int mRicecake = 0;
+	bool mHasRicecake = false;
 };
 
 class CameraObject : public Object
@@ -104,6 +111,11 @@ class TreeObject : public Object
 {
 public:
 	using Object::Object;
+	void OnUpdate(GameTimer& gTimer) override;
+	void OnProcessCollision(Object& other, XMVECTOR collisionNormal, float penetration) override;
+
+private:
+	float mElapseTime = 0.0f;
 };
 
 class TigerObject : public Object
@@ -152,14 +164,6 @@ private:
 	float mElapseTime = 0.0f;
 };
 
-class QuadObject : public Object
-{
-public:
-	using Object::Object;
-	void OnUpdate(GameTimer& gTimer) override;
-private:
-};
-
 class TigerMockup : public Object
 {
 public:
@@ -184,13 +188,17 @@ class SisterObject : public Object
 {
 public:
 	Object::Object;
+	void OnProcessCollision(Object& other, XMVECTOR collisionNormal, float penetration) override;
+
 private:
+	bool mIsQuadAble = false;
 };
 
 class GodObject : public Object
 {
 public:
 	Object::Object;
+	void OnProcessCollision(Object& other, XMVECTOR collisionNormal, float penetration) override;
 private:
 };
 
@@ -209,4 +217,51 @@ public:
 	void OnUpdate(GameTimer& gTimer) override;
 	void OnProcessCollision(Object& other, XMVECTOR collisionNormal, float penetration) override;
 private:
+};
+
+class RicecakeObject : public Object
+{
+public:
+	Object::Object;
+	void SetDir(XMVECTOR dir);
+	void OnUpdate(GameTimer& gTimer) override;
+	void OnProcessCollision(Object& other, XMVECTOR collisionNormal, float penetration) override;
+	void LateUpdate(GameTimer& gTimer) override;
+
+private:
+	XMFLOAT3 mDir{};
+	float mSpeed = 200.0f;
+};
+
+class RicecakeMockup : public Object
+{
+public:
+	Object::Object;
+	void OnUpdate(GameTimer& gTimer) override;
+private:
+};
+
+class GoToBaseObject : public Object
+{
+public:
+	Object::Object;
+	void OnUpdate(GameTimer& gTimer) override;
+	void OnProcessCollision(Object& other, XMVECTOR collisionNormal, float penetration) override;
+
+private:
+	float mElapseTime = 0.0f;
+};
+
+class TitleObject : public Object
+{
+public:
+	Object::Object;
+	void OnUpdate(GameTimer& gTimer) override;
+};
+
+class QuadObject : public Object
+{
+public:
+	Object::Object;
+	void OnUpdate(GameTimer& gTimer) override;
 };

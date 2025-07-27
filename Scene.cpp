@@ -23,7 +23,7 @@ void Scene::OnInit(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
     LoadMeshAnimationTexture();
     BuildProjMatrix();
-    BuildBaseStage();
+    BuildTitleStage();
     BuildRootSignature(device);
     BuildInputElement();
     BuildShaders();
@@ -69,6 +69,46 @@ void Scene::BuildHuntingStage()
         objectPtr->AddComponent(new Transform{ {0.f, 0.0f, 0.f} });
         objectPtr->AddComponent(new Mesh{ "HeightMap.raw" });
         objectPtr->AddComponent(new Texture{ L"grass" , 5.0f, 0.4f });
+        AddObj(objectPtr);
+    }
+
+    // 마을로 복귀
+    {
+        float scale = 0.4f;
+        objectPtr = new GoToBaseObject(this, AllocateId());
+        objectPtr->AddComponent(new Transform{ {550.0f, 0.0f, 550.0f} });
+        objectPtr->AddComponent(new AdjustTransform{ {0.0f * scale, 13.0f * scale, 0.0f * scale}, {0.0f, 0.0f, 0.0f}, {scale, scale, scale} });
+        objectPtr->AddComponent(new Mesh{ "well.fbx" });
+        objectPtr->AddComponent(new Texture{ L"broken_house", 1.0f, 0.4f });
+        objectPtr->AddComponent(new Collider{ {0.0f, 37.5f * scale, 0.0f}, {12.5f * scale, 37.5f * scale, 12.5f * scale} });
+        objectPtr->AddComponent(new Gravity);
+        AddObj(objectPtr);
+
+        objectPtr = new GoToBaseObject(this, AllocateId());
+        objectPtr->AddComponent(new Transform{ {950.0f, 0.0f, 550.0f} });
+        objectPtr->AddComponent(new AdjustTransform{ {0.0f * scale, 13.0f * scale, 0.0f * scale}, {0.0f, 0.0f, 0.0f}, {scale, scale, scale} });
+        objectPtr->AddComponent(new Mesh{ "well.fbx" });
+        objectPtr->AddComponent(new Texture{ L"broken_house", 1.0f, 0.4f });
+        objectPtr->AddComponent(new Collider{ {0.0f, 37.5f * scale, 0.0f}, {12.5f * scale, 37.5f * scale, 12.5f * scale} });
+        objectPtr->AddComponent(new Gravity);
+        AddObj(objectPtr);
+
+        objectPtr = new GoToBaseObject(this, AllocateId());
+        objectPtr->AddComponent(new Transform{ {550.0f, 0.0f, 950.0f} });
+        objectPtr->AddComponent(new AdjustTransform{ {0.0f * scale, 13.0f * scale, 0.0f * scale}, {0.0f, 0.0f, 0.0f}, {scale, scale, scale} });
+        objectPtr->AddComponent(new Mesh{ "well.fbx" });
+        objectPtr->AddComponent(new Texture{ L"broken_house", 1.0f, 0.4f });
+        objectPtr->AddComponent(new Collider{ {0.0f, 37.5f * scale, 0.0f}, {12.5f * scale, 37.5f * scale, 12.5f * scale} });
+        objectPtr->AddComponent(new Gravity);
+        AddObj(objectPtr);
+
+        objectPtr = new GoToBaseObject(this, AllocateId());
+        objectPtr->AddComponent(new Transform{ {950.0f, 0.0f, 950.0f} });
+        objectPtr->AddComponent(new AdjustTransform{ {0.0f * scale, 13.0f * scale, 0.0f * scale}, {0.0f, 0.0f, 0.0f}, {scale, scale, scale} });
+        objectPtr->AddComponent(new Mesh{ "well.fbx" });
+        objectPtr->AddComponent(new Texture{ L"broken_house", 1.0f, 0.4f });
+        objectPtr->AddComponent(new Collider{ {0.0f, 37.5f * scale, 0.0f}, {12.5f * scale, 37.5f * scale, 12.5f * scale} });
+        objectPtr->AddComponent(new Gravity);
         AddObj(objectPtr);
     }
 
@@ -160,14 +200,6 @@ void Scene::BuildBaseStage()
         objectPtr->AddComponent(new Gravity);
         objectPtr->AddComponent(new Collider{ {0.0f, 80.0f * scale, 0.0f}, {30.0f * scale, 80.0f * scale, 30.0f * scale} });
         AddObj(objectPtr);
-
-        scale = 2.0f;
-        objectPtr = new TestObject(this, AllocateId(), objectPtr->GetId());
-        objectPtr->AddComponent(new Transform{ { 0.0f, 5.0f, -3.0f} });
-        objectPtr->AddComponent(new AdjustTransform{ {-0.8f * scale, 0.3f * scale, -2.5f * scale}, {0.0f, 0.0f, 0.0f}, {scale, scale, scale} });
-        objectPtr->AddComponent(new Mesh{ "long_tree.fbx" });
-        objectPtr->AddComponent(new Texture{ L"longTree", 1.0f, 0.4f });
-        AddObj(objectPtr);
     }
 
     // 여동생
@@ -187,7 +219,7 @@ void Scene::BuildBaseStage()
     // 산신령
     {
         float scale = 0.1f;
-        objectPtr = new SisterObject(this, AllocateId());
+        objectPtr = new GodObject(this, AllocateId());
         objectPtr->AddComponent(new Transform{ {500.f, 20.0f, 600.f}, {0.0f, 180.0f, 0.0f} });
         objectPtr->AddComponent(new AdjustTransform{ {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {scale, scale, scale} });
         objectPtr->AddComponent(new Mesh{ "god_idle.fbx" });
@@ -542,17 +574,6 @@ void Scene::BuildBaseStage()
             AddObj(objectPtr);
         }
     }
-
-    //{
-    //    float scale = 3.0f;
-    //    objectPtr = new QuadObject(this, AllocateId());
-    //    objectPtr->AddComponent(new Transform{ {0.0f, 0.0f, 1.0f}, {0.0, 0.0f, 0.0f} });
-    //    objectPtr->AddComponent(new AdjustTransform{ {-0.8f * scale, 0.3f * scale, -2.5f * scale}, {0.0f, 0.0f, 0.0f}, {scale, scale, scale} });
-    //    objectPtr->AddComponent(new Mesh{ "long_tree.fbx" });
-    //    objectPtr->AddComponent(new Texture{ L"longTree", 1.0f, 0.4f });
-    //    AddObj(objectPtr);
-    //}
-
     ProcessObjectQueue();
 }
 
@@ -572,7 +593,7 @@ void Scene::BuildGodStage()
     {
         float scale = 0.1f;
         objectPtr = new PlayerObject(this, AllocateId());
-        objectPtr->AddComponent(new Transform{ {100.0f, 0.0f, 100.0f} });
+        objectPtr->AddComponent(new Transform{ {150.0f, 0.0f, 100.0f} });
         objectPtr->AddComponent(new AdjustTransform{ {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {scale, scale, scale} });
         objectPtr->AddComponent(new Mesh{ "1P(boy-idle).fbx" });
         objectPtr->AddComponent(new Texture{ L"boy" , 1.0f, 0.4f });
@@ -590,6 +611,8 @@ void Scene::BuildGodStage()
         objectPtr->AddComponent(new Texture{ L"grass", 1.0f, 0.4f });
         AddObj(objectPtr);
     }
+
+
 
     // 중앙나무
     {
@@ -673,6 +696,45 @@ void Scene::BuildGodStage()
         AddObj(objectPtr);
 
     }
+    ProcessObjectQueue();
+}
+
+void Scene::BuildTitleStage()
+{
+    m_current_stage = L"Title";
+    Object* objectPtr = nullptr;
+
+    // 카메라
+    {
+        objectPtr = new CameraObject(this, AllocateId());
+        objectPtr->AddComponent(new Transform{ {0.0f, 0.0f, 0.0f} });
+        AddObj(objectPtr);
+    }
+
+    // 플레이어
+    {
+        float scale = 0.1f;
+        objectPtr = new PlayerObject(this, AllocateId());
+        objectPtr->AddComponent(new Transform{ {500.0f, 0.0f, 500.0f} });
+        objectPtr->AddComponent(new AdjustTransform{ {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {scale, scale, scale} });
+        objectPtr->AddComponent(new Mesh{ "1P(boy-idle).fbx" });
+        objectPtr->AddComponent(new Texture{ L"boy" , 1.0f, 0.4f });
+        objectPtr->AddComponent(new Animation{ "1P(boy-idle).fbx" });
+        objectPtr->AddComponent(new Gravity);
+        objectPtr->AddComponent(new Collider{ {0.0f, 80.0f * scale, 0.0f}, {30.0f * scale, 80.0f * scale, 30.0f * scale} });
+        AddObj(objectPtr);
+    }
+
+    // Title
+    {
+        objectPtr = new TitleObject(this, AllocateId());
+        objectPtr->AddComponent(new Transform{ {-0.5f * 1.77f, -0.5f, 1.0f}, {-90.0f, 0.0f, 0.0f}, {1.77f, 1.0f, 1.0f} });
+        objectPtr->AddComponent(new Mesh{ "Quad" });
+        objectPtr->AddComponent(new Texture{ L"Title", 1.0f, 0.4f });
+        AddObj(objectPtr);
+    }
+
+    ProcessObjectQueue();
 }
 
 void Scene::BuildShadow()
@@ -933,6 +995,22 @@ void Scene::SetStage(wstring stage)
     m_stage_queue = stage;
 }
 
+void Scene::IncreaseLeatherCount()
+{
+    ++mLeatherCount;
+}
+
+void Scene::ResetLeatherCount()
+{
+    mLeatherCount = 0;
+}
+
+bool Scene::HasEnoughLeather()
+{
+    
+    return mLeatherCount > 5 ? true : false;
+}
+
 void Scene::ProcessStageQueue()
 {
     if (m_stage_queue == L"Base")
@@ -950,6 +1028,11 @@ void Scene::ProcessStageQueue()
     {
         DeleteCurrentObjects();
         BuildGodStage();
+    }
+    else if (m_stage_queue == L"Title")
+    {
+        DeleteCurrentObjects();
+        BuildTitleStage();
     }
     m_stage_queue = L"";
 }
@@ -1288,6 +1371,9 @@ void Scene::ProcessInput()
     if ((keyState[VK_F2] & 0x88) == 0x80) {
         m_stage_queue = L"God";
     }
+    if ((keyState[VK_F3] & 0x88) == 0x80) {
+        m_stage_queue = L"Title";
+    }
 }
 
 void Scene::LoadMeshAnimationTexture()
@@ -1295,6 +1381,7 @@ void Scene::LoadMeshAnimationTexture()
     m_resourceManager = make_unique<ResourceManager>();
     m_resourceManager->CreatePlane("Plane", 1000, 10);
     m_resourceManager->CreatePlane("HalfPlane", 500, 5);
+    m_resourceManager->CreatePlane("Quad", 1, 1);
     m_resourceManager->CreateTerrain("HeightMap.raw", 50, 5, 50);
     m_resourceManager->LoadFbx("1P(boy-idle).fbx", false, true);
     m_resourceManager->LoadFbx("boy_walk_fix.fbx", true, true);
@@ -1303,6 +1390,7 @@ void Scene::LoadMeshAnimationTexture()
     m_resourceManager->LoadFbx("boy_attack(45).fbx", true, true);
     m_resourceManager->LoadFbx("boy_hit.fbx", true, true);
     m_resourceManager->LoadFbx("boy_dying_fix.fbx", true, true);
+    m_resourceManager->LoadFbx("boy_throw.fbx", true, true);
 
     m_resourceManager->LoadFbx("god_idle.fbx", false, true);
     m_resourceManager->LoadFbx("sister_idle_fix.fbx", false, true);
@@ -1334,14 +1422,11 @@ void Scene::LoadMeshAnimationTexture()
     m_resourceManager->LoadFbx("tiger_leather.fbx", false, true);
     m_resourceManager->LoadFbx("axe.fbx", false, true);
     m_resourceManager->LoadFbx("wood.fbx", false, true);
+    m_resourceManager->LoadFbx("ricecake.fbx", false, true);
 
     int i = 0;
     m_DDSFileName.push_back(L"./Textures/boy.dds");
     m_texture_name_to_index.insert({ L"boy", i++ });
-    m_DDSFileName.push_back(L"./Textures/bricks3.dds");
-    m_texture_name_to_index.insert({ L"bricks3", i++ });
-    m_DDSFileName.push_back(L"./Textures/checkboard.dds");
-    m_texture_name_to_index.insert({ L"checkboard", i++ });
     m_DDSFileName.push_back(L"./Textures/grass.dds");
     m_texture_name_to_index.insert({ L"grass", i++ });
     m_DDSFileName.push_back(L"./Textures/tile.dds");
@@ -1350,8 +1435,6 @@ void Scene::LoadMeshAnimationTexture()
     m_texture_name_to_index.insert({ L"god", i++ });
     m_DDSFileName.push_back(L"./Textures/sister.dds");
     m_texture_name_to_index.insert({ L"sister", i++ });
-    m_DDSFileName.push_back(L"./Textures/water1.dds");
-    m_texture_name_to_index.insert({ L"water1", i++ });
     m_DDSFileName.push_back(L"./Textures/PP_Color_Palette.dds");
     m_texture_name_to_index.insert({ L"PP_Color_Palette", i++ });
     m_DDSFileName.push_back(L"./Textures/tigercolor.dds");
@@ -1376,6 +1459,16 @@ void Scene::LoadMeshAnimationTexture()
     m_texture_name_to_index.insert({ L"axe", i++ });
     m_DDSFileName.push_back(L"./Textures/wood.dds");
     m_texture_name_to_index.insert({ L"wood", i++ });
+    m_DDSFileName.push_back(L"./Textures/ricecake.dds");
+    m_texture_name_to_index.insert({ L"ricecake", i++ });
+    m_DDSFileName.push_back(L"./Textures/Title.dds");
+    m_texture_name_to_index.insert({ L"Title", i++ });
+    m_DDSFileName.push_back(L"./Textures/cloud.dds");
+    m_texture_name_to_index.insert({ L"White", i++ });
+    m_DDSFileName.push_back(L"./Textures/Quest.dds");
+    m_texture_name_to_index.insert({ L"Quest", i++ });
+    m_DDSFileName.push_back(L"./Textures/End.dds");
+    m_texture_name_to_index.insert({ L"End", i++ });
 }
 
 // Update frame-based values.
