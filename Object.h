@@ -4,6 +4,7 @@
 
 class GameTimer;
 class Scene;
+
 class Object
 {
 public:
@@ -51,7 +52,7 @@ public:
 	void OnUpdate(GameTimer& gTimer) override;
 	void OnProcessCollision(Object& other, XMVECTOR collisionNormal, float penetration) override;
 	int GetRicecakeCount();
-
+	int GetLifeCount();
 private:
 	void ProcessInput(const GameTimer& gTimer);
 	void ChangeState(string fileName);
@@ -65,7 +66,6 @@ private:
 	void Hit();
 	void Dead();
 	void CalcTime(float deltaTime);
-	void ProcessRicecakeMockUp();
 	float mWalkSpeed = 20.0f;
 	float mRunSpeed = 40.0f;
 	float mElapseTime = 0.0f;
@@ -77,7 +77,6 @@ private:
 	int mLife = 3;
 	XMFLOAT3 mDir{};
 	int mRicecake = 0;
-	bool mHasRicecake = false;
 };
 
 class CameraObject : public Object
@@ -124,6 +123,7 @@ public:
 	using Object::Object;
 	void OnUpdate(GameTimer& gTimer) override;
 	void OnProcessCollision(Object& other, XMVECTOR collisionNormal, float penetration) override;
+	int GetLife();
 private:
 	void TigerBehavior(GameTimer& gTimer);
 	void ChangeState(string fileName);
@@ -233,14 +233,6 @@ private:
 	float mSpeed = 200.0f;
 };
 
-class RicecakeMockup : public Object
-{
-public:
-	Object::Object;
-	void OnUpdate(GameTimer& gTimer) override;
-private:
-};
-
 class GoToBaseObject : public Object
 {
 public:
@@ -252,14 +244,14 @@ private:
 	float mElapseTime = 0.0f;
 };
 
-class TitleObject : public Object
+class TitleQuadObject : public Object
 {
 public:
 	Object::Object;
 	void OnUpdate(GameTimer& gTimer) override;
 };
 
-class QuadObject : public Object
+class EndQuadObject : public Object
 {
 public:
 	Object::Object;
@@ -270,4 +262,31 @@ class SisterQuadObject : public Object
 {
 public:
 	Object::Object;
+	void OnUpdate(GameTimer& gTimer) override;
+};
+
+class LifeQuadObject : public Object
+{
+public:
+	Object::Object;
+	void OnUpdate(GameTimer& gTimer) override;
+};
+
+class BoyIconQuadObject : public Object
+{
+public:
+	Object::Object;
+	void OnUpdate(GameTimer& gTimer) override;
+};
+
+class RiceCakeQuadObject : public Object
+{
+	Object::Object;
+	void OnUpdate(GameTimer& gTimer) override;
+};
+
+class TigerLeatherQuadObject : public Object
+{
+	Object::Object;
+	void OnUpdate(GameTimer& gTimer) override;
 };
