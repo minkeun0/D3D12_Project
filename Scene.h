@@ -89,6 +89,7 @@ private:
     Object* m_object_queue[MAX_QUEUE]{};
     int m_object_queue_index = 0;
     int mLeatherCount = 0;
+
     //
     unique_ptr<ResourceManager> m_resourceManager;
     //
