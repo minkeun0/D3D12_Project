@@ -59,14 +59,6 @@ LRESULT CALLBACK Win32Application::WindowProc(HWND hWnd, UINT message, WPARAM wP
 
     switch (message)
     {
-    case WM_MOUSEMOVE:
-        if (pSample)
-        {
-            pSample->GetScene(pSample->GetCurrentSceneName()).GetObj<CameraObject>()->OnMouseInput(
-                wParam, pSample->GetWin32App().GetHwnd());
-        }
-        break;
-
     case WM_SIZE:
         if (pSample)
         {

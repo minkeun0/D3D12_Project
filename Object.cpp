@@ -488,13 +488,14 @@ void PlayerObject::CalcTime(float deltaTime)
 
 void CameraObject::OnUpdate(GameTimer& gTimer)
 {
+    ProcessInput();
     float x = mRadius * sinf(mPhi) * cosf(mTheta);
     float y = mRadius * cosf(mPhi);
     float z = mRadius * sinf(mPhi) * sinf(mTheta);
 
     Object* playerObj = m_scene->GetObj<PlayerObject>();
     Transform* playerTransform = playerObj->GetComponent<Transform>();
-    XMVECTOR targetPos = playerTransform->GetPosition() + XMVECTOR{0.0f, 10.0f, 0.0f};
+    XMVECTOR targetPos = playerTransform->GetPosition() + XMVECTOR{0.0f, 15.0f, 0.0f};
 
     Transform* myTransform = GetComponent<Transform>();
     XMVECTOR myPos = targetPos + XMVECTOR{ x, y, z, 0.f };
@@ -521,9 +522,10 @@ void CameraObject::LateUpdate(GameTimer& gTimer)
     memcpy(m_scene->GetConstantBufferMappedData(), &XMMatrixTranspose(invtransformM), sizeof(XMMATRIX)); // 처음 매개변수는 시작주소
 }
 
-void CameraObject::OnMouseInput(WPARAM wParam, HWND hWnd)
+void CameraObject::MouseMove()
 {
     // 현재 wnd의 센터 좌표를 알아온다
+    HWND hWnd = m_scene->GetFramework()->GetHWnd();
     RECT clientRect{};
     GetWindowRect(hWnd, &clientRect);
     int width = int(clientRect.right - clientRect.left);
@@ -544,6 +546,11 @@ void CameraObject::OnMouseInput(WPARAM wParam, HWND hWnd)
     mPhi = mPhi < min ? min : (mPhi > max ? max : mPhi);
 
     SetCursorPos(centerX, centerY);
+}
+
+void CameraObject::ProcessInput()
+{
+    MouseMove();
 }
 
 void TigerObject::OnUpdate(GameTimer& gTimer)
