@@ -145,13 +145,14 @@ void Scene::BuildHuntingStage()
             for (int j = 0; j < repeat; ++j) {
                 objectPtr = new TreeObject(this, AllocateId());
                 objectPtr->AddComponent(new Transform{ {basePosX + offset * j, -100.f, basePosZ + offset * i} });
-                objectPtr->AddComponent(new AdjustTransform{ {-0.8f * scale, 0.3f * scale, -2.5f * scale}, {0.0f, 0.0f, 0.0f}, {scale, scale, scale} });
-                objectPtr->AddComponent(new Mesh{ "long_tree.fbx" });
-                objectPtr->AddComponent(new Texture{ L"longTree", 1.0f, 0.4f });
-                objectPtr->AddComponent(new Collider{ {0.0f, 20.0f, 0.0f}, {4.0f, 20.0f, 4.0f} });
+                objectPtr->AddComponent(new AdjustTransform{ {-1.0f * scale, 0.0f * scale, 0.0f * scale}, {0.0f, 0.0f, 0.0f}, {scale, scale, scale} });
+                objectPtr->AddComponent(new Mesh{ "normal_tree.fbx" });
+                objectPtr->AddComponent(new Texture{ L"normalTree", 1.0f, 0.4f });
+                objectPtr->AddComponent(new Collider{ {0.0f, 1.0f * scale, 0.0f}, {0.15f * scale, 1.0f * scale, 0.15f * scale} });
                 AddObj(objectPtr);
             }
         }
+
     }
 
     // 호랑이
@@ -173,6 +174,60 @@ void Scene::BuildHuntingStage()
                 objectPtr->AddComponent(new Collider{ {0.0f, 6.0f, 0.0f}, {2.0f, 6.0f, 10.0f} });
                 AddObj(objectPtr);
             }
+        }
+    }
+
+    //경계벽
+    {
+        float scale = 44.0f;
+        float scaleY = scale * 1.5f;
+        int repeat = 7;
+        for (int i = 0; i < repeat; ++i)
+        {
+            objectPtr = new TestObject(this, AllocateId());
+            objectPtr->AddComponent(new Transform{ {100.0f + 200.0f * i, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f} });
+            objectPtr->AddComponent(new AdjustTransform{ {0.0f, 0.0f, 0.0f }, {0.0f, 0.0f, 0.0f}, {scale, scaleY, scale} });
+            objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {2.3f * scale, 1.5f * scaleY, 1.3f * scale} });
+            objectPtr->AddComponent(new Mesh{ "cloud1.fbx" });
+            objectPtr->AddComponent(new Texture{ L"LightGray", 1.0f, 0.4f });
+            objectPtr->AddComponent(new Gravity);
+            AddObj(objectPtr);
+        }
+
+        for (int i = 0; i < repeat; ++i)
+        {
+            objectPtr = new TestObject(this, AllocateId());
+            objectPtr->AddComponent(new Transform{ {100.0f + 200.0f * i, 0.0f, 2560.0f}, {0.0f, 0.0f, 0.0f} });
+            objectPtr->AddComponent(new AdjustTransform{ {0.0f, 0.0f, 0.0f }, {0.0f, 0.0f, 0.0f}, {scale, scaleY, scale} });
+            objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {2.3f * scale, 1.5f * scaleY, 1.3f * scale} });
+            objectPtr->AddComponent(new Mesh{ "cloud1.fbx" });
+            objectPtr->AddComponent(new Texture{ L"LightGray", 1.0f, 0.4f });
+            objectPtr->AddComponent(new Gravity);
+            AddObj(objectPtr);
+        }
+
+        for (int i = 0; i < repeat; ++i)
+        {
+            objectPtr = new TestObject(this, AllocateId());
+            objectPtr->AddComponent(new Transform{ {0.0f, 0.0f, 100.0f + 200.0f * i}, {0.0f, 90.0f, 0.0f} });
+            objectPtr->AddComponent(new AdjustTransform{ {0.0f, 0.0f, 0.0f }, {0.0f, 0.0f, 0.0f}, {scale, scaleY, scale} });
+            objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {2.3f * scale, 1.5f * scaleY, 1.3f * scale} });
+            objectPtr->AddComponent(new Mesh{ "cloud1.fbx" });
+            objectPtr->AddComponent(new Texture{ L"LightGray", 1.0f, 0.4f });
+            objectPtr->AddComponent(new Gravity);
+            AddObj(objectPtr);
+        }
+
+        for (int i = 0; i < repeat; ++i)
+        {
+            objectPtr = new TestObject(this, AllocateId());
+            objectPtr->AddComponent(new Transform{ {2560.0f, 0.0f, 100.0f + 200.0f * i}, {0.0f, 90.0f, 0.0f} });
+            objectPtr->AddComponent(new AdjustTransform{ {0.0f, 0.0f, 0.0f }, {0.0f, 0.0f, 0.0f}, {scale, scaleY, scale} });
+            objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {2.3f * scale, 1.5f * scaleY, 1.3f * scale} });
+            objectPtr->AddComponent(new Mesh{ "cloud1.fbx" });
+            objectPtr->AddComponent(new Texture{ L"LightGray", 1.0f, 0.4f });
+            objectPtr->AddComponent(new Gravity);
+            AddObj(objectPtr);
         }
     }
 }
@@ -525,13 +580,14 @@ void Scene::BuildBaseStage()
     //경계벽
     {
         float scale = 44.0f;
+        float scaleY = scale * 1.5f;
         int repeat = 5;
         for (int i = 0; i < repeat; ++i)
         {
             objectPtr = new TestObject(this, AllocateId());
             objectPtr->AddComponent(new Transform{ {100.0f + 200.0f * i, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f} });
-            objectPtr->AddComponent(new AdjustTransform{ {0.0f * scale, 0.0f * scale, 0.0f * scale}, {0.0f, 0.0f, 0.0f}, {scale, scale, scale} });
-            objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {2.3f * scale, 1.5f * scale, 1.3f * scale} });
+            objectPtr->AddComponent(new AdjustTransform{ {0.0f, 0.0f, 0.0f }, {0.0f, 0.0f, 0.0f}, {scale, scaleY, scale} });
+            objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {2.3f * scale, 1.5f * scaleY, 1.3f * scale} });
             objectPtr->AddComponent(new Mesh{ "cloud1.fbx" });
             objectPtr->AddComponent(new Texture{ L"Gray", 1.0f, 0.4f });
             objectPtr->AddComponent(new Gravity);
@@ -541,9 +597,9 @@ void Scene::BuildBaseStage()
         for (int i = 0; i < repeat; ++i)
         {
             objectPtr = new TestObject(this, AllocateId());
-            objectPtr->AddComponent(new Transform{ {100.0f + 200.0f * i, 0.0f, 1000.0f}, {0.0f, 0.0f, 0.0f} });
-            objectPtr->AddComponent(new AdjustTransform{ {0.0f * scale, 0.0f * scale, 0.0f * scale}, {0.0f, 0.0f, 0.0f}, {scale, scale, scale} });
-            objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {2.3f * scale, 1.5f * scale, 1.3f * scale} });
+            objectPtr->AddComponent(new Transform{ {100.0f + 200.0f * i, 0.0f, 2560.0f}, {0.0f, 0.0f, 0.0f} });
+            objectPtr->AddComponent(new AdjustTransform{ {0.0f, 0.0f, 0.0f }, {0.0f, 0.0f, 0.0f}, {scale, scaleY, scale} });
+            objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {2.3f * scale, 1.5f * scaleY, 1.3f * scale} });
             objectPtr->AddComponent(new Mesh{ "cloud1.fbx" });
             objectPtr->AddComponent(new Texture{ L"Gray", 1.0f, 0.4f });
             objectPtr->AddComponent(new Gravity);
@@ -554,8 +610,8 @@ void Scene::BuildBaseStage()
         {
             objectPtr = new TestObject(this, AllocateId());
             objectPtr->AddComponent(new Transform{ {0.0f, 0.0f, 100.0f + 200.0f * i}, {0.0f, 90.0f, 0.0f} });
-            objectPtr->AddComponent(new AdjustTransform{ {0.0f * scale, 0.0f * scale, 0.0f * scale}, {0.0f, 0.0f, 0.0f}, {scale, scale, scale} });
-            objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {2.3f * scale, 1.5f * scale, 1.3f * scale} });
+            objectPtr->AddComponent(new AdjustTransform{ {0.0f, 0.0f, 0.0f }, {0.0f, 0.0f, 0.0f}, {scale, scaleY, scale} });
+            objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {2.3f * scale, 1.5f * scaleY, 1.3f * scale} });
             objectPtr->AddComponent(new Mesh{ "cloud1.fbx" });
             objectPtr->AddComponent(new Texture{ L"LightGray", 1.0f, 0.4f });
             objectPtr->AddComponent(new Gravity);
@@ -565,9 +621,9 @@ void Scene::BuildBaseStage()
         for (int i = 0; i < repeat; ++i)
         {
             objectPtr = new TestObject(this, AllocateId());
-            objectPtr->AddComponent(new Transform{ {1000.0f, 0.0f, 100.0f + 200.0f * i}, {0.0f, 90.0f, 0.0f} });
-            objectPtr->AddComponent(new AdjustTransform{ {0.0f * scale, 0.0f * scale, 0.0f * scale}, {0.0f, 0.0f, 0.0f}, {scale, scale, scale} });
-            objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {2.3f * scale, 1.5f * scale, 1.3f * scale} });
+            objectPtr->AddComponent(new Transform{ {2560.0f, 0.0f, 100.0f + 200.0f * i}, {0.0f, 90.0f, 0.0f} });
+            objectPtr->AddComponent(new AdjustTransform{ {0.0f, 0.0f, 0.0f }, {0.0f, 0.0f, 0.0f}, {scale, scaleY, scale} });
+            objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {2.3f * scale, 1.5f * scaleY, 1.3f * scale} });
             objectPtr->AddComponent(new Mesh{ "cloud1.fbx" });
             objectPtr->AddComponent(new Texture{ L"LightGray", 1.0f, 0.4f });
             objectPtr->AddComponent(new Gravity);
@@ -610,7 +666,6 @@ void Scene::BuildGodStage()
         objectPtr->AddComponent(new Texture{ L"grass", 1.0f, 0.4f });
         AddObj(objectPtr);
     }
-
 
     // 중앙나무
     {
@@ -693,6 +748,59 @@ void Scene::BuildGodStage()
         objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {100.0f * scale, 15.0f * scale, 150.0f * scale } });
         AddObj(objectPtr);
 
+    }
+    //경계벽
+    {
+        float scale = 44.0f;
+        float scaleY = scale * 1.5f;
+        int repeat = 3;
+        for (int i = 0; i < repeat; ++i)
+        {
+            objectPtr = new TestObject(this, AllocateId());
+            objectPtr->AddComponent(new Transform{ {100.0f + 200.0f * i, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f} });
+            objectPtr->AddComponent(new AdjustTransform{ {0.0f, 0.0f, 0.0f }, {0.0f, 0.0f, 0.0f}, {scale, scaleY, scale} });
+            objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {2.3f * scale, 1.5f * scaleY, 1.3f * scale} });
+            objectPtr->AddComponent(new Mesh{ "cloud1.fbx" });
+            objectPtr->AddComponent(new Texture{ L"Gray", 1.0f, 0.4f });
+            objectPtr->AddComponent(new Gravity);
+            AddObj(objectPtr);
+        }
+
+        for (int i = 0; i < repeat; ++i)
+        {
+            objectPtr = new TestObject(this, AllocateId());
+            objectPtr->AddComponent(new Transform{ {100.0f + 200.0f * i, 0.0f, 2560.0f}, {0.0f, 0.0f, 0.0f} });
+            objectPtr->AddComponent(new AdjustTransform{ {0.0f, 0.0f, 0.0f }, {0.0f, 0.0f, 0.0f}, {scale, scaleY, scale} });
+            objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {2.3f * scale, 1.5f * scaleY, 1.3f * scale} });
+            objectPtr->AddComponent(new Mesh{ "cloud1.fbx" });
+            objectPtr->AddComponent(new Texture{ L"Gray", 1.0f, 0.4f });
+            objectPtr->AddComponent(new Gravity);
+            AddObj(objectPtr);
+        }
+
+        for (int i = 0; i < repeat; ++i)
+        {
+            objectPtr = new TestObject(this, AllocateId());
+            objectPtr->AddComponent(new Transform{ {0.0f, 0.0f, 100.0f + 200.0f * i}, {0.0f, 90.0f, 0.0f} });
+            objectPtr->AddComponent(new AdjustTransform{ {0.0f, 0.0f, 0.0f }, {0.0f, 0.0f, 0.0f}, {scale, scaleY, scale} });
+            objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {2.3f * scale, 1.5f * scaleY, 1.3f * scale} });
+            objectPtr->AddComponent(new Mesh{ "cloud1.fbx" });
+            objectPtr->AddComponent(new Texture{ L"Gray", 1.0f, 0.4f });
+            objectPtr->AddComponent(new Gravity);
+            AddObj(objectPtr);
+        }
+
+        for (int i = 0; i < repeat; ++i)
+        {
+            objectPtr = new TestObject(this, AllocateId());
+            objectPtr->AddComponent(new Transform{ {2560.0f, 0.0f, 100.0f + 200.0f * i}, {0.0f, 90.0f, 0.0f} });
+            objectPtr->AddComponent(new AdjustTransform{ {0.0f, 0.0f, 0.0f }, {0.0f, 0.0f, 0.0f}, {scale, scaleY, scale} });
+            objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {2.3f * scale, 1.5f * scaleY, 1.3f * scale} });
+            objectPtr->AddComponent(new Mesh{ "cloud1.fbx" });
+            objectPtr->AddComponent(new Texture{ L"Gray", 1.0f, 0.4f });
+            objectPtr->AddComponent(new Gravity);
+            AddObj(objectPtr);
+        }
     }
 }
 
@@ -1458,7 +1566,7 @@ void Scene::AddObj(Object* object)
 
 void Scene::BuildProjMatrix()
 {
-    XMMATRIX proj = XMMatrixPerspectiveFovLH(XMConvertToRadians(60.0f), m_viewport.Width / m_viewport.Height, 0.1f, 1000.0f);
+    XMMATRIX proj = XMMatrixPerspectiveFovLH(XMConvertToRadians(60.0f), m_viewport.Width / m_viewport.Height, 0.1f, 1500.0f);
     XMStoreFloat4x4(&m_proj, proj);
 }
 
@@ -1531,6 +1639,8 @@ void Scene::LoadMeshAnimationTexture()
     m_resourceManager->LoadFbx("axe.fbx", false, true);
     m_resourceManager->LoadFbx("wood.fbx", false, true);
     m_resourceManager->LoadFbx("ricecake.fbx", false, true);
+
+    m_resourceManager->LoadFbx("grass_low.fbx", false, true);
 
     int i = 0;
     m_DDSFileName.push_back(L"./Textures/boy.dds");

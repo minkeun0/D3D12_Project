@@ -103,6 +103,7 @@ class TestObject : public Object
 {
 public:
 	using Object::Object;
+	void OnProcessCollision(Object& other, XMVECTOR collisionNormal, float penetration) override;
 };
 
 class TreeObject : public Object
@@ -132,6 +133,7 @@ private:
 	void TimeOut();
 	void Fire();
 	void Hit();
+	void HitByRiceCake();
 	void Dead();
 	void CalcTime(float deltaTime);
 	void CreateLeather();
@@ -288,4 +290,11 @@ class TigerLeatherQuadObject : public Object
 {
 	Object::Object;
 	void OnUpdate(GameTimer& gTimer) override;
+};
+
+class GrassGroupObject : public Object
+{
+public:
+	GrassGroupObject(Scene* scene, uint32_t id, uint32_t parentId = -1);
+	void RandomRot();
 };
