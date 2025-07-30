@@ -104,7 +104,6 @@ void Framework::OnResize(UINT width, UINT height, bool minimized)
         m_commandQueue.Get()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
         WaitForPreviousFrame();
     }
-    m_win32App->SetWindowVisible(!minimized);
 }
 
 void Framework::OnDestroy()
@@ -490,5 +489,15 @@ BYTE* Framework::GetKeyState()
 HWND Framework::GetHWnd()
 {
     return m_win32App->GetHwnd();
+}
+
+void Framework::SetWndActivateState(bool state)
+{
+    m_win32App->SetWindowVisible(state);
+}
+
+bool Framework::GetWndActivateState()
+{
+    return m_win32App->GetWindowVisible();
 }
 

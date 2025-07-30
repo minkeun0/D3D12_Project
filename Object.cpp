@@ -586,6 +586,7 @@ void CameraObject::LateUpdate(GameTimer& gTimer)
 
 void CameraObject::MouseMove()
 {
+    if (!m_scene->GetFramework()->GetWndActivateState()) return;
     // 현재 wnd의 센터 좌표를 알아온다
     HWND hWnd = m_scene->GetFramework()->GetHWnd();
     RECT clientRect{};

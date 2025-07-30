@@ -26,6 +26,8 @@ public:
 	BYTE* GetKeyState();
 	HWND GetHWnd();
 
+	void SetWndActivateState(bool state);
+	bool GetWndActivateState();
 private:
 	void GetHardwareAdapter(
 		IDXGIFactory1* pFactory,
