@@ -194,7 +194,12 @@ void Object::Delete()
 
 void PlayerObject::OnUpdate(GameTimer& gTimer)
 {
-    ProcessInput(gTimer);
+    Transform* transform = GetComponent<Transform>();
+    XMVECTOR pos = transform->GetPosition();
+    char outstatus = m_scene->ClampToBounds(pos, { 0.0f, 0.0f, 0.0f });
+    if (outstatus & 0x04) mIsJumpping = false;
+
+    ProcessInput(gTimer);    
     Object::OnUpdate(gTimer);
 }
 
@@ -241,6 +246,7 @@ void PlayerObject::OnProcessCollision(Object& other, XMVECTOR collisionNormal, f
     Gravity* gravity = GetComponent<Gravity>();
     if (gravity && similarity > 0.80f) {
         gravity->ResetElapseTime();
+        mIsJumpping = false;
     }
 }
 
@@ -282,7 +288,6 @@ void PlayerObject::ProcessInput(const GameTimer& gTimer)
 
     if ((keyState[VK_LBUTTON] & 0x88) == 0x80)  Attack(); 
     if ((keyState[VK_RBUTTON] & 0x88) == 0x80)  Throw(); 
-
 
     if ((keyState[VK_SPACE] & 0x88) == 0x80) {
         Jump();
@@ -337,9 +342,8 @@ void PlayerObject::Idle()
 
 void PlayerObject::Jump()
 {
-    if (mJumped) return;
-    mJumped = true;
-    mJumpTime = 0.0f;
+    if (mIsJumpping) return;
+    mIsJumpping = true;
     Gravity* gravity = GetComponent<Gravity>();
     Animation* anim = GetComponent<Animation>();
     if (!gravity) return;
@@ -478,15 +482,6 @@ void PlayerObject::CalcTime(float deltaTime)
     {
         mElapseTime += deltaTime;
         if (mElapseTime > 2.0f) TimeOut();
-    }
-
-    if (mJumped)
-    {
-        mJumpTime += deltaTime;
-        if (mJumpTime > 1.2f)
-        {
-            mJumped = false;
-        }
     }
 }
 
@@ -1000,8 +995,8 @@ void GoToBaseObject::OnUpdate(GameTimer& gTimer)
     Texture* texture = GetComponent<Texture>();
     if (texture && m_scene->HasEnoughLeather())
     {
+        texture->mAmbiantValue = fabs(sinf(mElapseTime) * 2.0f)  + 0.4f;
         mElapseTime += gTimer.DeltaTime();        
-        texture->mAmbiantValue = ((sinf(mElapseTime) + 1.0f) * 2.0f) + 0.4;
     }
     Object::OnUpdate(gTimer);
 }
@@ -1044,20 +1039,12 @@ void SisterObject::OnProcessCollision(Object& other, XMVECTOR collisionNormal, f
     if (player && !mIsQuadAble)
     {
         mIsQuadAble = true;
-        
+        m_scene->SetTigerQuestState(true);
+
         Object* obj = new SisterQuadObject(m_scene, m_scene->AllocateId(), m_id);
         obj->AddComponent(new Transform{ {-5.0f, 10.0f, 0.1f}, {-90.0f, 180.0f, 0.0f}, {30.0f, 0.0f, 25.0f} });
         obj->AddComponent(new Mesh{ "Quad" });
         obj->AddComponent(new Texture{ L"Quest", -1.0f, 0.4f });
-        m_scene->AddObj(obj);
-
-        float depthFactor = 0.11;
-        float scale = 0.25;
-        float textureRatio = 256.0f / 256.0f; // 텍스처 비율
-        obj = new TigerLeatherQuadObject(m_scene, m_scene->AllocateId());
-        obj->AddComponent(new Transform{ {0.7f * depthFactor, -0.55f * depthFactor, 1.0f * depthFactor}, {-90.0f, 0.0f, 0.0f}, {depthFactor * textureRatio * scale, 1.0f, depthFactor * scale} });
-        obj->AddComponent(new Mesh{ "Quad" });
-        obj->AddComponent(new Texture{ L"TigerLeather0", -1.0f, 0.4f });
         m_scene->AddObj(obj);
     }
 
@@ -1078,7 +1065,6 @@ void SisterQuadObject::OnUpdate(GameTimer& gTimer)
         texture->mName = L"GoToGod";
     }
 
-    Object::OnUpdate(gTimer);
 }
 
 void LifeQuadObject::OnUpdate(GameTimer& gTimer)
@@ -1107,14 +1093,12 @@ void LifeQuadObject::OnUpdate(GameTimer& gTimer)
         break;
     }
 
-    Object::OnUpdate(gTimer);
 }
 
 void BoyIconQuadObject::OnUpdate(GameTimer& gTimer)
 {
     CameraObject* camera = m_scene->GetObj<CameraObject>();
     m_parent_id = camera->GetId();
-    Object::OnUpdate(gTimer);
 }
 
 void RiceCakeQuadObject::OnUpdate(GameTimer& gTimer)
@@ -1122,8 +1106,9 @@ void RiceCakeQuadObject::OnUpdate(GameTimer& gTimer)
     CameraObject* camera = m_scene->GetObj<CameraObject>();
     m_parent_id = camera->GetId();
     PlayerObject* player = m_scene->GetObj<PlayerObject>();
-    int riceCakeCount = player->GetRicecakeCount();
     Texture* texture = GetComponent<Texture>();
+
+    int riceCakeCount = player->GetRicecakeCount();
     switch (riceCakeCount)
     {
     case 0:
@@ -1145,7 +1130,6 @@ void RiceCakeQuadObject::OnUpdate(GameTimer& gTimer)
         break;
     }
 
-    Object::OnUpdate(gTimer);
 }
 
 void TigerLeatherQuadObject::OnUpdate(GameTimer& gTimer)
@@ -1179,4 +1163,8 @@ void TigerLeatherQuadObject::OnUpdate(GameTimer& gTimer)
         break;
     }
 
+    if (!m_scene->IsTigerQuestAccepted())
+    {
+        texture->mName = L"White";
+    }
 }

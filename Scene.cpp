@@ -23,7 +23,6 @@ void Scene::OnInit(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
     LoadMeshAnimationTexture();
     BuildProjMatrix();
-    BuildTitleStage();
     BuildRootSignature(device);
     BuildInputElement();
     BuildShaders();
@@ -38,6 +37,9 @@ void Scene::OnInit(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
     BuildConstantBufferView(device);
     BuildTextureBufferView(device);
     BuildShadow();
+
+    ProcessStageQueue();
+    ProcessObjectQueue();
 }
 
 void Scene::BuildHuntingStage()
@@ -63,44 +65,6 @@ void Scene::BuildHuntingStage()
         objectPtr->AddComponent(new Collider{ {0.0f, 8.0f, 0.0f}, {2.0f, 8.0f, 2.0f} });
         AddObj(objectPtr);
     }
-
-    // UI
-    {
-        float depthFactor = 0.11f;
-        float scale = 0.1f;
-        float textureRatio = 420.0f / 112.0f; // 텍스처 비율
-        objectPtr = new LifeQuadObject(this, AllocateId());
-        objectPtr->AddComponent(new Transform{ {-0.8f * depthFactor, 0.4f * depthFactor, 1.0f * depthFactor}, {-90.0f, 0.0f, 0.0f}, {depthFactor * textureRatio * scale, 1.0f, depthFactor * scale} });
-        objectPtr->AddComponent(new Mesh{ "Quad" });
-        objectPtr->AddComponent(new Texture{ L"Life3", -1.0f, 0.4f });
-        AddObj(objectPtr);
-
-        scale = 0.15;
-        textureRatio = 256.0f / 256.0f; // 텍스처 비율
-        objectPtr = new BoyIconQuadObject(this, AllocateId());
-        objectPtr->AddComponent(new Transform{ {-1.0f * depthFactor, 0.4f * depthFactor, 1.0f * depthFactor}, {-90.0f, 0.0f, 0.0f}, {depthFactor * textureRatio * scale, 1.0f, depthFactor * scale} });
-        objectPtr->AddComponent(new Mesh{ "Quad" });
-        objectPtr->AddComponent(new Texture{ L"BoyIcon", -1.0f, 0.4f });
-        AddObj(objectPtr);
-
-        scale = 0.25;
-        textureRatio = 256.0f / 328.0f; // 텍스처 비율
-        objectPtr = new RiceCakeQuadObject(this, AllocateId());
-        objectPtr->AddComponent(new Transform{ {-1.0f * depthFactor, -0.55f * depthFactor, 1.0f * depthFactor}, {-90.0f, 0.0f, 0.0f}, {depthFactor * textureRatio * scale, 1.0f, depthFactor * scale} });
-        objectPtr->AddComponent(new Mesh{ "Quad" });
-        objectPtr->AddComponent(new Texture{ L"RiceCake0", -1.0f, 0.4f });
-        AddObj(objectPtr);
-
-        scale = 0.25;
-        textureRatio = 256.0f / 256.0f; // 텍스처 비율
-        objectPtr = new TigerLeatherQuadObject(this, AllocateId());
-        objectPtr->AddComponent(new Transform{ {0.7f * depthFactor, -0.55f * depthFactor, 1.0f * depthFactor}, {-90.0f, 0.0f, 0.0f}, {depthFactor * textureRatio * scale, 1.0f, depthFactor * scale} });
-        objectPtr->AddComponent(new Mesh{ "Quad" });
-        objectPtr->AddComponent(new Texture{ L"TigerLeather0", -1.0f, 0.4f });
-        AddObj(objectPtr);
-
-    }
-
 
     {
         objectPtr = new TerrainObject(this, AllocateId());
@@ -211,7 +175,6 @@ void Scene::BuildHuntingStage()
             }
         }
     }
-    ProcessObjectQueue();
 }
 
 void Scene::BuildBaseStage()
@@ -238,35 +201,6 @@ void Scene::BuildBaseStage()
         objectPtr->AddComponent(new Gravity);
         objectPtr->AddComponent(new Collider{ {0.0f, 80.0f * scale, 0.0f}, {30.0f * scale, 80.0f * scale, 30.0f * scale} });
         AddObj(objectPtr);
-    }
-
-    // UI
-    {
-        float depthFactor = 0.11f;
-        float scale = 0.1f;
-        float textureRatio = 420.0f / 112.0f; // 텍스처 비율
-        objectPtr = new LifeQuadObject(this, AllocateId());
-        objectPtr->AddComponent(new Transform{ {-0.8f * depthFactor, 0.4f * depthFactor, 1.0f * depthFactor}, {-90.0f, 0.0f, 0.0f}, {depthFactor * textureRatio * scale, 1.0f, depthFactor * scale} });
-        objectPtr->AddComponent(new Mesh{ "Quad" });
-        objectPtr->AddComponent(new Texture{ L"Life3", -1.0f, 0.4f });
-        AddObj(objectPtr);
-
-        scale = 0.15;
-        textureRatio = 256.0f / 256.0f; // 텍스처 비율
-        objectPtr = new BoyIconQuadObject(this, AllocateId());
-        objectPtr->AddComponent(new Transform{ {-1.0f * depthFactor, 0.4f * depthFactor, 1.0f * depthFactor}, {-90.0f, 0.0f, 0.0f}, {depthFactor * textureRatio * scale, 1.0f, depthFactor * scale} });
-        objectPtr->AddComponent(new Mesh{ "Quad" });
-        objectPtr->AddComponent(new Texture{ L"BoyIcon", -1.0f, 0.4f });
-        AddObj(objectPtr);
-
-        scale = 0.25;
-        textureRatio = 256.0f / 328.0f; // 텍스처 비율
-        objectPtr = new RiceCakeQuadObject(this, AllocateId());
-        objectPtr->AddComponent(new Transform{ {-1.0f * depthFactor, -0.55f * depthFactor, 1.0f * depthFactor}, {-90.0f, 0.0f, 0.0f}, {depthFactor * textureRatio * scale, 1.0f, depthFactor * scale} });
-        objectPtr->AddComponent(new Mesh{ "Quad" });
-        objectPtr->AddComponent(new Texture{ L"RiceCake0", -1.0f, 0.4f });
-        AddObj(objectPtr);
-
     }
 
     // 여동생
@@ -640,7 +574,6 @@ void Scene::BuildBaseStage()
             AddObj(objectPtr);
         }
     }
-    ProcessObjectQueue();
 }
 
 void Scene::BuildGodStage()
@@ -666,26 +599,6 @@ void Scene::BuildGodStage()
         objectPtr->AddComponent(new Animation{ "1P(boy-idle).fbx" });
         objectPtr->AddComponent(new Gravity);
         objectPtr->AddComponent(new Collider{ {0.0f, 80.0f * scale, 0.0f}, {30.0f * scale, 80.0f * scale, 30.0f * scale} });
-        AddObj(objectPtr);
-    }
-
-    // UI
-    {
-        float depthFactor = 0.11f;
-        float scale = 0.1f;
-        float textureRatio = 420.0f / 112.0f; // 텍스처 비율
-        objectPtr = new LifeQuadObject(this, AllocateId());
-        objectPtr->AddComponent(new Transform{ {-0.8f * depthFactor, 0.4f * depthFactor, 1.0f * depthFactor}, {-90.0f, 0.0f, 0.0f}, {depthFactor * textureRatio * scale, 1.0f, depthFactor * scale} });
-        objectPtr->AddComponent(new Mesh{ "Quad" });
-        objectPtr->AddComponent(new Texture{ L"Life3", -1.0f, 0.4f });
-        AddObj(objectPtr);
-
-        scale = 0.15;
-        textureRatio = 256.0f / 256.0f; // 텍스처 비율
-        objectPtr = new BoyIconQuadObject(this, AllocateId());
-        objectPtr->AddComponent(new Transform{ {-1.0f * depthFactor, 0.4f * depthFactor, 1.0f * depthFactor}, {-90.0f, 0.0f, 0.0f}, {depthFactor * textureRatio * scale, 1.0f, depthFactor * scale} });
-        objectPtr->AddComponent(new Mesh{ "Quad" });
-        objectPtr->AddComponent(new Texture{ L"BoyIcon", -1.0f, 0.4f });
         AddObj(objectPtr);
     }
 
@@ -781,7 +694,6 @@ void Scene::BuildGodStage()
         AddObj(objectPtr);
 
     }
-    ProcessObjectQueue();
 }
 
 void Scene::BuildEndStage()
@@ -818,8 +730,47 @@ void Scene::BuildEndStage()
         objectPtr->AddComponent(new Texture{ L"End", -1.0f, 0.4f });
         AddObj(objectPtr);
     }
+}
 
-    ProcessObjectQueue();
+void Scene::BuildUI()
+{
+    if (m_current_stage == L"Title") return;
+    if (m_current_stage == L"End") return;
+    // UI
+    Object* objectPtr = nullptr;
+
+    float depthFactor = 0.11f;
+    float scale = 0.1f;
+    float textureRatio = 420.0f / 112.0f; // 텍스처 비율
+    objectPtr = new LifeQuadObject(this, AllocateId());
+    objectPtr->AddComponent(new Transform{ {-0.8f * depthFactor, 0.4f * depthFactor, 1.0f * depthFactor}, {-90.0f, 0.0f, 0.0f}, {depthFactor * textureRatio * scale, 1.0f, depthFactor * scale} });
+    objectPtr->AddComponent(new Mesh{ "Quad" });
+    objectPtr->AddComponent(new Texture{ L"Life3", -1.0f, 0.4f });
+    AddObj(objectPtr);
+
+    scale = 0.15;
+    textureRatio = 256.0f / 256.0f; // 텍스처 비율
+    objectPtr = new BoyIconQuadObject(this, AllocateId());
+    objectPtr->AddComponent(new Transform{ {-1.0f * depthFactor, 0.4f * depthFactor, 1.0f * depthFactor}, {-90.0f, 0.0f, 0.0f}, {depthFactor * textureRatio * scale, 1.0f, depthFactor * scale} });
+    objectPtr->AddComponent(new Mesh{ "Quad" });
+    objectPtr->AddComponent(new Texture{ L"BoyIcon", -1.0f, 0.4f });
+    AddObj(objectPtr);
+
+    scale = 0.25;
+    textureRatio = 256.0f / 328.0f; // 텍스처 비율
+    objectPtr = new RiceCakeQuadObject(this, AllocateId());
+    objectPtr->AddComponent(new Transform{ {-1.0f * depthFactor, -0.55f * depthFactor, 1.0f * depthFactor}, {-90.0f, 0.0f, 0.0f}, {depthFactor * textureRatio * scale, 1.0f, depthFactor * scale} });
+    objectPtr->AddComponent(new Mesh{ "Quad" });
+    objectPtr->AddComponent(new Texture{ L"RiceCake0", -1.0f, 0.4f });
+    AddObj(objectPtr);
+
+    scale = 0.25;
+    textureRatio = 256.0f / 256.0f; // 텍스처 비율
+    objectPtr = new TigerLeatherQuadObject(this, AllocateId());
+    objectPtr->AddComponent(new Transform{ {0.7f * depthFactor, -0.55f * depthFactor, 1.0f * depthFactor}, {-90.0f, 0.0f, 0.0f}, {depthFactor * textureRatio * scale, 1.0f, depthFactor * scale} });
+    objectPtr->AddComponent(new Mesh{ "Quad" });
+    objectPtr->AddComponent(new Texture{ L"White", -1.0f, 0.4f });
+    AddObj(objectPtr);
 }
 
 void Scene::BuildTitleStage()
@@ -859,7 +810,6 @@ void Scene::BuildTitleStage()
         AddObj(objectPtr);
     }
 
-    ProcessObjectQueue();
 }
 
 void Scene::BuildShadow()
@@ -1147,33 +1097,47 @@ int Scene::GetLeatherCount()
     return mLeatherCount;
 }
 
+bool Scene::IsTigerQuestAccepted()
+{
+    return mTigerQuest;
+}
+
+void Scene::SetTigerQuestState(bool state)
+{
+    mTigerQuest = state;
+}
+
 void Scene::ProcessStageQueue()
 {
     if (m_stage_queue == L"Base")
     {
         DeleteCurrentObjects();
         BuildBaseStage();
+        BuildUI();
     }
     else if (m_stage_queue == L"Hunting")
     {
         DeleteCurrentObjects();
         BuildHuntingStage();
-
+        BuildUI();
     }
     else if (m_stage_queue == L"God")
     {
         DeleteCurrentObjects();
         BuildGodStage();
+        BuildUI();
     }
     else if (m_stage_queue == L"Title")
     {
         DeleteCurrentObjects();
         BuildTitleStage();
+        BuildUI();
     }
     else if (m_stage_queue == L"End")
     {
         DeleteCurrentObjects();
         BuildEndStage();
+        BuildUI();
     }
     m_stage_queue = L"";
 }
@@ -1598,6 +1562,8 @@ void Scene::LoadMeshAnimationTexture()
     m_texture_name_to_index.insert({ L"LightGray", i++ });
     m_DDSFileName.push_back(L"./Textures/Green.dds");
     m_texture_name_to_index.insert({ L"Green", i++ });
+    m_DDSFileName.push_back(L"./Textures/White.dds");
+    m_texture_name_to_index.insert({ L"White", i++ });
 
     m_DDSFileName.push_back(L"./Textures/tiger.dds");
     m_texture_name_to_index.insert({ L"tigerLeather", i++ });
@@ -1667,7 +1633,7 @@ void Scene::OnUpdate(GameTimer& gTimer)
     m_shadow->UpdateShadow();
 
     //투영행렬 쉐이더로 전달
-    memcpy(static_cast<UINT8*>(m_mappedData) + sizeof(XMMATRIX), &XMMatrixTranspose(XMLoadFloat4x4(&m_proj)), sizeof(XMMATRIX)); // 처음 매개변수는 시작주소
+    memcpy(static_cast<UINT8*>(m_mappedData) + sizeof(XMMATRIX), &XMMatrixTranspose(XMLoadFloat4x4(&m_proj)), sizeof(XMMATRIX));
 }
 
 // Render the scene.
