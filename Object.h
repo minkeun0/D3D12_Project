@@ -76,6 +76,7 @@ private:
 	int mLife = 3;
 	XMFLOAT3 mDir{};
 	int mRicecake = 0;
+	bool mFocusMode = false;
 };
 
 class CameraObject : public Object
@@ -90,6 +91,9 @@ private:
 	float mTheta = XMConvertToRadians(-90.0f);
 	float mPhi = XMConvertToRadians(60.0f);
 	float mRadius = 70.0f;
+	bool mFocusMode = false;
+	float mDeltaX = 0.0f;
+	float mDeltaY = 0.0f;
 };
 
 class TerrainObject : public Object
