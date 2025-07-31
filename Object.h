@@ -56,8 +56,9 @@ public:
 private:
 	void ProcessInput(const GameTimer& gTimer);
 	void ChangeState(string fileName);
-	void Move(XMVECTOR dir, float speed, float deltatime);
 	void Idle();
+	void Walk();
+	void Run();
 	void Jump();
 	void Attack();
 	void Throw();
@@ -66,8 +67,7 @@ private:
 	void Hit();
 	void Dead();
 	void CalcTime(float deltaTime);
-	float mWalkSpeed = 20.0f;
-	float mRunSpeed = 40.0f;
+	float mSpeed = 20.0f;
 	float mElapseTime = 0.0f;
 	float mAttackTime = 0.0f;
 	bool mIsFired = false;
@@ -75,6 +75,7 @@ private:
 	bool mIsJumpping = false;
 	int mLife = 3;
 	XMFLOAT3 mDir{};
+	XMFLOAT3 mInputDir{};
 	int mRicecake = 0;
 	bool mFocusMode = false;
 };
