@@ -43,6 +43,7 @@ public:
     int GetLeatherCount();
     bool IsTigerQuestAccepted();
     void SetTigerQuestState(bool state);
+    XMVECTOR GetInputDir();
 
     template<typename T>
     T* GetObj()
@@ -96,6 +97,8 @@ private:
     int m_object_queue_index = 0;
     int mLeatherCount = 0;
     bool mTigerQuest = false;
+
+    XMFLOAT3 mInputDir{};
     //
     unique_ptr<ResourceManager> m_resourceManager;
     //

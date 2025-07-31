@@ -56,6 +56,7 @@ public:
 private:
 	void ProcessInput(const GameTimer& gTimer);
 	void ChangeState(string fileName);
+	void MoveAndRotate(float deltaTime);
 	void Idle();
 	void Walk();
 	void Run();
