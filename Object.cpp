@@ -299,14 +299,18 @@ void PlayerObject::ProcessInput(const GameTimer& gTimer)
     if ((keyState[0x41] & 0x88) == 0x08) { mInputDir.x += 1.0f; } // a up
     if ((keyState[0x44] & 0x88) == 0x08) { mInputDir.x -= 1.0f; } // d up
 
-    if (!XMVector3Equal(XMLoadFloat3(&mInputDir), XMVectorZero())) 
+    if (XMVector3Equal(XMLoadFloat3(&mInputDir), XMVectorZero())) 
     {
-        if ((keyState[VK_SHIFT] & 0x88) == 0x88) 
+        Idle();
+    }
+    else 
+    {
+        if ((keyState[VK_SHIFT] & 0x88) == 0x88)
         {
             mSpeed = 60.0f;
             Run();
         }
-        else if ((keyState[VK_CONTROL] & 0x88) == 0x88) 
+        else if ((keyState[VK_CONTROL] & 0x88) == 0x88)
         {
             mSpeed = 100.0f;
             Run();
@@ -316,10 +320,6 @@ void PlayerObject::ProcessInput(const GameTimer& gTimer)
             mSpeed = 20.0f;
             Walk();
         }
-    }
-    else 
-    {
-        Idle();
     }
 
     if ((keyState[VK_LBUTTON] & 0x88) == 0x80)
