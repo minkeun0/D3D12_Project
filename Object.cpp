@@ -196,7 +196,7 @@ void PlayerObject::OnUpdate(GameTimer& gTimer)
 {
     CalcTime(gTimer.DeltaTime());
     ProcessInput(gTimer);
-    UpdatePosRot(gTimer.DeltaTime());
+    MoveAndRotate(gTimer.DeltaTime());
     Object::OnUpdate(gTimer);
 }
 
@@ -324,7 +324,7 @@ void PlayerObject::ChangeState(string fileName)
     if(anim->ResetAnim(fileName, 0.0f)) mElapseTime = 0.0f;
 }
 
-void PlayerObject::UpdatePosRot(float deltaTime)
+void PlayerObject::MoveAndRotate(float deltaTime)
 {
     Animation* anim = GetComponent<Animation>();
     if (anim->mCurrentFileName == "boy_attack(45).fbx") return;
