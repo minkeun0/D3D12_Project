@@ -25,9 +25,9 @@ public:
 	ID3D12DescriptorHeap* GetDsvDescHeap();
 	BYTE* GetKeyState();
 	HWND GetHWnd();
-
 	void SetWndActivateState(bool state);
 	bool GetWndActivateState();
+
 private:
 	void GetHardwareAdapter(
 		IDXGIFactory1* pFactory,
@@ -43,12 +43,10 @@ private:
 	void BuildDepthStencilBuffer(UINT width, UINT height);
 	void BuildDsv();
 	void BuildFence();
-
 	void CalculateFrame();
 	void PopulateCommandList();
 	void BuildScenes(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
 	void WaitForPreviousFrame();
-
 	void ProcessInput();
 
 	unique_ptr<Win32Application> m_win32App;

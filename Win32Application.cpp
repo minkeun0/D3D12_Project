@@ -67,6 +67,7 @@ LRESULT CALLBACK Win32Application::WindowProc(HWND hWnd, UINT message, WPARAM wP
             pSample->OnResize(clientRect.right - clientRect.left, clientRect.bottom - clientRect.top, wParam == SIZE_MINIMIZED);
         }
         break;
+
     case WM_ACTIVATE:
         // wParam의 하위 워드(LOWORD)가 활성화 상태를 나타냅니다.
         if (LOWORD(wParam) == WA_ACTIVE || LOWORD(wParam) == WA_CLICKACTIVE)
