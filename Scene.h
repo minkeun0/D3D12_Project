@@ -97,8 +97,8 @@ private:
     int m_object_queue_index = 0;
     int mLeatherCount = 0;
     bool mTigerQuest = false;
-
     XMFLOAT3 mInputDir{};
+    uint32_t mMainCameraId = -1;
     //
     unique_ptr<ResourceManager> m_resourceManager;
     //

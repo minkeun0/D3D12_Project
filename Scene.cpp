@@ -39,7 +39,7 @@ void Scene::OnInit(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
     BuildShadow();
 
     ProcessStageQueue();
-    ProcessObjectQueue();
+    //ProcessObjectQueue();
 }
 
 void Scene::BuildHuntingStage()
@@ -48,7 +48,8 @@ void Scene::BuildHuntingStage()
 
     Object* objectPtr = nullptr;
     {
-        objectPtr = new CameraObject(this, AllocateId());
+        mMainCameraId = AllocateId();
+        objectPtr = new CameraObject(this, mMainCameraId);
         objectPtr->AddComponent(new Transform{ {0.f, 0.0f, 0.f} });
         AddObj(objectPtr);
     }
@@ -236,10 +237,10 @@ void Scene::BuildBaseStage()
 {
     m_current_stage = L"Base";
     Object* objectPtr = nullptr;
-
     // 카메라
     {
-        objectPtr = new CameraObject(this, AllocateId());
+        mMainCameraId = AllocateId();
+        objectPtr = new CameraObject(this, mMainCameraId);
         objectPtr->AddComponent(new Transform{ {0.0f, 0.0f, 0.0f} });
         AddObj(objectPtr);
     }
@@ -639,7 +640,8 @@ void Scene::BuildGodStage()
 
     // 카메라
     {
-        objectPtr = new CameraObject(this, AllocateId());
+        mMainCameraId = AllocateId();
+        objectPtr = new CameraObject(this, mMainCameraId);
         objectPtr->AddComponent(new Transform{ {0.0f, 0.0f, 0.0f} });
         AddObj(objectPtr);
     }
@@ -667,6 +669,18 @@ void Scene::BuildGodStage()
         AddObj(objectPtr);
     }
 
+    // 나무
+    {
+        float scale = 30.0f;
+        objectPtr = new TreeObject(this, AllocateId());
+        objectPtr->AddComponent(new Transform{ {200.0f, 0.0f, 150.0f} });
+        objectPtr->AddComponent(new AdjustTransform{ {-1.0f * scale, 0.0f * scale, 0.0f * scale}, {0.0f, 0.0f, 0.0f}, {scale, scale, scale} });
+        objectPtr->AddComponent(new Mesh{ "normal_tree.fbx" });
+        objectPtr->AddComponent(new Texture{ L"normalTree", 1.0f, 0.4f });
+        objectPtr->AddComponent(new Collider{ {0.0f, 1.0f * scale, 0.0f}, {0.15f * scale, 1.0f * scale, 0.15f * scale} });
+        AddObj(objectPtr);
+    }
+
     // 중앙나무
     {
         float scale = 5.0f;
@@ -682,7 +696,7 @@ void Scene::BuildGodStage()
 
     // 도끼
     {
-        float scale = 20.0f;
+        float scale = 30.0f;
         objectPtr = new AxeObject(this, AllocateId());
         objectPtr->AddComponent(new Transform{ {250.0f, 500.0f, 250.0f} });
         objectPtr->AddComponent(new AdjustTransform{ {0.0f, 0.1f * scale, 0.0f}, {0.0f, -90.0f, 0.0f}, {scale, scale, scale} });
@@ -749,6 +763,7 @@ void Scene::BuildGodStage()
         AddObj(objectPtr);
 
     }
+
     //경계벽
     {
         float scale = 44.0f;
@@ -811,7 +826,8 @@ void Scene::BuildEndStage()
 
     // 카메라
     {
-        objectPtr = new CameraObject(this, AllocateId());
+        mMainCameraId = AllocateId();
+        objectPtr = new CameraObject(this, mMainCameraId);
         objectPtr->AddComponent(new Transform{ {0.0f, 0.0f, 0.0f} });
         AddObj(objectPtr);
     }
@@ -832,7 +848,7 @@ void Scene::BuildEndStage()
 
     // End
     {
-        objectPtr = new TitleQuadObject(this, AllocateId());
+        objectPtr = new TitleQuadObject(this, AllocateId(), mMainCameraId);
         objectPtr->AddComponent(new Transform{ {-0.5f * 1.77f, -0.5f, 1.0f}, {-90.0f, 0.0f, 0.0f}, {1.77f, 1.0f, 1.0f} });
         objectPtr->AddComponent(new Mesh{ "Quad" });
         objectPtr->AddComponent(new Texture{ L"End", -1.0f, 0.4f });
@@ -850,7 +866,7 @@ void Scene::BuildUI()
     float depthFactor = 0.11f;
     float scale = 0.1f;
     float textureRatio = 420.0f / 112.0f; // 텍스처 비율
-    objectPtr = new LifeQuadObject(this, AllocateId());
+    objectPtr = new LifeQuadObject(this, AllocateId(), mMainCameraId);
     objectPtr->AddComponent(new Transform{ {-0.8f * depthFactor, 0.4f * depthFactor, 1.0f * depthFactor}, {-90.0f, 0.0f, 0.0f}, {depthFactor * textureRatio * scale, 1.0f, depthFactor * scale} });
     objectPtr->AddComponent(new Mesh{ "Quad" });
     objectPtr->AddComponent(new Texture{ L"Life3", -1.0f, 0.4f });
@@ -858,7 +874,7 @@ void Scene::BuildUI()
 
     scale = 0.15;
     textureRatio = 256.0f / 256.0f; // 텍스처 비율
-    objectPtr = new BoyIconQuadObject(this, AllocateId());
+    objectPtr = new BoyIconQuadObject(this, AllocateId(), mMainCameraId);
     objectPtr->AddComponent(new Transform{ {-1.0f * depthFactor, 0.4f * depthFactor, 1.0f * depthFactor}, {-90.0f, 0.0f, 0.0f}, {depthFactor * textureRatio * scale, 1.0f, depthFactor * scale} });
     objectPtr->AddComponent(new Mesh{ "Quad" });
     objectPtr->AddComponent(new Texture{ L"BoyIcon", -1.0f, 0.4f });
@@ -866,7 +882,7 @@ void Scene::BuildUI()
 
     scale = 0.25;
     textureRatio = 256.0f / 328.0f; // 텍스처 비율
-    objectPtr = new RiceCakeQuadObject(this, AllocateId());
+    objectPtr = new RiceCakeQuadObject(this, AllocateId(), mMainCameraId);
     objectPtr->AddComponent(new Transform{ {-1.0f * depthFactor, -0.55f * depthFactor, 1.0f * depthFactor}, {-90.0f, 0.0f, 0.0f}, {depthFactor * textureRatio * scale, 1.0f, depthFactor * scale} });
     objectPtr->AddComponent(new Mesh{ "Quad" });
     objectPtr->AddComponent(new Texture{ L"RiceCake0", -1.0f, 0.4f });
@@ -874,7 +890,7 @@ void Scene::BuildUI()
 
     scale = 0.25;
     textureRatio = 256.0f / 256.0f; // 텍스처 비율
-    objectPtr = new TigerLeatherQuadObject(this, AllocateId());
+    objectPtr = new TigerLeatherQuadObject(this, AllocateId(), mMainCameraId);
     objectPtr->AddComponent(new Transform{ {0.7f * depthFactor, -0.55f * depthFactor, 1.0f * depthFactor}, {-90.0f, 0.0f, 0.0f}, {depthFactor * textureRatio * scale, 1.0f, depthFactor * scale} });
     objectPtr->AddComponent(new Mesh{ "Quad" });
     objectPtr->AddComponent(new Texture{ L"White", -1.0f, 0.4f });
@@ -888,7 +904,8 @@ void Scene::BuildTitleStage()
 
     // 카메라
     {
-        objectPtr = new CameraObject(this, AllocateId());
+        mMainCameraId = AllocateId();
+        objectPtr = new CameraObject(this, mMainCameraId);
         objectPtr->AddComponent(new Transform{ {0.0f, 0.0f, 0.0f} });
         AddObj(objectPtr);
     }
@@ -911,7 +928,7 @@ void Scene::BuildTitleStage()
     {
         float scale = 0.2f;
         float ratio = GetAspectRatio();
-        objectPtr = new TitleQuadObject(this, AllocateId());
+        objectPtr = new TitleQuadObject(this, AllocateId(), mMainCameraId);
         objectPtr->AddComponent(new Transform{ {-0.5f * ratio * scale, -0.5f * scale, scale}, {-90.0f, 0.0f, 0.0f}, {scale * ratio, scale, scale} });
         objectPtr->AddComponent(new Mesh{ "Quad" });
         objectPtr->AddComponent(new Texture{ L"Title", -1.0f, 0.4f });
@@ -1222,36 +1239,30 @@ XMVECTOR Scene::GetInputDir()
 
 void Scene::ProcessStageQueue()
 {
+    if (m_stage_queue == L"") return;
+
+    DeleteCurrentObjects();
     if (m_stage_queue == L"Base")
     {
-        DeleteCurrentObjects();
         BuildBaseStage();
-        BuildUI();
     }
     else if (m_stage_queue == L"Hunting")
     {
-        DeleteCurrentObjects();
         BuildHuntingStage();
-        BuildUI();
     }
     else if (m_stage_queue == L"God")
     {
-        DeleteCurrentObjects();
         BuildGodStage();
-        BuildUI();
     }
     else if (m_stage_queue == L"Title")
     {
-        DeleteCurrentObjects();
         BuildTitleStage();
-        BuildUI();
     }
     else if (m_stage_queue == L"End")
     {
-        DeleteCurrentObjects();
         BuildEndStage();
-        BuildUI();
     }
+    BuildUI();
     m_stage_queue = L"";
 }
 
@@ -1681,6 +1692,12 @@ void Scene::LoadMeshAnimationTexture()
     m_texture_name_to_index.insert({ L"Green", i++ });
     m_DDSFileName.push_back(L"./Textures/White.dds");
     m_texture_name_to_index.insert({ L"White", i++ });
+    m_DDSFileName.push_back(L"./Textures/Black.dds");
+    m_texture_name_to_index.insert({ L"Black", i++ });
+    m_DDSFileName.push_back(L"./Textures/Red.dds");
+    m_texture_name_to_index.insert({ L"Red", i++ });
+    m_DDSFileName.push_back(L"./Textures/Yellow.dds");
+    m_texture_name_to_index.insert({ L"Yellow", i++ });
 
     m_DDSFileName.push_back(L"./Textures/tiger.dds");
     m_texture_name_to_index.insert({ L"tigerLeather", i++ });
@@ -1688,8 +1705,10 @@ void Scene::LoadMeshAnimationTexture()
     m_texture_name_to_index.insert({ L"axe", i++ });
     m_DDSFileName.push_back(L"./Textures/wood.dds");
     m_texture_name_to_index.insert({ L"wood", i++ });
-    m_DDSFileName.push_back(L"./Textures/ricecake.dds");
-    m_texture_name_to_index.insert({ L"ricecake", i++ });
+    m_DDSFileName.push_back(L"./Textures/RiceCake.dds");
+    m_texture_name_to_index.insert({ L"RiceCake", i++ });
+    m_DDSFileName.push_back(L"./Textures/RiceCakePink.dds");
+    m_texture_name_to_index.insert({ L"RiceCakePink", i++ });
     m_DDSFileName.push_back(L"./Textures/Title.dds");
     m_texture_name_to_index.insert({ L"Title", i++ });
     m_DDSFileName.push_back(L"./Textures/Quest.dds");

@@ -51,7 +51,7 @@ public:
 	using Object::Object;
 	void OnUpdate(GameTimer& gTimer) override;
 	void OnProcessCollision(Object& other, XMVECTOR collisionNormal, float penetration) override;
-	int GetRicecakeCount();
+	int GetRiceCakeCount();
 	int GetLifeCount();
 private:
 	void ProcessInput(const GameTimer& gTimer);
@@ -76,7 +76,7 @@ private:
 	bool mIsJumpping = false;
 	int mLife = 3;
 	XMFLOAT3 mCameraLookDir{};
-	int mRicecake = 0;
+	int mRiceCake = 0;
 	bool mFocusMode = false;
 };
 
@@ -92,6 +92,7 @@ private:
 	float mTheta = XMConvertToRadians(-90.0f);
 	float mPhi = XMConvertToRadians(60.0f);
 	float mRadius = 70.0f;
+	float mFocusModeRadius = 15.0f;
 	bool mFocusMode = false;
 	float mDeltaX = 0.0f;
 	float mDeltaY = 0.0f;
@@ -255,6 +256,13 @@ private:
 	float mElapseTime = 0.0f;
 };
 
+class SisterQuadObject : public Object
+{
+public:
+	Object::Object;
+	void OnUpdate(GameTimer& gTimer) override;
+};
+
 class TitleQuadObject : public Object
 {
 public:
@@ -266,15 +274,8 @@ class EndQuadObject : public Object
 {
 public:
 	Object::Object;
-	void OnUpdate(GameTimer& gTimer) override;
 };
 
-class SisterQuadObject : public Object
-{
-public:
-	Object::Object;
-	void OnUpdate(GameTimer& gTimer) override;
-};
 
 class LifeQuadObject : public Object
 {
@@ -287,7 +288,6 @@ class BoyIconQuadObject : public Object
 {
 public:
 	Object::Object;
-	void OnUpdate(GameTimer& gTimer) override;
 };
 
 class RiceCakeQuadObject : public Object
@@ -298,6 +298,13 @@ class RiceCakeQuadObject : public Object
 
 class TigerLeatherQuadObject : public Object
 {
+	Object::Object;
+	void OnUpdate(GameTimer& gTimer) override;
+};
+
+class CrossHairQuadObject : public Object
+{
+public:
 	Object::Object;
 	void OnUpdate(GameTimer& gTimer) override;
 };
