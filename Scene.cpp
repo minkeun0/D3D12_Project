@@ -57,7 +57,7 @@ void Scene::BuildHuntingStage()
     {
         float scale = 0.1f;
         objectPtr = new PlayerObject(this, AllocateId());
-        objectPtr->AddComponent(new Transform{ {300.f, 0.0f, 300.f} });
+        objectPtr->AddComponent(new Transform{ {200.f, 0.0f, 300.f} });
         objectPtr->AddComponent(new AdjustTransform{ {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {scale, scale, scale} });
         objectPtr->AddComponent(new Mesh{ "1P(boy-idle).fbx" });
         objectPtr->AddComponent(new Texture{ L"boy" , 1.0f, 0.4f });
