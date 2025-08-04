@@ -1174,12 +1174,21 @@ Object* Scene::GetObjFromId(uint32_t id)
 
 void Scene::CompactObjects()
 {
-    m_objects.erase(std::remove_if(m_objects.begin(), m_objects.end(),[](Object* obj) { return !(obj->GetValid()); }), m_objects.end());
+    auto func = [](Object* obj) -> bool
+        {
+            bool result = obj->GetValid();
+            if (!result) delete obj;
+            return !result;
+        };
+
+    auto it = std::remove_if(m_objects.begin(), m_objects.end(), func);
+    m_objects.erase(it, m_objects.end());
 }
 
 void Scene::ProcessObjectQueue()
 {
-    for (int i = 0; i < m_object_queue_index; ++i) {
+    for (int i = 0; i < m_object_queue_index; ++i) 
+    {
         m_objects.push_back(m_object_queue[i]);
     }
     m_object_queue_index = 0;

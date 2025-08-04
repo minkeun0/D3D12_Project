@@ -11,7 +11,8 @@ uniform_int_distribution uid(-180,180);
 
 Object::~Object()
 {
-    for (Component* component : m_components) {
+    for (Component* component : m_components) 
+    {
         delete component;
     }
 }
@@ -872,7 +873,7 @@ void TigerObject::CreateLeather()
 void TigerAttackObject::OnUpdate(GameTimer& gTimer)
 {
     mElapseTime += gTimer.DeltaTime();
-    if (mElapseTime >= 0.05) Delete();
+    if (mElapseTime >= 0.1) Delete();
     Object::OnUpdate(gTimer);
 }
 
@@ -1024,7 +1025,7 @@ void TreeObject::LateUpdate(GameTimer& gTimer)
         float yaw = uid(dre);
         XMVECTOR offset = XMVector3TransformNormal(XMVECTOR{ 0.0f, 50.0f, 20.0f }, XMMatrixRotationY(yaw));
         float scale = 0.03f;
-        RiceCakeObject* obj = new RiceCakeObject(m_scene, m_scene->AllocateId());
+        Object* obj = new RiceCakeObject(m_scene, m_scene->AllocateId());
         obj->AddComponent(new Transform{ pos + offset });
         obj->AddComponent(new AdjustTransform{ {-20.0f * scale, 22.0f * scale, 0.0f}, {0.0f, 0.0f, -90.0f}, {scale, scale, scale} });
         obj->AddComponent(new Mesh{ "ricecake.fbx" });
