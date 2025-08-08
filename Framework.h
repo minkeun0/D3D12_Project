@@ -7,7 +7,7 @@
 class Framework
 {
 public:
-	~Framework();	
+	~Framework();
 	void OnInit(HINSTANCE hInstance, UINT width, UINT height);
 	void OnUpdate();
 	void OnProcessCollision();

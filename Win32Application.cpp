@@ -12,7 +12,6 @@ Win32Application::Win32Application(HINSTANCE hInstance, UINT width, UINT height)
 
 void Win32Application::CreateWnd(HINSTANCE hInstance)
 {
-    // Initialize the window class.
     WNDCLASSEX windowClass = { 0 };
     windowClass.cbSize = sizeof(WNDCLASSEX);
     windowClass.style = CS_HREDRAW | CS_VREDRAW;
@@ -25,17 +24,16 @@ void Win32Application::CreateWnd(HINSTANCE hInstance)
     RECT windowRect = { 0, 0, static_cast<LONG>(m_width), static_cast<LONG>(m_height) };
     AdjustWindowRect(&windowRect, WS_OVERLAPPEDWINDOW, FALSE);
 
-    // Create the window and store a handle to it.
     m_hwnd = CreateWindow(
         windowClass.lpszClassName,
         GetTitle(),
         WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT,
         CW_USEDEFAULT,
-        windowRect.right - windowRect.left, // AdjustWindowRect() 함수에 의해서 크기가 조정됐기 때문
-        windowRect.bottom - windowRect.top, // AdjustWindowRect() 함수에 의해서 크기가 조정됐기 때문
-        nullptr,        // We have no parent window.
-        nullptr,        // We aren't using menus.
+        windowRect.right - windowRect.left, 
+        windowRect.bottom - windowRect.top, 
+        nullptr,        
+        nullptr,        
         hInstance,
         nullptr);
 }
@@ -62,9 +60,7 @@ LRESULT CALLBACK Win32Application::WindowProc(HWND hWnd, UINT message, WPARAM wP
     case WM_SIZE:
         if (pSample)
         {
-            RECT clientRect{};
-            GetClientRect(hWnd, &clientRect);
-            pSample->OnResize(clientRect.right - clientRect.left, clientRect.bottom - clientRect.top, wParam == SIZE_MINIMIZED);
+            pSample->OnResize(LOWORD(lParam), HIWORD(lParam), wParam == SIZE_MINIMIZED);
         }
         break;
 

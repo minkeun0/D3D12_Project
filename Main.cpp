@@ -10,7 +10,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     UpdateWindow(framework.GetHWnd());
     ShowCursor(false);
 
-    // Main loop.
     MSG msg{};
     while (msg.message != WM_QUIT)
     {

@@ -55,11 +55,11 @@ void Object::OnProcessCollision(Object& other, XMVECTOR collisionNormal, float p
     Gravity* gravity = GetComponent<Gravity>();
     if (gravity && similarity > 0.80f) 
     {
-        gravity->ResetElapseTime();
         Transform* transform = GetComponent<Transform>();
         XMVECTOR pos = transform->GetPosition();
         pos -= collisionNormal * penetration;
         transform->SetPosition(pos);
+        gravity->ResetElapseTime();
     }
 }
 
@@ -314,6 +314,11 @@ void PlayerObject::ProcessInput(const GameTimer& gTimer)
     else if ((keyState[VK_RBUTTON] & 0x88) == 0x08)
     {
         mFocusMode = false;
+    }
+
+    if ((keyState[0x52] & 0x88) == 0x80)
+    {
+        mRiceCake = 4;
     }
 }
 
@@ -1008,6 +1013,12 @@ void RiceCakeObject::OnProcessCollision(Object& other, XMVECTOR collisionNormal,
     Object::OnProcessCollision(other, collisionNormal, penetration);
 }
 
+void TreeObject::OnUpdate(GameTimer& gTimer)
+{
+    mCollisionByPlayerAttack = mCollisionByPlayerAttack >> 4;
+    Object::OnUpdate(gTimer);
+}
+
 void TreeObject::OnProcessCollision(Object& other, XMVECTOR collisionNormal, float penetration)
 {
     PlayerAttackObject* pa = dynamic_cast<PlayerAttackObject*>(&other);
@@ -1034,7 +1045,6 @@ void TreeObject::LateUpdate(GameTimer& gTimer)
         obj->AddComponent(new Collider{ {0.0f, 30.0f * scale, 0.0f}, {25.0f * scale, 30.0f * scale, 25.0f * scale} });
         m_scene->AddObj(obj);
     }
-    mCollisionByPlayerAttack = mCollisionByPlayerAttack >> 4;
     Object::LateUpdate(gTimer);
 }
 
@@ -1087,7 +1097,7 @@ void SisterObject::OnProcessCollision(Object& other, XMVECTOR collisionNormal, f
         m_scene->SetTigerQuestState(true);
 
         Object* obj = new SisterQuadObject(m_scene, m_scene->AllocateId(), m_id);
-        obj->AddComponent(new Transform{ {-5.0f, 10.0f, 0.1f}, {-90.0f, 180.0f, 0.0f}, {30.0f, 0.0f, 25.0f} });
+        obj->AddComponent(new Transform{ {-5.0f, 10.0f, 0.0f}, {-90.0f, 180.0f, 0.0f}, {30.0f, 0.0f, 30.0f} });
         obj->AddComponent(new Mesh{ "Quad" });
         obj->AddComponent(new Texture{ L"Quest", -1.0f, 0.4f });
         m_scene->AddObj(obj);
@@ -1281,4 +1291,80 @@ void CrossHairQuadObject::OnUpdate(GameTimer& gTimer)
         Delete();
     }
 
+}
+
+PuzzleFrameObject::PuzzleFrameObject(Scene* scene, uint32_t id, uint32_t parentId) : Object(scene, id, parentId)
+{
+    PuzzleCellObject* obj = nullptr;
+    float scale = 0.27f;
+    float offset = 0.315f;
+    for (int i = 0; i < 3; ++i)
+    {
+        for (int j = 0; j < 3; ++j)
+        {
+            obj = new PuzzleCellObject(scene, scene->AllocateId(), id);
+            obj->AddComponent(new Transform({ 0.05f + offset * j, 0.1f, 0.05f + offset * i }, { 0.0f, 0.0f, 0.0f }, { scale, 1.0f, scale }));
+            obj->AddComponent(new Mesh("Quad"));
+            obj->AddComponent(new Texture(L"PuzzleO", -1.0f, 0.4f));
+            obj->AddComponent(new Collider({ 0.5f, 0.0f, 0.5f }, { 0.5f, 0.2f, 0.5f }));
+            scene->AddObj(obj);
+            mCells[i][j] = obj;
+        }
+    }
+}
+
+void PuzzleFrameObject::OnUpdate(GameTimer& gTimer)
+{
+    bool isSame = AllCellMatch();
+
+    Texture* texture = GetComponent<Texture>();
+    if (isSame)
+    {
+        texture->mName = L"PuzzleFrameComplete";
+    }
+    else
+    {
+        texture->mName = L"PuzzleFrame";
+    }
+}
+
+bool PuzzleFrameObject::AllCellMatch()
+{
+    int (*targetStatus)[3] = m_scene->GetPuzzleStatus();
+    for (int i = 0; i < 3; ++i)
+    {
+        for (int j = 0; j < 3; ++j)
+        {
+            if (mCells[i][j]->GetStatus() != targetStatus[i][j])
+            {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+void PuzzleCellObject::OnProcessCollision(Object& other, XMVECTOR collisionNormal, float penetration)
+{
+    RiceCakeProjectileObject* riceCake = dynamic_cast<RiceCakeProjectileObject*>(&other);
+    if (riceCake)
+    {
+        Texture* texture = GetComponent<Texture>();
+        switch (++mStatus % 2)
+        {
+        case 0:
+            texture->mName = L"PuzzleO";
+            break;
+        case 1:
+            texture->mName = L"PuzzleX";
+            break;
+        default:
+            break;
+        }
+    }
+}
+
+int PuzzleCellObject::GetStatus()
+{
+    return mStatus % 2;
 }

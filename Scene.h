@@ -44,6 +44,7 @@ public:
     bool IsTigerQuestAccepted();
     void SetTigerQuestState(bool state);
     XMVECTOR GetInputDir();
+    int (*GetPuzzleStatus())[3];
 
     template<typename T>
     T* GetObj()
@@ -87,7 +88,7 @@ private:
     void BuildInputElement();
     ComPtr<ID3DBlob> CompileShader(
         const std::wstring& fileName, const D3D_SHADER_MACRO* defines, const std::string& entryPoint, const std::string& target);
-private:
+
     Framework* m_parent = nullptr;
     wstring m_current_stage = L"";
     wstring m_stage_queue = L"God";
@@ -99,6 +100,8 @@ private:
     bool mTigerQuest = false;
     XMFLOAT3 mInputDir{};
     uint32_t mMainCameraId = -1;
+
+    int mPuzzleStatus[3][3] = { {0,0,0},{1,1,1},{0,0,0} };
     //
     unique_ptr<ResourceManager> m_resourceManager;
     //
