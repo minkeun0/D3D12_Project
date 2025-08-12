@@ -39,7 +39,7 @@ void Scene::OnInit(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
     BuildShadow();
 
     ProcessStageQueue();
-    //ProcessObjectQueue();
+    ProcessObjectQueue();
 }
 
 void Scene::BuildHuntingStage()
@@ -650,7 +650,8 @@ void Scene::BuildGodStage()
     {
         float scale = 0.1f;
         objectPtr = new PlayerObject(this, AllocateId());
-        objectPtr->AddComponent(new Transform{ {150.0f, 0.0f, 100.0f} });
+        //objectPtr->AddComponent(new Transform{ {150.0f, 0.0f, 100.0f} });
+        objectPtr->AddComponent(new Transform{ {250.0f, 270, 150.0f} });
         objectPtr->AddComponent(new AdjustTransform{ {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {scale, scale, scale} });
         objectPtr->AddComponent(new Mesh{ "1P(boy-idle).fbx" });
         objectPtr->AddComponent(new Texture{ L"boy" , 1.0f, 0.4f });
@@ -673,7 +674,7 @@ void Scene::BuildGodStage()
     {
         float scale = 30.0f;
         objectPtr = new TreeObject(this, AllocateId());
-        objectPtr->AddComponent(new Transform{ {200.0f, 0.0f, 150.0f} });
+        objectPtr->AddComponent(new Transform{ {150.0f, 0.0f, 100.0f} });
         objectPtr->AddComponent(new AdjustTransform{ {-1.0f * scale, 0.0f * scale, 0.0f * scale}, {0.0f, 0.0f, 0.0f}, {scale, scale, scale} });
         objectPtr->AddComponent(new Mesh{ "normal_tree.fbx" });
         objectPtr->AddComponent(new Texture{ L"normalTree", 1.0f, 0.4f });
@@ -684,11 +685,36 @@ void Scene::BuildGodStage()
     // 퍼즐판
     {
         objectPtr = new PuzzleFrameObject(this, AllocateId());
-        objectPtr->AddComponent(new Transform{ {300.0f, 0.0f, 150.0f}, {-90.0f, 0.0f, 0.0f}, {100.0f, 1.0f, 100.0f} });
+        objectPtr->AddComponent(new Transform{ {200.0f, 0.0f, 200.0f}, {-90.0f, 0.0f, 0.0f}, {100.0f, 1.0f, 100.0f} });
         objectPtr->AddComponent(new Mesh{ "Quad" });
         objectPtr->AddComponent(new Texture{ L"PuzzleFrame", -1.0f, 0.4f });
         AddObj(objectPtr);
     }
+
+    // 퍼즐판 발판
+    {
+        float scale = 0.3f;
+        objectPtr = new PuzzlePlatformObject(this, AllocateId());
+        objectPtr->AddComponent(new Transform{ {250.0f, 0.0f, 100.0f}, {0.0f, 90.0f, 0.0f} });
+        objectPtr->AddComponent(new AdjustTransform{ {100.0f * scale, 0.0f, -150.0f * scale }, {0.0f, -90.0f, 0.0f}, {scale, scale, scale} });
+        objectPtr->AddComponent(new Mesh{ "fence.fbx" });
+        objectPtr->AddComponent(new Texture{ L"Brown", 1.0f, 0.4f });
+        objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {100.0f * scale, 15.0f * scale, 150.0f * scale } });
+        AddObj(objectPtr);
+    }
+
+    //// 움직이는 발판
+    //{
+    //    float scale = 0.1f;
+    //    objectPtr = new MovePlatformObject(this, AllocateId());
+    //    objectPtr->AddComponent(new Transform{ {300.0f, 30.0f, 100.0f}, {0.0f, 90.0f, 0.0f} });
+    //    objectPtr->AddComponent(new AdjustTransform{ {100.0f * scale, 0.0f, -150.0f * scale }, {0.0f, -90.0f, 0.0f}, {scale, scale, scale} });
+    //    objectPtr->AddComponent(new Mesh{ "fence.fbx" });
+    //    objectPtr->AddComponent(new Texture{ L"Brown", 1.0f, 0.4f });
+    //    objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {100.0f * scale, 15.0f * scale, 150.0f * scale } });
+    //    AddObj(objectPtr);
+
+    //}
 
     // 중앙나무
     {
@@ -705,10 +731,10 @@ void Scene::BuildGodStage()
 
     // 도끼
     {
-        float scale = 30.0f;
+        float scale = 50.0f;
         objectPtr = new AxeObject(this, AllocateId());
         objectPtr->AddComponent(new Transform{ {250.0f, 500.0f, 250.0f} });
-        objectPtr->AddComponent(new AdjustTransform{ {0.0f, 0.1f * scale, 0.0f}, {0.0f, -90.0f, 0.0f}, {scale, scale, scale} });
+        objectPtr->AddComponent(new AdjustTransform{ {0.0f, 0.1f * scale, 0.0f}, {0.0f, 0.0f, 0.0f}, {scale, scale, scale} });
         objectPtr->AddComponent(new Mesh{ "axe.fbx" });
         objectPtr->AddComponent(new Texture{ L"axe", 1.0f, 0.4f });
         objectPtr->AddComponent(new Gravity);
@@ -722,16 +748,28 @@ void Scene::BuildGodStage()
         float offsetX = 100.0f;
         float offsetY = 50.0f;
         float scale = 0.3f;
-        for (int i = 0; i < 4; ++i)
-        {
-            objectPtr = new TestObject(this, AllocateId());
-            objectPtr->AddComponent(new Transform{ {100.0f, offsetY * i, 100.0f+ offsetZ * i}, {-30.0f, 0.0f, 0.0f} });
-            objectPtr->AddComponent(new AdjustTransform{ {100.0f * scale, 0.0f, -150.0f * scale }, {0.0f, -90.0f, 0.0f}, {scale, scale, scale} });
-            objectPtr->AddComponent(new Mesh{ "fence.fbx" });
-            objectPtr->AddComponent(new Texture{ L"Brown", 1.0f, 0.4f });
-            objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {100.0f * scale, 15.0f * scale, 150.0f * scale } });
-            AddObj(objectPtr);
-        }
+
+        objectPtr = new MovePlatformObject(this, AllocateId());
+        objectPtr->AddComponent(new Transform{ {150.0f, 150.0f, 100.0f}, {0.0f, 0.0f, 0.0f} });
+        objectPtr->AddComponent(new AdjustTransform{ {100.0f * scale, 0.0f, -150.0f * scale }, {0.0f, -90.0f, 0.0f}, {scale, scale, scale} });
+        objectPtr->AddComponent(new Mesh{ "fence.fbx" });
+        objectPtr->AddComponent(new Texture{ L"Brown", 1.0f, 0.4f });
+        objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {100.0f * scale, 15.0f * scale, 150.0f * scale } });
+        AddObj(objectPtr);
+        objectPtr = new MovePlatformObject(this, AllocateId());
+        objectPtr->AddComponent(new Transform{ {80.0f, 150.0f, 300}, {0.0f, 180.0f, 0.0f} });
+        objectPtr->AddComponent(new AdjustTransform{ {100.0f * scale, 0.0f, -150.0f * scale }, {0.0f, -90.0f, 0.0f}, {scale, scale, scale} });
+        objectPtr->AddComponent(new Mesh{ "fence.fbx" });
+        objectPtr->AddComponent(new Texture{ L"Brown", 1.0f, 0.4f });
+        objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {100.0f * scale, 15.0f * scale, 150.0f * scale } });
+        AddObj(objectPtr);
+        objectPtr = new MovePlatformObject(this, AllocateId());
+        objectPtr->AddComponent(new Transform{ {150.0f, 150.0f, 300}, {0.0f, 0.0f, 0.0f} });
+        objectPtr->AddComponent(new AdjustTransform{ {100.0f * scale, 0.0f, -150.0f * scale }, {0.0f, -90.0f, 0.0f}, {scale, scale, scale} });
+        objectPtr->AddComponent(new Mesh{ "fence.fbx" });
+        objectPtr->AddComponent(new Texture{ L"Brown", 1.0f, 0.4f });
+        objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {100.0f * scale, 15.0f * scale, 150.0f * scale } });
+        AddObj(objectPtr);
 
         for (int i = 0; i < 3; ++i)
         {
@@ -744,33 +782,101 @@ void Scene::BuildGodStage()
             AddObj(objectPtr);
         }
 
-        for (int i = 0; i < 3; ++i)
-        {
-            objectPtr = new TestObject(this, AllocateId());
-            objectPtr->AddComponent(new Transform{ {400.0f, 250.0f + offsetY * i, 300.0f - offsetZ * i  }, {30.0f, 00.0f, 0.0f} });
-            objectPtr->AddComponent(new AdjustTransform{ {100.0f * scale, 0.0f, -150.0f * scale }, {0.0f, -90.0f, 0.0f}, {scale, scale, scale} });
-            objectPtr->AddComponent(new Mesh{ "fence.fbx" });
-            objectPtr->AddComponent(new Texture{ L"Brown", 1.0f, 0.4f });
-            objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {100.0f * scale, 15.0f * scale, 150.0f * scale } });
-            AddObj(objectPtr);
-        }
+        objectPtr = new RotPlatformObject(this, AllocateId());
+        objectPtr->AddComponent(new Transform{ {350.0f, 250.0f, 120.0f  }, {0.0f, 0.0f, 0.0f} });
+        objectPtr->AddComponent(new AdjustTransform{ {100.0f * scale, 0.0f, -150.0f * scale }, {0.0f, -90.0f, 0.0f}, {scale, scale, scale} });
+        objectPtr->AddComponent(new Mesh{ "fence.fbx" });
+        objectPtr->AddComponent(new Texture{ L"Brown", 1.0f, 0.4f });
+        objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {100.0f * scale, 15.0f * scale, 150.0f * scale } });
+        AddObj(objectPtr);
+        objectPtr = new RotPlatformObject(this, AllocateId());
+        objectPtr->AddComponent(new Transform{ {350.0f, 250.0f, 230.0f  }, {0.0f, 0.0f, 90.0f} });
+        objectPtr->AddComponent(new AdjustTransform{ {100.0f * scale, 0.0f, -150.0f * scale }, {0.0f, -90.0f, 0.0f}, {scale, scale, scale} });
+        objectPtr->AddComponent(new Mesh{ "fence.fbx" });
+        objectPtr->AddComponent(new Texture{ L"Brown", 1.0f, 0.4f });
+        objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {100.0f * scale, 15.0f * scale, 150.0f * scale } });
+        AddObj(objectPtr);
+        objectPtr = new RotPlatformObject(this, AllocateId());
+        objectPtr->AddComponent(new Transform{ {350.0f, 250.0f, 340.0f  }, {0.0f, 0.0f, 0.0f} });
+        objectPtr->AddComponent(new AdjustTransform{ {100.0f * scale, 0.0f, -150.0f * scale }, {0.0f, -90.0f, 0.0f}, {scale, scale, scale} });
+        objectPtr->AddComponent(new Mesh{ "fence.fbx" });
+        objectPtr->AddComponent(new Texture{ L"Brown", 1.0f, 0.4f });
+        objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {100.0f * scale, 15.0f * scale, 150.0f * scale } });
+        AddObj(objectPtr);
+
 
         objectPtr = new TestObject(this, AllocateId());
-        objectPtr->AddComponent(new Transform{ {300.0f, 350.0f, 50.0f  }, {0.0f, 90.0f, 0.0f} });
+        objectPtr->AddComponent(new Transform{ {250.0f, 250, 150.0f }, {0.0f, 90.0f, 0.0f} });
         objectPtr->AddComponent(new AdjustTransform{ {100.0f * scale, 0.0f, -150.0f * scale }, {0.0f, -90.0f, 0.0f}, {scale, scale, scale} });
         objectPtr->AddComponent(new Mesh{ "fence.fbx" });
         objectPtr->AddComponent(new Texture{ L"Brown", 1.0f, 0.4f });
         objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {100.0f * scale, 15.0f * scale, 150.0f * scale } });
         AddObj(objectPtr);
 
-        objectPtr = new RotFenceObject(this, AllocateId());
-        objectPtr->AddComponent(new Transform{ {250.0f, 350.0f, 150.0f  }, {0.0f, 0.0f, 0.0f} });
+        scale = 0.05;
+        objectPtr = new TestObject(this, AllocateId());
+        objectPtr->AddComponent(new Transform{ {250.0f, 260, 200.0f }, {0.0f, 0.0f, 0.0f} });
         objectPtr->AddComponent(new AdjustTransform{ {100.0f * scale, 0.0f, -150.0f * scale }, {0.0f, -90.0f, 0.0f}, {scale, scale, scale} });
         objectPtr->AddComponent(new Mesh{ "fence.fbx" });
         objectPtr->AddComponent(new Texture{ L"Brown", 1.0f, 0.4f });
         objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {100.0f * scale, 15.0f * scale, 150.0f * scale } });
         AddObj(objectPtr);
-
+        objectPtr = new TestObject(this, AllocateId());
+        objectPtr->AddComponent(new Transform{ {260.0f, 270, 200.0f }, {0.0f, 0.0f, 0.0f} });
+        objectPtr->AddComponent(new AdjustTransform{ {100.0f * scale, 0.0f, -150.0f * scale }, {0.0f, -90.0f, 0.0f}, {scale, scale, scale} });
+        objectPtr->AddComponent(new Mesh{ "fence.fbx" });
+        objectPtr->AddComponent(new Texture{ L"Brown", 1.0f, 0.4f });
+        objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {100.0f * scale, 15.0f * scale, 150.0f * scale } });
+        AddObj(objectPtr);
+        objectPtr = new TestObject(this, AllocateId());
+        objectPtr->AddComponent(new Transform{ {240.0f, 280, 200.0f }, {0.0f, 0.0f, 0.0f} });
+        objectPtr->AddComponent(new AdjustTransform{ {100.0f * scale, 0.0f, -150.0f * scale }, {0.0f, -90.0f, 0.0f}, {scale, scale, scale} });
+        objectPtr->AddComponent(new Mesh{ "fence.fbx" });
+        objectPtr->AddComponent(new Texture{ L"Brown", 1.0f, 0.4f });
+        objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {100.0f * scale, 15.0f * scale, 150.0f * scale } });
+        AddObj(objectPtr);
+        objectPtr = new TestObject(this, AllocateId());
+        objectPtr->AddComponent(new Transform{ {230.0f, 290, 200.0f }, {0.0f, 0.0f, 0.0f} });
+        objectPtr->AddComponent(new AdjustTransform{ {100.0f * scale, 0.0f, -150.0f * scale }, {0.0f, -90.0f, 0.0f}, {scale, scale, scale} });
+        objectPtr->AddComponent(new Mesh{ "fence.fbx" });
+        objectPtr->AddComponent(new Texture{ L"Brown", 1.0f, 0.4f });
+        objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {100.0f * scale, 15.0f * scale, 150.0f * scale } });
+        AddObj(objectPtr);
+        objectPtr = new TestObject(this, AllocateId());
+        objectPtr->AddComponent(new Transform{ {270.0f, 300, 200.0f }, {0.0f, 0.0f, 0.0f} });
+        objectPtr->AddComponent(new AdjustTransform{ {100.0f * scale, 0.0f, -150.0f * scale }, {0.0f, -90.0f, 0.0f}, {scale, scale, scale} });
+        objectPtr->AddComponent(new Mesh{ "fence.fbx" });
+        objectPtr->AddComponent(new Texture{ L"Brown", 1.0f, 0.4f });
+        objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {100.0f * scale, 15.0f * scale, 150.0f * scale } });
+        AddObj(objectPtr);
+        objectPtr = new TestObject(this, AllocateId());
+        objectPtr->AddComponent(new Transform{ {230.0f, 310, 200.0f }, {0.0f, 0.0f, 0.0f} });
+        objectPtr->AddComponent(new AdjustTransform{ {100.0f * scale, 0.0f, -150.0f * scale }, {0.0f, -90.0f, 0.0f}, {scale, scale, scale} });
+        objectPtr->AddComponent(new Mesh{ "fence.fbx" });
+        objectPtr->AddComponent(new Texture{ L"Brown", 1.0f, 0.4f });
+        objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {100.0f * scale, 15.0f * scale, 150.0f * scale } });
+        AddObj(objectPtr);
+        objectPtr = new TestObject(this, AllocateId());
+        objectPtr->AddComponent(new Transform{ {270.0f, 320, 200.0f }, {0.0f, 0.0f, 0.0f} });
+        objectPtr->AddComponent(new AdjustTransform{ {100.0f * scale, 0.0f, -150.0f * scale }, {0.0f, -90.0f, 0.0f}, {scale, scale, scale} });
+        objectPtr->AddComponent(new Mesh{ "fence.fbx" });
+        objectPtr->AddComponent(new Texture{ L"Brown", 1.0f, 0.4f });
+        objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {100.0f * scale, 15.0f * scale, 150.0f * scale } });
+        AddObj(objectPtr);
+        objectPtr = new TestObject(this, AllocateId());
+        objectPtr->AddComponent(new Transform{ {230.0f, 330, 200.0f }, {0.0f, 0.0f, 0.0f} });
+        objectPtr->AddComponent(new AdjustTransform{ {100.0f * scale, 0.0f, -150.0f * scale }, {0.0f, -90.0f, 0.0f}, {scale, scale, scale} });
+        objectPtr->AddComponent(new Mesh{ "fence.fbx" });
+        objectPtr->AddComponent(new Texture{ L"Brown", 1.0f, 0.4f });
+        objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {100.0f * scale, 15.0f * scale, 150.0f * scale } });
+        AddObj(objectPtr);
+        objectPtr = new TestObject(this, AllocateId());
+        objectPtr->AddComponent(new Transform{ {270.0f, 340, 200.0f }, {0.0f, 0.0f, 0.0f} });
+        objectPtr->AddComponent(new AdjustTransform{ {100.0f * scale, 0.0f, -150.0f * scale }, {0.0f, -90.0f, 0.0f}, {scale, scale, scale} });
+        objectPtr->AddComponent(new Mesh{ "fence.fbx" });
+        objectPtr->AddComponent(new Texture{ L"Brown", 1.0f, 0.4f });
+        objectPtr->AddComponent(new Collider{ {0.0f, 0.0f, 0.0f}, {100.0f * scale, 15.0f * scale, 150.0f * scale } });
+        AddObj(objectPtr);
     }
 
     //경계벽
@@ -1225,7 +1331,7 @@ void Scene::CompactObjects()
 
 void Scene::ProcessObjectQueue()
 {
-    for (int i = 0; i < m_object_queue_index; ++i) 
+    for (int i = 0; i < m_object_queue_index; ++i)
     {
         m_objects.push_back(m_object_queue[i]);
     }

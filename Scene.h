@@ -5,6 +5,7 @@
 #include <utility>
 #include "Shadow.h"
 #define MAX_QUEUE 700
+
 class GameTimer;
 class Framework;
 
