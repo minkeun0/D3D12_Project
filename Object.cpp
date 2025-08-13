@@ -5,7 +5,7 @@
 #include <random>
 #include "Framework.h"
 
-std::random_device rd;  // Ã¹ ¹øÂ° rd °´Ã¼
+std::random_device rd;
 default_random_engine dre(rd());
 uniform_int_distribution uid(-180,180);
 
@@ -1344,29 +1344,40 @@ bool PuzzleFrameObject::AllCellMatch()
     return true;
 }
 
+void PuzzleCellObject::OnUpdate(GameTimer& gTimer)
+{
+    Texture* texture = GetComponent<Texture>();
+    switch (mStatus % 2)
+    {
+    case 0:
+        texture->mName = L"PuzzleO";
+        break;
+    case 1:
+        texture->mName = L"PuzzleX";
+        break;
+    default:
+        break;
+    }
+    Object::OnUpdate(gTimer);
+}
+
 void PuzzleCellObject::OnProcessCollision(Object& other, XMVECTOR collisionNormal, float penetration)
 {
     RiceCakeProjectileObject* riceCake = dynamic_cast<RiceCakeProjectileObject*>(&other);
     if (riceCake)
     {
-        Texture* texture = GetComponent<Texture>();
-        switch (++mStatus % 2)
-        {
-        case 0:
-            texture->mName = L"PuzzleO";
-            break;
-        case 1:
-            texture->mName = L"PuzzleX";
-            break;
-        default:
-            break;
-        }
+        ++mStatus;
     }
 }
 
 int PuzzleCellObject::GetStatus()
 {
     return mStatus % 2;
+}
+
+void PuzzleCellObject::SetStatus(int value)
+{
+    mStatus = value;
 }
 
 void PuzzlePlatformObject::OnUpdate(GameTimer& gTimer)
@@ -1411,4 +1422,27 @@ void MovePlatformObject::OnUpdate(GameTimer& gTimer)
     transform->SetPosition(pos);
 
     Object::OnUpdate(gTimer);
+}
+
+PuzzleQuestObject::PuzzleQuestObject(Scene* scene, uint32_t id, uint32_t parentId) : Object(scene, id, parentId)
+{
+    int (*targetStatus)[3] = scene->GetPuzzleStatus();
+
+    PuzzleCellObject* obj = nullptr;
+    float scale = 0.27f;
+    float offset = 0.315f;
+    for (int i = 0; i < 3; ++i)
+    {
+        for (int j = 0; j < 3; ++j)
+        {
+            obj = new PuzzleCellObject(scene, scene->AllocateId(), id);
+            obj->AddComponent(new Transform({ 0.05f + offset * j, 0.0001f, 0.05f + offset * i }, { 0.0f, 0.0f, 0.0f }, { scale, 1.0f, scale }));
+            obj->AddComponent(new Mesh("Quad"));
+            obj->AddComponent(new Texture(L"PuzzleO", -1.0f, 0.4f));
+            scene->AddObj(obj);
+
+            obj->SetStatus(targetStatus[i][j]);
+        }
+    }
+
 }

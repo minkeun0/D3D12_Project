@@ -5,6 +5,11 @@
 #include "info.h"
 #include <array>
 #include "Framework.h"
+#include <random>
+
+std::random_device rd1;
+default_random_engine dre1(rd1());
+uniform_int_distribution uid1(0, 1);
 
 Scene::~Scene()
 {
@@ -38,6 +43,7 @@ void Scene::OnInit(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
     BuildTextureBufferView(device);
     BuildShadow();
 
+    BuildRandomPuzzleStatus();
     ProcessStageQueue();
     ProcessObjectQueue();
 }
@@ -650,8 +656,7 @@ void Scene::BuildGodStage()
     {
         float scale = 0.1f;
         objectPtr = new PlayerObject(this, AllocateId());
-        //objectPtr->AddComponent(new Transform{ {150.0f, 0.0f, 100.0f} });
-        objectPtr->AddComponent(new Transform{ {250.0f, 270, 150.0f} });
+        objectPtr->AddComponent(new Transform{ {150.0f, 0.0f, 100.0f} });
         objectPtr->AddComponent(new AdjustTransform{ {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {scale, scale, scale} });
         objectPtr->AddComponent(new Mesh{ "1P(boy-idle).fbx" });
         objectPtr->AddComponent(new Texture{ L"boy" , 1.0f, 0.4f });
@@ -978,7 +983,7 @@ void Scene::BuildUI()
     // UI
     Object* objectPtr = nullptr;
 
-    float depthFactor = 0.11f;
+    float depthFactor = 0.2f;
     float scale = 0.1f;
     float textureRatio = 420.0f / 112.0f; // 텍스처 비율
     objectPtr = new LifeQuadObject(this, AllocateId(), mMainCameraId);
@@ -1003,13 +1008,27 @@ void Scene::BuildUI()
     objectPtr->AddComponent(new Texture{ L"RiceCake0", -1.0f, 0.4f });
     AddObj(objectPtr);
 
-    scale = 0.25;
-    textureRatio = 256.0f / 256.0f; // 텍스처 비율
-    objectPtr = new TigerLeatherQuadObject(this, AllocateId(), mMainCameraId);
-    objectPtr->AddComponent(new Transform{ {0.7f * depthFactor, -0.55f * depthFactor, 1.0f * depthFactor}, {-90.0f, 0.0f, 0.0f}, {depthFactor * textureRatio * scale, 1.0f, depthFactor * scale} });
-    objectPtr->AddComponent(new Mesh{ "Quad" });
-    objectPtr->AddComponent(new Texture{ L"White", -1.0f, 0.4f });
-    AddObj(objectPtr);
+
+    if (m_current_stage == L"God")
+    {
+        scale = 0.25;
+        textureRatio = 1024.0f / 1024.0f; // 텍스처 비율
+        objectPtr = new PuzzleQuestObject(this, AllocateId(), mMainCameraId);
+        objectPtr->AddComponent(new Transform{ {0.7f * depthFactor, -0.55f * depthFactor, 1.0f * depthFactor}, {-90.0f, 0.0f, 0.0f}, {depthFactor * textureRatio * scale, 1.0f, depthFactor * scale} });
+        objectPtr->AddComponent(new Mesh{ "Quad" });
+        objectPtr->AddComponent(new Texture{ L"PuzzleFrame", -1.0f, 0.4f });
+        AddObj(objectPtr);
+    }
+    else
+    {
+        scale = 0.25;
+        textureRatio = 256.0f / 256.0f; // 텍스처 비율
+        objectPtr = new TigerLeatherQuadObject(this, AllocateId(), mMainCameraId);
+        objectPtr->AddComponent(new Transform{ {0.7f * depthFactor, -0.55f * depthFactor, 1.0f * depthFactor}, {-90.0f, 0.0f, 0.0f}, {depthFactor * textureRatio * scale, 1.0f, depthFactor * scale} });
+        objectPtr->AddComponent(new Mesh{ "Quad" });
+        objectPtr->AddComponent(new Texture{ L"White", -1.0f, 0.4f });
+        AddObj(objectPtr);
+    }
 }
 
 void Scene::BuildTitleStage()
@@ -1285,6 +1304,17 @@ Object* Scene::GetObjFromId(uint32_t id)
         }
     }
     return nullptr;
+}
+
+void Scene::BuildRandomPuzzleStatus()
+{
+    for (int i = 0; i < 3; ++i)
+    {
+        for (int j = 0; j < 3; ++j)
+        {
+            mPuzzleStatus[i][j] = uid1(dre1);
+        }
+    }
 }
 
 void Scene::ProcessStageQueue()
